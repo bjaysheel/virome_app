@@ -52,5 +52,5 @@
 	<cfset value = CreateObject("component", application.cfc & ".Library").add_library(sobj)/>
 	<cfdump var="#value#">
 	
-	<!-- push in jaysheel-devel branch -->
+	<!-- git test -->
 </cfoutput>
