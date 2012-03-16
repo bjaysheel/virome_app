@@ -52,5 +52,5 @@
 	<cfset value = CreateObject("component", application.cfc & ".Library").add_library(sobj)/>
 	<cfdump var="#value#">
 	
-	<!-- git test -->
+	<!-- git test2 -->
 </cfoutput>
