@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  layout="vertical" width="100%" height="100%"
+		  xmlns:cfservice="services.*"
+		  title="OVERVIEW OF PRIVATE VIROME METAGENOMES" 
+		  addedToStage="onAddtoStage()"
+		  creationComplete="onCreationComplete()" 
+		  show="onShow()" xmlns:local="*" xmlns:library="services.library.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyLibraryObject;
+			import com.MyUtility;
+			import com.events.BrowseEnvEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			import com.google.analytics.debug.Label;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.VBox;
+			import mx.controls.HRule;
+			import mx.controls.Text;
+			import mx.events.IndexChangedEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var loadarr:Array = new Array; 
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );			
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/PrivateLibrary" );
+			}
+			
+			protected function onCreationComplete():void{
+				privEnvRequest.token = Library.getEnvironmentObject(_util.app.cookie.LIBRARYID);
+			}
+			
+			 protected function privEnvResponse(event:ResultEvent):void{
+				//local var
+				var result:ArrayCollection = event.result as ArrayCollection;
+				
+				//loop through all env returend
+				for (var i:int=0;i<result.length; i++){
+					if (result.getItemAt(i).label != "Select One"){
+						//create rpc caller for each lib
+						
+						//create vbox for environment
+						var vbox:VBox = new VBox();
+						vbox.percentWidth = 100;
+						vbox.id = result.getItemAt(i).label;
+						vbox.name = result.getItemAt(i).label;
+						vbox.label = result.getItemAt(i).label;
+						
+						var txt:Text = new Text();
+						txt.percentWidth = 100;
+						txt.text = result.getItemAt(i).label;
+						txt.styleName = "subheading";
+						vbox.addChild(txt);
+				
+						//add vbox to accordian.
+						privateAccordion.addChild(vbox);
+						loadarr.push(0);
+						accordionChangeHandler(vbox.name,loadarr.length-1);
+					}
+				}
+			}
+			
+			protected function accordionChangeHandler(str:String,idx:Number):void{
+				var libraryRequest:CallResponder = new CallResponder();
+				libraryRequest.addEventListener(ResultEvent.RESULT,libraryResponse);
+				libraryRequest.addEventListener(FaultEvent.FAULT,_util.faultHandler);
+				
+				if (loadarr[idx] == 0){
+					loadarr[idx] = 1;
+					
+					//arguments passed are environment, private library ids, and private library bit 0=private,1=public
+					libraryRequest.token = Library.getLibraryInfo(str,_util.app.cookie.LIBRARYID,0);
+				}
+			}
+			
+			protected function libraryResponse(event:ResultEvent):void{
+				//local variables.
+				var rslt:Object = event.result as Object;
+				
+				var libObject:MyLibraryObject = new MyLibraryObject();
+				libObject.makeGrid(rslt.children);
+				
+				//add new libinfo object to the stage.
+				var vbox:VBox = privateAccordion.getChildByName(rslt.environment) as VBox;
+				vbox.addChild(libObject);
+				
+				privateAccordion.validateNow();
+			} 
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="privEnvRequest" result="privEnvResponse(event)"/>
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+						   destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library"/>
+	</fx:Declarations>
+	
+	<mx:HBox width="100%" height="100%" paddingBottom="23">
+		<local:OverviewTable id="privateOverview" width="100%" height="100%" isPrivate="true"/>	
+		
+		<mx:VRule height="100%"/>
+			
+		<local:BirdsEyeView id="privatebirdsEyeView" width="100%" height="100%" isPrivate="true"/>
+	</mx:HBox>
+	
+	<mx:HRule width="100%" height="5"/>
+	
+	<mx:Box id="privateAccordion" width="100%" height="100%"/>				
+</mx:Panel>

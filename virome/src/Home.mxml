@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  xmlns:cfservice="services.*"
+		  xmlns:component="com.component.*"
+		  xmlns:com="com.*"
+		  xmlns:local="*"
+		  layout="vertical" width="100%" height="100%" 
+		  title="OVERVIEW OF PUBLIC VIROME METAGENOMES"
+		  addedToStage="onAddtoStage()"
+		  creationComplete="onCreationComplete()" 
+		  show="onShow()" > 
+		  
+
+	<fx:Script>
+		<![CDATA[
+			import com.GeneralObject;
+			import com.MyUtility;
+			import com.component.MyNumberFormatter;
+			
+			import mx.binding.utils.BindingUtils;
+			import mx.collections.ArrayCollection;
+			import mx.containers.Grid;
+			import mx.controls.Label;
+			import mx.rpc.events.ResultEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			import mx.controls.Alert;
+			
+			public var tracker:AnalyticsTracker;
+
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/Home" );
+			}
+			
+			protected function onCreationComplete():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				introText.styleSheet = textStyle;
+				ackText.styleSheet = textStyle;
+			}			
+		]]>
+	</fx:Script>
+		
+	<mx:Canvas width="100%" height="100%" horizontalScrollPolicy="off" >
+		<mx:VBox width="100%" height="100%" id="container">
+			
+			<mx:HBox width="100%" height="100%" id="box">
+				<mx:VBox width="100%" height="100%">
+					<mx:Text width="100%" condenseWhite="true" id="introText">
+						<mx:htmlText>
+							<![CDATA[
+							<font size="11">
+								<b>Viral Informatics Resource for Metagenome Exploration - VIROME</b><br/><br/>
+								<p>
+									&nbsp;&nbsp;&nbsp;&nbsp;<b>VIROME</b> is a web-application designed for scientific exploration of metagenome sequence
+									data collected from viral assemblages occurring within a number of different
+									environmental contexts.
+								</p><br/>
+								<p>
+									&nbsp;&nbsp;&nbsp;&nbsp;The <b>VIROME</b> informatics pipeline focuses on the classification of predicted 
+									open-reading frames (ORFs) from viral metagenomes. For information on the VIROME bioinformatic pipeline 
+									visit the <a href="http://virome.diagcomputing.org/#view=Methods;">Methods</a> page. 
+									All ORFs receive only one classification based on the following priority:
+								</p><br/>
+							</font>
+							]]>
+						</mx:htmlText>					
+					</mx:Text>
+					
+					<mx:Grid width="100%" height="100%" horizontalGap="2">
+						<mx:GridRow width="100%" height="100%" backgroundColor="0xF4FBFF">
+							<mx:GridItem width="100%" height="100%" colSpan="2">
+								<mx:Text width="100%" textAlign="center" condenseWhite="true" fontSize="11">
+									<mx:htmlText>
+										<![CDATA[
+											<b>The VIROME ORF and sequence categories</b>
+										]]>
+									</mx:htmlText>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										1) Ribosomal RNA containing sequences:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										reads with significant homology to 5S, 16/18S, or 23/25S rRNA.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%" backgroundColor="0xF4FBFF">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										2) Transfer RNA containing sequences:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										reads with significant homology to a tRNA
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										3) Possible functional protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to a protein having a
+										functional classification in the UniRef 100 plus
+										database.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%" backgroundColor="0xF4FBFF">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										4) Unassigned protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to a protein with
+										unassigned function in the UniRef 100 plus database.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										5) Top-hit viral environmental protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to only environmental
+										sequence, top hit was of viral in origin within the
+										MetaGenomes on-line database
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%" backgroundColor="0xF4FBFF">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										6) Viral only environmental protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to only environmental
+										sequence, all hits were of viral in origin within the
+										MetaGenomes on-line database.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										7) Top-hit microbial environmental protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to only environmental
+										sequence, top hit was of microbial in origin within the
+										MetaGenomes on-line database.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%" backgroundColor="0xF4FBFF">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										8) Microbial only environmental protein:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										ORFs with significant homology to only environmental
+										sequence, all hits were of microbial in origin within the
+										MetaGenomes on-line database.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>
+						
+						<mx:GridRow width="100%" height="100%">
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										9) True ORFan:
+									</mx:text>								
+								</mx:Text>
+							</mx:GridItem>
+							<mx:GridItem width="100%" height="100%">
+								<mx:Text width="100%" condenseWhite="true" fontSize="11">
+									<mx:text>
+										BLAST analysis against over 50 million proteins yielded
+										no significant homology in either the UniRef 100 plus or
+										MetaGenomes on-line databases.
+									</mx:text>
+								</mx:Text>
+							</mx:GridItem>
+						</mx:GridRow>					
+					</mx:Grid>
+					
+					
+				</mx:VBox>
+				
+				<mx:VRule height="100%"/>
+				
+				<!-- birds eye view chart top right -->
+				<local:BirdsEyeView id="birdsEyeViewChart" width="100%" height="100%" isPrivate="false"/>
+			</mx:HBox>
+
+			<mx:HRule width="100%"/>
+		
+			<!-- table overview -->
+			<local:OverviewTable width="100%" height="100%" isPrivate="false"/>
+			
+			<mx:HRule width="100%"/>
+		
+			<!--add acknowledgement-->
+			<mx:Text width="100%" condenseWhite="true" id="ackText" paddingTop="15">
+				<mx:htmlText>
+					<![CDATA[
+					<font size="11">
+					<p>
+					<b>VIROME</b> is the collective creative and scientific output of principally: 
+					<a href="mailto:bjaysheel@gmail.com">Jaysheel Bhavsar</a>, 
+					<a href="mailto:polson@dbi.udel.edu">Shawn Polson</a>, 
+					<a href="mailto:wommack@dbi.udel.edu">K. Eric Wommack</a>. 
+					If you use <b>VIROME</b> in the preparation of data for publication please
+					give the URL (http://virome.dbi.udel.edu) and cite: Bhavsar, J. D, S. W. Polson and K. E.
+					Wommack. 2009. VIROME: An informatics resource for viral metagenome exploration. in preparation.
+					</p><br/>
+					<p>
+					<b>VIROME</b> development supported through research grants from the National Science Foundation, the US.
+					Department of Agriculture, and the Delaware EPSCoR program
+					</p>
+					</font>
+					]]>
+				</mx:htmlText>					
+			</mx:Text>
+			
+			<mx:HRule width="100%"/>
+			
+			<!--add logos-->
+			<mx:HBox width="100%" height="100%" horizontalAlign="center" paddingTop="15">
+				<mx:Image source="assets/logos/gbmf.png" height="75"/>
+				<mx:Image source="assets/logos/csrees.jpg" width="75" height="75"/>
+				<mx:Image source="assets/logos/nsf.png" width="75" height="75"/>
+				<mx:Image source="assets/logos/dbi.png" width="75" height="75"/>
+				<mx:Image source="assets/logos/epscor.png" height="75"/>
+			</mx:HBox>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>

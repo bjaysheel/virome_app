@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:mx="library://ns.adobe.com/flex/mx"  
+			xmlns:cfservice="services.*"
+			xmlns:stats="stats.*"
+			title="Virome Classification"
+			styleName="catalogPanel" 
+			width="100%" height="100%"
+			borderStyle="solid" 
+			addedToStage="onAddtoStage()" 
+			show="onShow()" xmlns:statistics="services.statistics.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.ChartnData;
+			import com.MyUtility;
+			import com.component.MyNumberFormatter;
+			import com.events.SetSearchDBFormEvent;
+			import com.events.StatsChangeViewEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.charts.HitData;
+			import mx.charts.events.ChartItemEvent;
+			import mx.collections.ArrayCollection;
+			import mx.collections.XMLListCollection;
+			import mx.events.ToolTipEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var viromeCategoryDataSet:XMLListCollection = new XMLListCollection();
+			[Bindable] private var dbDataSet:XMLListCollection = new XMLListCollection();
+			
+			private var _libraryId:Number = 0;
+			private var _environment:String = "";
+			private var _libraryInfoObject:Object = new Object();
+			private var _flag:Boolean = true;
+			private var doubleClickFlag:Boolean = true;
+			
+			public var tracker:AnalyticsTracker;
+
+			
+			[Bindable] public function set libraryId(v:Number):void{
+				_libraryId = v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject=v;
+			}
+			[Bindable] public function set flag(v:Boolean):void{
+				_flag = v;
+			}
+			public function get libraryId():Number{
+				return _libraryId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			public function get flag():Boolean{
+				return _flag;
+			}
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );				
+			}
+
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/STATISTICS/VIROME-Classification" );
+
+				//load data on page if flag
+				if ((flag) && (libraryId > 0) && (environment.length > 0)){
+					flag = false;
+					viromeClass.token = Statistics.getVIROMEClass(libraryId,environment);
+				}
+				
+				viromeCategoryChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+				dbChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+			}
+			
+			protected function chartClick(event:MouseEvent,str:String):void{
+				new ChartnData(event,_libraryInfoObject['LIBNAME'],str);
+			}
+			
+			protected function viromeClassResponse(event:ResultEvent):void{
+				var obj:Object = event.result as Object;
+				
+				demo.libraryInfoObject = libraryInfoObject;
+				demo.showValues();
+
+				//reset data provider.
+				viromeCategoryDataSet = new XMLListCollection();
+				dbDataSet = new XMLListCollection();
+
+				viromeCategoryDataSet = new XMLListCollection((new XML(new String(obj.VCLASS))).children());
+				dbDataSet = new XMLListCollection((new XML(new String(obj.ACLASS))).children());
+			}
+			
+			protected function dataTipFunc(hd:HitData):String{
+				var nf:MyNumberFormatter = new MyNumberFormatter();
+				nf.updatePrecision(0);
+				return hd.item.@LABEL+ ": " + nf.format(hd.item.@VALUE) + "%";
+			}
+			
+			protected function overviewClickHandler(event:ChartItemEvent):void{
+				//check if double click or single click
+				var timer:Timer = new Timer(500,1);
+				if (doubleClickFlag){
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function ():void{doubleClickFlag=true;});
+					timer.start();
+					doubleClickFlag = false;
+				} else {
+					timer.stop();
+					doubleClickFlag=true;
+					
+					var obj:Object = event.hitData.chartItem.item;
+					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+					_sf.environment = environment;
+					_sf.library = libraryId;
+					_sf.idFile = obj.@IDFNAME;
+					_sf.tag = obj.@TAG;
+					
+					var str:String = obj.@LABEL
+					if (str == "No Significant Hit")
+						_sf.evalue = 0.1;
+					else if ((str == "Metagenomes") || (str == "Uniref100p"))
+						_sf.blastDB = str.toUpperCase();
+					
+					_util.simulateSearchClick(_sf);
+				}
+			}
+			
+			protected function viromeClickHandler(event:ChartItemEvent):void{
+				//check if double click or single click
+				var timer:Timer = new Timer(500,1);
+				if (doubleClickFlag){
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function (e:TimerEvent):void {
+						timer_complete(e,event); });
+					timer.start();
+					doubleClickFlag = false;
+				} else {
+					timer.stop();
+					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+					doubleClickFlag=true;
+					
+					_sf.environment = environment;
+					_sf.library = libraryId;
+					_sf.vircat = (event.hitData.chartItem.item as XML).@CAT;
+					
+					if (_sf.vircat == 'orfan')
+						_sf.evalue = 0.1;
+					else _sf.evalue = 0.001;
+					
+					_util.simulateSearchClick(_sf);
+				}	
+			}
+			
+			protected function timer_complete(evt:TimerEvent, item:ChartItemEvent):void{
+				//only single click
+				if (!doubleClickFlag){
+					doubleClickFlag=true;
+					
+					var obj:Object = item.hitData.chartItem.item;
+					var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
+					
+					var str:String = obj.@LABEL 
+					if (str == "Possible functional protein"){
+						cv.name = "_fxnal";
+						_util.app.dispatchEvent(cv);
+					} else if (str == "tRNA"){
+						cv.name = "_tRNA";
+						_util.app.dispatchEvent(cv);
+					}
+				}
+			}
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<s:CallResponder id="viromeClass" result="viromeClassResponse(event)"/>
+		<statistics:Statistics id="Statistics" showBusyCursor="true" fault="_util.faultHandler(event)"
+					destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Statistics" />
+	</fx:Declarations>
+	
+	<mx:Canvas width="100%" height="100%" horizontalScrollPolicy="off">
+		<mx:VBox width="100%" height="100%" horizontalGap="0" verticalGap="0" paddingRight="20">
+			
+			<mx:HBox width="100%" verticalAlign="top" paddingLeft="25">
+				<mx:VBox width="100%" height="100%">
+					<stats:LibraryDemograph id="demo" libraryInfoObject="{libraryInfoObject}" width="100%"/>
+					
+					<mx:VBox width="100%" backgroundColor="0x3399FF" backgroundAlpha="0.3">
+						<mx:HBox width="100%">
+							<mx:Image source="@Embed(source='assets/icons/Info.png')"/>
+							<mx:Text text="VIROME: data-driven Analysis" styleName="strong"/>								
+						</mx:HBox>
+						<mx:Text condenseWhite="true">
+							<mx:htmlText>
+								<![CDATA[
+									<ul>
+										<li>Hover pointer over any bar for more information.</li><br/>
+										<li>Double click on an <b>Analysis Overview</b> bar will go to search page
+											showing all the predicted ORFs in the category.</li><br/>
+										<li>Single click on <b>VIROME categories</b> bar will navigate to that section of the analysis.</li>
+									</ul>
+								]]>
+							</mx:htmlText>
+						</mx:Text>
+					</mx:VBox>
+				</mx:VBox>
+				
+				<mx:VBox width="100%" height="100%">					
+					<mx:Text text="Analysis Overview" styleName="strong" width="100%" textAlign="center"/>
+
+					<mx:ColumnChart showDataTips="true" id="dbChart" dataProvider="{dbDataSet}"
+									columnWidthRatio="0.50" showLabelVertically="true" 
+									itemClick="overviewClickHandler(event);"
+									click="chartClick(event,'analysis_overview')"
+									toolTip="tip">
+						<mx:verticalAxis>
+							<mx:LinearAxis minimum="0" title="No. ORFs per category"/>
+						</mx:verticalAxis>
+						<mx:horizontalAxis>
+							<mx:CategoryAxis id="haxis" categoryField="@LABEL"/>
+						</mx:horizontalAxis>						
+						<mx:horizontalAxisRenderers>
+							<mx:AxisRenderer axis="{haxis}" labelRotation="45"/>
+						</mx:horizontalAxisRenderers>
+						
+						<mx:series>
+							<mx:ColumnSeries id="acSeries" yField="@VALUE"/>
+						</mx:series>
+					</mx:ColumnChart>
+				</mx:VBox>
+			</mx:HBox>
+			
+			<mx:HRule width="99%"/>
+			
+			<mx:VBox width="100%" height="100%" verticalAlign="bottom" horizontalAlign="left" paddingTop="10">
+				<mx:Text text="VIROME Categories" styleName="strong" width="100%" textAlign="center"/>
+				
+				<mx:ColumnChart width="90%" dataTipFunction="dataTipFunc" id="viromeCategoryChart"
+								showDataTips="true" dataProvider="{viromeCategoryDataSet}" 
+								showLabelVertically="true"
+								itemClick="viromeClickHandler(event);"
+								click="chartClick(event,'virome_category')"
+								toolTip="tip">
+					<mx:verticalAxis>
+						<mx:LinearAxis minimum="0" maximum="100" title="% ORFs per category" />
+					</mx:verticalAxis>
+					<mx:horizontalAxis>
+						<mx:CategoryAxis id="xaxis" categoryField="@LABEL"/>
+					</mx:horizontalAxis>
+					<mx:horizontalAxisRenderers>
+						<mx:AxisRenderer axis="{xaxis}" labelRotation="45"/>
+					</mx:horizontalAxisRenderers>
+					
+					<mx:series>
+						<mx:ColumnSeries id="vcSeries" yField="@VALUE"/>
+					</mx:series>
+				</mx:ColumnChart>
+			</mx:VBox>
+		</mx:VBox>
+	</mx:Canvas>
+	
+</mx:Panel>

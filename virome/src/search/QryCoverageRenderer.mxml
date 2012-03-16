@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	<mx:Script>
+		<![CDATA[
+			import com.component.MyNumberFormatter;
+		]]>
+	</mx:Script>
+	<mx:Text text="{new MyNumberFormatter().format((Math.abs(data.QRY_START-data.QRY_END+1)/data.QUERY_LENGTH)*100)} %"/>
+</mx:VBox>

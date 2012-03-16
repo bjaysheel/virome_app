@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark"
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	layout="vertical" width="100%" height="100%"
+	xmlns:cfservice="services.*"
+	title="Browse" 
+	addedToStage="onAddtoStage()"
+	creationComplete="onCreationComplete()" 
+	show="onShow()" xmlns:library="services.library.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyLibraryObject;
+			import com.MyUtility;
+			import com.events.BrowseEnvEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Accordion;
+			import mx.containers.VBox;
+			import mx.controls.Alert;
+			import mx.events.IndexChangedEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			private var loadarr:Array = new Array; 
+			
+			[Bindable] public var readyNessBit:Boolean = false;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var pendingEvent:BrowseEnvEvent = new BrowseEnvEvent();
+			[Bindable] private var _accordian:Accordion = new Accordion();
+			
+			protected function onAddtoStage():void{
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+				
+				_util.app.addEventListener(BrowseEnvEvent.BROWSE_ENVIRONMENT_EVENT, browseEnvironment);				
+				this.addEventListener(BrowseEnvEvent.BROWSE_ENVIRONMENT_EVENT, browseEnvironment);
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/Browser" );
+			}
+			
+			protected function onCreationComplete():void{
+				//parameter passed is groupId
+				_accordian.percentHeight=100;
+				_accordian.percentWidth=100;
+				_accordian.addEventListener(IndexChangedEvent.CHANGE,accordianChangeHandler);
+				this.addChild(_accordian);
+				
+				environmentRequest.token = Library.getEnvironmentObject('');
+			}
+			
+			protected function browseEnvironment(e:BrowseEnvEvent):void{
+				if (!readyNessBit){
+					pendingEvent.duplicate(e);
+					pendingEvent.pending = true;
+				}else {
+					var event:IndexChangedEvent = new IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE,false,true);
+	
+					_accordian.selectedIndex = _accordian.getChildIndex(_accordian.getChildByName(e.environment));
+					event.newIndex = _accordian.selectedIndex;
+					_accordian.dispatchEvent(event);
+					pendingEvent.pending = false;
+				}
+			}
+			
+			protected function environmentResponse(event:ResultEvent):void {
+				//local var
+				var result:ArrayCollection = event.result as ArrayCollection;
+				
+				//loop through all env returend
+				for (var i:int=0;i<result.length; i++){
+					if (result.getItemAt(i).label != "Select One"){
+						var str:String = (result.getItemAt(i).label as String);
+						
+						//create vbox for environment
+						var vbox:VBox = new VBox();
+						vbox.percentWidth = 100;
+						vbox.id = result.getItemAt(i).label;
+						vbox.name = result.getItemAt(i).label;
+						vbox.label = result.getItemAt(i).label;
+						
+						//add vbox to accordian.
+						_accordian.addChild(vbox);
+						loadarr.push(0);
+					}
+				}
+				
+				readyNessBit = true;
+				
+				if (pendingEvent.pending) {
+					this.dispatchEvent(pendingEvent);
+				} else {
+					_accordian.selectedIndex = 0;
+					_accordian.dispatchEvent(new mx.events.IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE));
+				}
+			}
+						
+			protected function libraryResponse(event:ResultEvent):void{
+				//local variables.
+				var rslt:Object = event.result as Object;
+				
+				var libObject:MyLibraryObject = new MyLibraryObject();
+				libObject.makeGrid(rslt.children);
+					
+				//add new libinfo object to the stage.
+				var vbox:VBox = _accordian.getChildByName(rslt.environment) as VBox;
+				vbox.addChild(libObject);
+			}
+			
+			protected function accordianChangeHandler(event:IndexChangedEvent):void{
+				var libraryRequest:CallResponder = new CallResponder();
+				libraryRequest.addEventListener(ResultEvent.RESULT,libraryResponse);
+				libraryRequest.addEventListener(FaultEvent.FAULT,_util.faultHandler);
+
+				if ((event.newIndex < 0) || (loadarr[event.newIndex] == 0)){
+					//check for very first time accordian is loaded
+					if (event.newIndex < 0)
+						loadarr[0] = 1;
+					else loadarr[event.newIndex] = 1;
+					
+					//arguments passed are environment, groupId, and private lib boolean
+					libraryRequest.token = Library.getLibraryInfo(_accordian.selectedChild.name,'',1);
+				}
+			}
+			
+			public function simulateAccordianClick(v:String):void{
+				_accordian.selectedIndex = _accordian.getChildIndex(_accordian.getChildByName(v));
+				var event:IndexChangedEvent = new IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE,false,true);
+				event.newIndex = _accordian.selectedIndex;
+				_accordian.dispatchEvent(event);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
+		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />	
+	</fx:Declarations>
+</mx:Panel>

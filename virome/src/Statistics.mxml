@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"  
+	xmlns:com="com.*"
+	xmlns:cfservice="services.*"
+	xmlns:maps="com.google.maps.*"
+	width="100%" height="100%"  
+	showEffect="WipeDown" hideEffect="WipeUp" 
+	xmlns:stats="stats.*"
+	addedToStage="onAddtoStage()"
+	creationComplete="init()"
+	hide="onHide();" 
+	show="onShow();" 
+	horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:library="services.library.*">
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.LibraryStatEvent;
+			import com.events.StatsChangeViewEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.ItemClickEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var readyNessBit:Boolean = false;
+			[Bindable] private var pendingEvent:LibraryStatEvent = new LibraryStatEvent();
+			
+			private var _libraryId:Number = 0;
+			private var _environment:String = null;
+			private var _libraries:ArrayCollection = new ArrayCollection();
+			private var _environments:ArrayCollection = new ArrayCollection();
+			private var _libraryInfoObject:Object = new Object();
+			private var loadarr:Array = new Array;
+			
+			[Bindable] public function set libraryId(v:Number):void{
+				_libraryId = v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set libraries(v:ArrayCollection):void{
+				_libraries = v;
+			}
+			[Bindable] public function set environments(v:ArrayCollection):void{
+				_environments = v;
+			}
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject = v;
+			}
+			
+			public function get libraryId():Number{
+				return _libraryId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get libraries():ArrayCollection{
+				return _libraries;
+			}
+			public function get environments():ArrayCollection{
+				return _environments;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );							
+
+				_util.app.addEventListener(LibraryStatEvent.LIBRARY_STAT_EVENT,libStatsHandler);
+				_util.app.addEventListener(StatsChangeViewEvent.STATS_CHANGE_VIEW_EVENT,changeViewHandler);
+				
+				this.addEventListener(LibraryStatEvent.LIBRARY_STAT_EVENT,libStatsHandler);
+			}
+			
+			//This function add the event listner to show library statics when any library is selected
+			protected function init():void{
+				//add event listner for log in/out, to refresh library drop down with appropriate private data.
+				_util.app.addEventListener("userLogInOut",refreshLibraryList);
+				
+				//parameter passed is groupId
+				environmentRequest.token = Library.getEnvironmentObject('');
+			}
+			
+			protected function onHide():void{
+				this.gen.onHide();
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/Statistics" );				
+				this.gen.onShow();
+			}
+						
+			//This function is called when any library is selected
+			//from browse page
+			protected function libStatsHandler(event:LibraryStatEvent):void{
+				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
+				var obj:Object = event.struct;
+				libraryId = obj['LIBRARY'];
+				environment = obj['ENVIRONMENT'];
+				
+				if (readyNessBit){
+					for (var i:int=0; i<environments.length; i++){
+						if (environments[i]['data'] == environment){
+							envList.selectedIndex = i;
+							getLibrary();
+						}
+					}
+					
+					//_section.selectedIndex=0;
+					cv.name = "_general";
+					_util.app.dispatchEvent(cv);
+					
+					goToSleep(obj);
+				} else {
+					pendingEvent.duplicate(event);
+					pendingEvent.pending = true;
+				}
+			}
+			
+			protected function changeViewHandler(event:StatsChangeViewEvent):void{				
+				for (var i:int=0; i<buttons.length; i++){
+					if (buttons[i].name == event.name){
+						(this[event.name] as Button).enabled = false;
+					} else {
+						(this[buttons[i].name] as Button).enabled = true;
+					}				
+				}
+				_section.selectedIndex = _section.getChildIndex(_section.getChildByName(event.name));				
+			}
+			
+			protected function showInformation(event:MouseEvent):void{
+				//_section.selectedIndex=event.index;
+				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
+				cv.name = event.currentTarget.name;
+				_util.app.dispatchEvent(cv);
+			}
+			
+			protected function refreshLibraryList(event:Event):void{
+				getLibrary();
+			}
+			
+			//This function is called when a environment is selected
+			protected function getLibrary():void{
+				var libraryIdList:String = '';
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
+					libraryIdList = _util.app.cookie.LIBRARYID;
+				
+				if(envList.selectedIndex != 0)
+					libraryRequest.token = Library.getLibraryObject(envList.selectedItem.label,libraryIdList);	
+			}
+			
+			//This function is called when a library is selected
+			protected function getLibDetails(e:Event=null):void{				
+				if(libList.selectedIndex != 0) {
+					var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
+					var _ls:LibraryStatEvent = new LibraryStatEvent();
+					libraryId = _ls.library = libList.selectedItem.data as Number;
+					environment = _ls.environment = envList.selectedItem.data;
+					
+					cv.name = "_general";
+					_util.app.dispatchEvent(cv);
+					goToSleep(_ls.struct);
+					
+					//reset flags to reload data.
+					virclass_view.flag = true;
+					trna.flag = true;
+					fxn.flag = true;
+					aclame.flag = true;
+					go.flag = true;
+					seed.flag = true;
+					kegg.flag = true;
+					cog.flag = true;	
+					tax.flag = true;
+					envlib.flag = true;
+					libtype.flag = true;
+					genesis.flag = true;
+					sphere.flag = true;
+					ecosys.flag = true;
+					extreme.flag = true;
+					physiochem.flag = true;
+				}
+			}
+
+			//add sleep timer to eliminate possible race condition for 
+			//google map generation. 
+			protected function goToSleep(obj:Object):void{
+				var sleep:Timer = new Timer(1000,2); //2 sec delay
+				sleep.addEventListener(TimerEvent.TIMER_COMPLETE,function (e:TimerEvent):void{
+																		timeToWakeUp(obj);
+																	});
+				sleep.start();
+			}
+			
+			//after sleeping get general library information.
+			protected function timeToWakeUp(obj:Object):void{
+				generalRequest.token = Library.getGeneralObject(obj);
+			}
+			
+			//Displays all the environemnts
+			protected function environmentResponse(event:ResultEvent):void{
+				environments = event.result as ArrayCollection;
+				
+				this.envList.validateNow();
+				this.envList.selectedIndex=0;
+				
+				readyNessBit = true;
+				if (pendingEvent.pending){
+					this.dispatchEvent(pendingEvent);
+					pendingEvent.pending = false;
+				}
+			}
+			
+			//Displays all the libraries in selected environemnt
+			protected function libraryResponse(event:ResultEvent):void{
+				libraries = event.result as ArrayCollection;
+				
+				libList.validateNow();
+				libList.selectedIndex=0;
+				
+				for (var i:int=0; i<libraries.length; i++){
+					if (libraries[i]['data'] == libraryId){
+						libList.selectedIndex = i;
+						getLibDetails(null);
+						break;
+					}
+				}
+			}
+			
+			protected function generalResponse(event:ResultEvent):void{
+				libraryInfoObject = event.result as Object;
+				gen.libraryInfoObject = libraryInfoObject;
+				gen.populate();
+			}			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />
+		<s:CallResponder id="libraryRequest" result="libraryResponse(event)" />
+		<s:CallResponder id="generalRequest" result="generalResponse(event)"/>
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
+		
+		<fx:Array id="buttons">
+			<fx:Object label="General Information" name="_general"/>
+			<fx:Object label="VIROME Classification" name="_viromeclass"/>
+			<fx:Object label="tRNA" name="_tRNA"/>
+			<fx:Object label="Poss. Fxnal Protein" name="_fxnal"/>
+			<fx:Object label="ACLAME" name="_aclame"/>
+			<fx:Object label="GO" name="_go"/>
+			<fx:Object label="SEED" name="_seed"/>
+			<fx:Object label="KEGG" name="_kegg"/>
+			<fx:Object label="COG" name="_cog"/>
+			<fx:Object label="Taxonomy" name="_tax"/>
+			<fx:Object label="Library" name="_envlibrary"/>
+			<fx:Object label="Lib-Type" name="_libtype"/>
+			<fx:Object label="Genesis" name="_genesis"/>
+			<fx:Object label="Sphere" name="_sphere"/>
+			<fx:Object label="Eco-system" name="_ecosystem"/>
+			<fx:Object label="Extreme" name="_extreme"/>
+			<fx:Object label="Physio-chem-mods" name="_physio"/>
+		</fx:Array>
+	</fx:Declarations>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		.togStyle{
+			text-align:left;	
+		}
+	</fx:Style>
+	
+	
+	<mx:HBox width="100%" height="100%" paddingRight="20">
+	
+		<mx:VBox width="25%" height="100%" 
+				 paddingLeft="4" paddingRight="12" 
+				 paddingTop="12" paddingBottom="8">
+			<mx:Grid width="100%" borderStyle="none">
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Label text="Environment" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:ComboBox id="envList" dataProvider="{environments}" change="getLibrary()" rowCount="10"/>	
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem>
+						<mx:Label text="Library" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<mx:ComboBox id="libList" dataProvider="{libraries}" change="getLibDetails(event)" width="175" top="10"/>
+					</mx:GridItem>
+				</mx:GridRow>
+			</mx:Grid>
+			
+			<!-- navigation buttons box -->
+			<mx:VBox verticalGap="3">
+				<mx:Button label="General Information" id="_general" name="_general" width="150" click="showInformation(event)"/>
+				<mx:Button label="VIROME Classification" id="_viromeclass" name="_viromeclass" width="150" click="showInformation(event)"/>
+				<mx:Button label="tRNA" id="_tRNA" name="_tRNA" width="150" click="showInformation(event)"/>
+				
+				<mx:HBox>
+					<com:DottedSpacer height="13" width="60"/>
+					<mx:Label text="Functional Info."/>
+					<com:DottedSpacer height="13" width="60"/>
+				</mx:HBox>
+				
+				<mx:Button label="Poss. Fxnal Protein" id="_fxnal" name="_fxnal" width="150" click="showInformation(event)"/>
+				<mx:Button label="ACLAME" id="_aclame" name="_aclame" width="150" click="showInformation(event)"/>
+				<mx:Button label="COG" id="_cog" name="_cog" width="150" click="showInformation(event)"/>
+				<mx:Button label="GO" id="_go" name="_go" width="150" click="showInformation(event)"/>
+				<mx:Button label="KEGG" id="_kegg" name="_kegg" width="150" click="showInformation(event)"/>
+				<mx:Button label="SEED" id="_seed" name="_seed" width="150" click="showInformation(event)"/>
+				<mx:Button label="Taxonomy" id="_tax" name="_tax" width="150" click="showInformation(event)"/>
+				
+				<mx:HBox>
+					<com:DottedSpacer height="13" width="60"/>
+					<mx:Label text="Environmental Info."/>
+					<com:DottedSpacer height="13" width="60"/>
+				</mx:HBox>
+				
+				<mx:Button label="Library" id="_envlibrary" name="_envlibrary" width="150" click="showInformation(event)"/>
+				<mx:Button label="Lib-Type" id="_libtype" name="_libtype" width="150" click="showInformation(event)"/>
+				<mx:Button label="Genesis" id="_genesis" name="_genesis" width="150" click="showInformation(event)"/>
+				<mx:Button label="Sphere" id="_sphere" name="_sphere" width="150" click="showInformation(event)"/>
+				<mx:Button label="Eco-system" id="_ecosystem" name="_ecosystem" width="150" click="showInformation(event)"/>
+				<mx:Button label="Extreme" id="_extreme" name="_extreme" width="150" click="showInformation(event)"/>
+				<mx:Button label="Physio-chem-mods" id="_physio" name="_physio" width="150" click="showInformation(event)"/>
+			</mx:VBox>
+			
+		</mx:VBox>
+				
+		<mx:ViewStack width="100%"  height="100%" id="_section">
+			<stats:General id="gen" name="_general" creationPolicy="auto" label="General Information" 
+						   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"/>
+	
+			<stats:Viromeclass id="virclass_view" name="_viromeclass" creationPolicy="auto" 
+							   label="VIROME Classifications" width="100%" height="100%" 
+							   showEffect="WipeLeft" hideEffect="WipeRight" 
+							   libraryId="{libraryId}" environment="{environment}" 
+							   libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:tRNA id="trna" name="_tRNA" creationPolicy="auto" label="tRNA"
+						width="100%" height="100%" 
+						showEffect="WipeLeft" hideEffect="WipeRight" 
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+		
+			<stats:Functional id="fxn" name="_fxnal" creationPolicy="auto"  label="Functional"
+							  width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+							  libraryId="{libraryId}" environment="{environment}" 
+							  libraryInfoObject="{libraryInfoObject}"/>
+		
+			<stats:Aclame id="aclame" name="_aclame" creationPolicy="auto"  label="ACLAME"
+						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:GO id="go" name="_go" creationPolicy="auto"  label="GO"
+						  width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						  libraryId="{libraryId}" environment="{environment}" 
+						  libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:Seed id="seed" name="_seed" creationPolicy="auto"  label="SEED"
+						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:Kegg id="kegg" name="_kegg" creationPolicy="auto"  label="KEGG"
+						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:Cog id="cog" name="_cog" creationPolicy="auto"  label="COG"
+						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:Taxonomy id="tax" name="_tax" creationPolicy="auto" label="Taxonomy"
+							width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+							libraryId="{libraryId}" environment="{environment}" 
+							libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:EnvLibrary id="envlib" name="_envlibrary" creationPolicy="auto" label="Environment::Library"
+						  width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						  libraryId="{libraryId}" environment="{environment}" 
+						  libraryInfoObject="{libraryInfoObject}"/>
+
+			<stats:LibraryType id="libtype" name="_libtype" creationPolicy="auto" label="Environment::Library-Type"
+							  width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+							  libraryId="{libraryId}" environment="{environment}" 
+							  libraryInfoObject="{libraryInfoObject}"/>
+
+			<stats:Genesis id="genesis" name="_genesis" creationPolicy="auto" label="Environment::Genesis"
+							   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+							   libraryId="{libraryId}" environment="{environment}" 
+							   libraryInfoObject="{libraryInfoObject}"/>
+
+			<stats:Sphere id="sphere" name="_sphere" creationPolicy="auto" label="Environment::Sphere"
+							   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+							   libraryId="{libraryId}" environment="{environment}" 
+							   libraryInfoObject="{libraryInfoObject}"/>
+
+			<stats:EcoSystem id="ecosys" name="_ecosystem" creationPolicy="auto" label="Environment::Eco-System"
+						   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						   libraryId="{libraryId}" environment="{environment}" 
+						   libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:Extreme id="extreme" name="_extreme" creationPolicy="auto" label="Environment::Extreme"
+						   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						   libraryId="{libraryId}" environment="{environment}" 
+						   libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:PhysioChemMod id="physiochem" name="_physio" creationPolicy="auto" label="Environment::Physio-Chem-Mods"
+						   width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						   libraryId="{libraryId}" environment="{environment}" 
+						   libraryInfoObject="{libraryInfoObject}"/>
+			
+
+		</mx:ViewStack>
+	
+	</mx:HBox>
+	
+</mx:Canvas>

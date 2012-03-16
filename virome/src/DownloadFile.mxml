@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	xmlns:cfservice="services.*"
+	initialize="onInit()" width="100%" height="100%" 
+	creationComplete="onCreationComplete()" xmlns:exporter="services.exporter.*">
+
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			
+			import mx.containers.HBox;
+			import mx.controls.Alert;
+			import mx.controls.LinkButton;
+			import mx.controls.ProgressBar;
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			private var tbox:HBox;
+			public var _fileref:FileReference = new FileReference();
+			public var _request:URLRequest = new URLRequest;
+			public var tick:Timer;
+			public var tickCount:int = 10;
+			
+			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			
+			[Bindable] public var _fileSelector:Object = new Object();
+			[Bindable] public var _searchDBObj:Object = new Object();
+			[Bindable] public var _bin:ByteArray = new ByteArray();
+			[Bindable] public var _content:String = "";
+			
+			protected function onInit():void{
+				_content = new String();
+				_bin = new ByteArray();
+				_searchDBObj = new Object();
+				_fileSelector = new Object();
+			}
+			
+			protected function onCreationComplete():void{
+				//_progressbar.setProgress(0,0);
+				
+				var cls:LinkButton = new LinkButton();
+				cls.width=16;
+				cls.height=16;
+				cls.setStyle("icon",closeImg);
+				cls.addEventListener(MouseEvent.CLICK, function (e:MouseEvent):void { removeMe(); });
+				
+				var txt:Text = new Text();
+				txt.text = "Download File";
+				txt.setStyle("color","0xFFFFFF");
+				
+				var sp:Spacer = new Spacer();
+				sp.percentWidth=100;
+				
+				tbox = new HBox();
+				tbox.setStyle("verticalAlign","middle");
+				tbox.setStyle("paddingLeft",10);
+				tbox.setStyle("paddingRight",10);
+				tbox.width=this.width;
+				tbox.height = this.titleBar.height;
+				tbox.addChild(txt);
+				tbox.addChild(sp);
+				tbox.addChild(cls);
+				
+				this.titleBar.addChild(tbox);
+				
+				fileexport.token = Exporter.export(_fileSelector,_searchDBObj,_bin,_content);
+				
+				tick = new Timer(1000);
+				tick.addEventListener(TimerEvent.TIMER,updateTick);
+				tick.start();
+			}
+			
+			protected function updateTick(event:TimerEvent):void{
+				tickCount -= 1;
+				//clock.text = "Window will close in " + tickCount.toString();
+				
+				if (tickCount < 5){
+					tick.stop();
+					removeMe();
+				}
+			}
+			
+			protected function removeMe():void{
+				PopUpManager.removePopUp(this);	
+			}
+			
+			protected function exportResponse(event:ResultEvent):void{
+				if ((event.result == "NO_PUBLIC") || (event.result == "")){
+					removeMe();
+					Alert.show("Search sequence(s) have not been made public. " + 
+								"Please contact Dr. K. E. Wommack at wommack@dbi.udel.edu for more information","",Alert.OK);
+				} else {
+					_request = new URLRequest(event.result as String);
+					
+					_fileref = new FileReference();
+					
+				    _fileref.addEventListener(Event.OPEN, openHandler);
+				    _fileref.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+				    _fileref.addEventListener(Event.COMPLETE, completeHandler);
+					_fileref.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+					_fileref.addEventListener(SecurityErrorEvent.SECURITY_ERROR,ioErrorHandler);
+					
+				    Alert.show("File ready click OK to continue","",Alert.OK|Alert.CANCEL,this,downloadRequested);
+				}
+			}
+			
+			protected function downloadRequested(event:CloseEvent):void{
+				if (event.detail == Alert.OK)
+					 _fileref.download(_request); 
+				else removeMe();
+			}
+
+			/**
+			* When the OPEN event has dispatched, change the progress bar's label 
+			* and enable the "Cancel" button, which allows the user to abort the 
+			* download operation.
+			*/
+			private function openHandler(event:Event):void {
+			    //_progressbar.label = "DOWNLOADING %3%%";
+			}
+			
+			/**
+			* While the file is downloading, update the progress bar's status.
+			*/
+			private function progressHandler(event:ProgressEvent):void {
+			   //_progressbar.setProgress(event.bytesLoaded, event.bytesTotal);
+			}
+
+			/**
+			 * Once the download has completed, change the progress bar's label one 
+			 * last time and disable the "Cancel" button since the download is 
+			 * already completed.
+			 */
+			private function completeHandler(event:Event):void {
+			    //_progressbar.label = "DOWNLOAD COMPLETE";
+			    removeMe();
+			}
+			
+			private function ioErrorHandler(event:Event):void{
+				Alert.show(event.toString());
+			}
+
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<exporter:Exporter id="Exporter" showBusyCursor="false" fault="_util.faultHandler(event)"
+							 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Exporter"/>
+		<s:CallResponder id="fileexport" result="exportResponse(event)"/>
+	</fx:Declarations>
+	
+	<!--<mx:ProgressBar id="_progressbar" mode="manual" label="Preparing files to download" labelPlacement="center"/>-->
+	<mx:Text id="msg" text="File is being prepared for download. As soon as the file is ready you will be prompted.  Till then you are free to roam around :)"/>
+	<!--<mx:Label width="100%" height="100%" id="clock"/>-->
+
+</mx:Panel>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			
+			private var _util:MyUtility = new MyUtility();
+			
+			public function init():void{
+				var str:String = data.E_VALUE;
+				var pattern:RegExp = /e/i;
+				
+				if(str.search(pattern) < 0){
+					eval.text = _util.toScientific(data.E_VALUE,2);
+				} else {
+					eval.text = data.E_VALUE;
+				}
+				
+				//eval.text = data.E_VALUE;
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Label id="eval" text="" paddingLeft="5"/>
+	
+</mx:VBox>

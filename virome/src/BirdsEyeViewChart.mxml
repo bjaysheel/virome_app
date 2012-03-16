@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 height="100%" verticalAlign="top"
+		 horizontalAlign="left" creationComplete="ini()" initialize="myConstructor()"
+		 xmlns:effects="effects.*" xmlns:com="com.*">
+	
+	<!-- chart created wth the help of code from 
+		http://demo.quietlyscheming.com/drillDown/app.html
+		edited by Jaysheel Bhavsar -->
+	<fx:Script>
+		<![CDATA[
+			import com.ChartnData;
+			import com.component.MyAlert;
+			import com.component.MyToolTip;
+			import com.events.BrowseEnvEvent;
+			
+			import mx.charts.ChartItem;
+			import mx.charts.HitData;
+			import mx.charts.chartClasses.ChartBase;
+			import mx.charts.chartClasses.IAxis;
+			import mx.charts.chartClasses.Series;
+			import mx.charts.events.ChartItemEvent;
+			import mx.charts.series.items.ColumnSeriesItem;
+			import mx.collections.XMLListCollection;
+			import mx.events.ToolTipEvent;
+			import mx.managers.ToolTipManager;
+			
+			[Bindable] private var _rootNode:XML = new XML;
+			[Bindable] private var tXML:XML = <root/>;
+			[Bindable] private var libraryId:Number;
+			[Bindable] private var _children:String;
+			[Bindable] private var _direct:String;
+			[Bindable] public var isPrivate:Boolean = false;
+			
+			import com.MyUtility;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var chart:ChartBase;
+			private var series:Series;
+			
+			protected function myConstructor():void{
+				_rootNode = new XML;
+				libraryId = -1;
+				_children = '';
+				_direct = '';
+				tXML = <root/>;
+			}			
+			
+			public function set rootNode(v:XML):void{
+				_rootNode = v;
+			}
+			public function get rootNode():XML{
+				return _rootNode;
+			}
+			public function set children(v:String):void{
+				_children = v;
+			}
+			public function get children():String{
+				return _children;
+			}
+			public function set direct(v:String):void{
+				_direct = v;
+			}
+			public function get direct():String{
+				return _direct;
+			}
+						
+			public function showBar():void{
+				this.birdseyeviewchart.dataProvider = rootNode.children();
+				chart = this.birdseyeviewchart;
+				series = this.colSeries;
+			}
+			
+			public function ini():void{
+				toggleLevel();
+				_util = new MyUtility();
+				
+				birdseyeviewchart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+				ToolTipManager.toolTipClass = MyToolTip;
+			}
+			
+			protected function toggleLevel():void{
+				if (tXML.children().length()){
+					lev.enabled = true;
+					lev.visible = true;
+					lbl.visible = true;
+				}
+				else {
+					lev.enabled = false;
+					lev.visible = false;
+					lbl.visible = false;
+				}
+			}
+			
+			protected function chartClick(event:MouseEvent, str:String):void{
+				new ChartnData(event,str,(isPrivate) ? 'private' : 'public');
+			}
+			
+			protected function drillDown(e:ChartItemEvent):void
+			{
+				var xml:XML = XML(e.hitData.chartItem.item);
+				if (rootNode.child(children).length()){
+		
+					chart.mouseChildren = false;
+					effD.drillFromIndex = e.hitData.chartItem.index;
+					series.setStyle("showDataEffect",effD);
+					rootNode = xml;
+					chart.dataProvider = rootNode.children();
+					
+					var node:XML = <node/>;
+					node.@LABEL = rootNode.@LABEL;
+					node.@NAME = rootNode.@NAME;
+					node.@VALUE = rootNode.@VALUE;
+					
+					tXML = addNode(node,tXML);
+					crumbs.leaf = rootNode;
+					toggleLevel();
+				} else if (_direct == "Browse") { 
+						goToBrowse(rootNode.@LABEL);	
+				}
+			}
+			
+			protected function goToBrowse(v:String):void{
+				var be:BrowseEnvEvent = new BrowseEnvEvent();
+				be.environment = v;
+				
+				_util.app.simulateMenuClick('browse');
+				_util.app.dispatchEvent(be);
+			}
+			
+			protected function drillUp():void
+			{
+				if (rootNode.parent() == null){
+					tXML = <root/>;
+					return;
+				}
+				
+				drillUpTo(rootNode.parent());
+			}
+			
+			protected function drillUpTo(node:XML):void
+			{
+				if(rootNode == node)
+					return;
+				
+				while(rootNode.parent() != node)
+					rootNode = rootNode.parent();
+				
+				chart.mouseChildren = false;
+				series.setStyle("showDataEffect",effU);
+				effU.drillToIndex = rootNode.childIndex();		
+				rootNode = rootNode.parent();
+				chart.dataProvider = rootNode.children();
+				
+				tXML = removeNode(node,tXML);
+				crumbs.leaf = rootNode;
+				toggleLevel();
+			}
+			
+			protected function catLabel(value:XML,field:String,index:Number,percent:Number):String{
+				var temp:String= (" " + percent).substr(0,6);
+				return value.@LABEL + ": " + '\n' + "Total ORFs: " + value.@VALUE + '\n' + temp + "%";
+			}
+			
+			protected function verticalLabelFunc(item:Object, prevValue:Object, axis:IAxis):String{
+				return item as String;	
+			}
+			
+			protected function horizontalLabelFunc(item:Object, prevValue:Object, axis:CategoryAxis, categoryItem:XML):String {
+				var str:String = item.toString();
+				str = str.replace(/ /,"\n");
+				
+				if (categoryItem.localName() == "ENVIRONMENT")
+					hAxis.title = "Log ORF counts of all Environments";
+				else
+					hAxis.title = "ORF counts of VIROME categories for " + _util.properCase(categoryItem.parent().@LABEL);
+				
+				return str;
+			}
+			
+			protected function columnLabelFunc(element:ChartItem, series:Series):String {				
+				var csi:ColumnSeriesItem = ColumnSeriesItem(element);
+				var n:Number = csi.item.@VALUE;
+				if (rootNode.localName() == "ENVIRONMENT")
+					return nf.format(n).toString();
+				else return (nf.format(Math.pow(10,n))).toString();
+			}
+			
+			protected function dataTipFunc(hd:HitData):String {
+				var str:String = "";
+				
+				if (rootNode.localName() == "ENVIRONMENT")
+					str = hd.item.@LABEL + "\n" + 
+					 	  "Count: " + nf.format(hd.item.@VALUE).toString();
+				else str = hd.item.@LABEL + "\n" +
+						   "ORF count: " + nf.format(Math.pow(10,hd.item.@VALUE)).toString();
+				
+				//str += "\n\n" + _util.downloadChart;
+				
+				return str;
+			}
+			
+			protected function addNode(node:XML, x:XML):XML{
+				if (x.children().length() == 0)
+					x.appendChild(node);
+				else addNode(node,XML(x.children()));
+				
+				return x;
+			}
+			
+			protected function removeNode(node:XML, x:XML):XML{
+				if (x.@NAME == node.@NAME)
+					for (var i:int=0; i< x.children().length(); i++)
+						delete x.children()[i];
+				else removeNode(node,XML(x.children()));
+				
+				return x;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<effects:DrillDownEffect id="effD" duration="1500"  effectEnd="chart.mouseChildren = true;" />
+		<effects:DrillUpEffect id="effU" duration="1500" effectEnd="chart.mouseChildren = true;" />
+		
+		<s:SolidColor id="barFill" color="0x0ABFBC" alpha="0.8"/>
+		
+		<mx:NumberFormatter id="nf" precision="0"/>
+	</fx:Declarations>
+	
+	<mx:Text id="chartLabel" text="Bird's eye view" styleName="strong"/>
+	
+	<mx:Spacer height="15"/>
+	
+	<mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Label text="Environment:" id="lbl" />
+			<com:BreadCrumb id="crumbs" width="100%" labelField="@NAME" itemClick="drillUpTo(XML(event.data))"/>
+		</mx:HBox>
+		<mx:HBox>
+			<mx:LinkButton label="&lt;&lt; Level" click="drillUp()" id="lev" />
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:Spacer height="15"/>
+
+	<mx:VBox width="100%" height="100%">
+		<mx:ColumnChart id="birdseyeviewchart" width="500" height="400" 
+						itemClick="drillDown(event);" 
+						click="chartClick(event,'BirdsEyeView')"
+						showDataTips="true"  showLabelVertically="true"
+						dataTipFunction="dataTipFunc"
+						toolTip="tip"
+						paddingBottom="0" paddingLeft="0" 
+						paddingRight="0" paddingTop="0">
+			
+			<mx:horizontalAxis>
+				<mx:CategoryAxis id="hAxis" categoryField="@LABEL" labelFunction="horizontalLabelFunc" />
+			</mx:horizontalAxis>
+			<mx:horizontalAxisRenderers>
+				<mx:AxisRenderer labelRotation="-45" axis="{hAxis}"/>
+			</mx:horizontalAxisRenderers>
+			
+			<mx:series>
+				<mx:ColumnSeries id="colSeries" yField="@VALUE">
+					<mx:itemRenderer>
+						<fx:Component>
+							<com:RollOverBoxItemRenderer color="#13747D" overColor="#0ABFBC" downColor="#888888" />
+						</fx:Component>
+					</mx:itemRenderer>
+				</mx:ColumnSeries>
+			</mx:series>
+		</mx:ColumnChart>
+	</mx:VBox>
+</mx:VBox>

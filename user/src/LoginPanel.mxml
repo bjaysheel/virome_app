@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				xmlns:cfservice="services.*" width="100%" height="100%" 
+				close="removeMe()" showCloseButton="true" 
+				xmlns:user="services.user.*"
+				x="{(this.parent.width/2)-(this.width/2)}" y="50" 
+				title="Login" title.Register="Register" creationComplete="onCreationComplete()">
+	
+	<fx:Script>
+		<![CDATA[			
+			import com.events.UserEvent;
+			
+			import mx.controls.Alert;
+			import mx.effects.easing.Bounce;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.messaging.channels.StreamingAMFChannel;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.validators.EmailValidator;
+			
+			
+			[Bindable] private var _endPoint:String = null;
+			[Bindable] private var _cfcSourcePath:String = null;
+			
+			[Bindable] public function set endPoint(s:String):void{
+				_endPoint = s;
+			}
+			[Bindable] public function set cfcSourcePath(s:String):void{
+				_cfcSourcePath = s;
+			}
+			public function get endPoint():String{
+				return _endPoint;
+			}
+			public function get cfcSourcePath():String{
+				return _cfcSourcePath;
+			}
+			
+			private function onCreationComplete():void{
+				//nothing to init.
+				this.username.setFocus();				
+			}
+			
+			private function removeMe():void{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function getConfCode():String{
+				var str:String = new String();
+				
+				for (var i:int=0; i<4; i++){
+					var num:int = Math.round(Math.random()*10);
+					str += num;
+				}
+				
+				return str;
+			}
+			
+			private function validateForm(event:Event):void{
+				var successFlag:Boolean = true;
+				var emailvalidate:EmailValidator = new EmailValidator();
+				var obj:UserEvent = new UserEvent();
+				
+				if (this.username.text.length == 0){
+					this.username.toolTip = "Please enter your username";
+					this.username.styleName = "error";
+					successFlag = false;
+				}
+				else{
+					this.username.toolTip = "";
+					this.username.styleName = "ok";
+				}
+				
+				if ((this.currentState == 'Register') || (this.currentState == 'Retrieve')) {
+					if (this.firstname.text.length == 0){
+						this.firstname.toolTip = "Please enter your first name";
+						this.firstname.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.firstname.toolTip = "";
+						this.firstname.styleName = "ok";
+					}
+					
+					if (this.lastname.text.length == 0){
+						this.lastname.toolTip = "Please enter your last name";
+						this.lastname.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.lastname.toolTip = "";
+						this.lastname.styleName = "ok";
+					}
+					
+					if (emailvalidate.validate(this.email.text).type != ValidationResultEvent.VALID){
+						this.email.toolTip = "Invalide email address";
+						this.email.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.email.toolTip = "";
+						this.email.styleName = "ok";
+					}
+				}
+				
+				if (this.currentState == 'Register') {	
+					if (this.institute.text.length == 0){
+						this.institute.toolTip = "Please enter your organization/institute name";
+						this.institute.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.institute.toolTip = "";
+						this.institute.styleName = "ok";
+					}
+					
+					if (this.confCode.text != this.confirmCode.text){
+						this.confirmCode.toolTip = "Confirmation code does not match";
+						this.confirmCode.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.confirmCode.toolTip = "";
+						this.confirmCode.styleName = "ok";
+					}
+					if (this.password.text != this.password2.text){
+						this.password.toolTip = "Password does not match";
+						this.password.styleName = "error";
+						this.password.text = "";
+						this.password2.text = "";
+						successFlag = false;
+					}
+					else {
+						this.password.toolTip = "";
+						this.password.styleName = "ok";
+					}
+					
+					if (successFlag == false){
+						this.confCode.text = getConfCode();
+					}
+				}
+				
+				if ((this.currentState == 'Register') || (this.currentState == 'default')){
+					if (this.password.text.length == 0){
+						this.password.toolTip = "Please enter your password";
+						this.password.styleName = "error";
+						successFlag = false;
+					}
+					else {
+						this.password.toolTip = "";
+						this.password.styleName = "ok";
+					}
+				}
+				
+				if ((successFlag == true) && (this.currentState == 'Register')){
+					obj.username = username.text;
+					obj.password = password.text;
+					obj.institute = institute.text;
+					obj.email = email.text;
+					obj.firstname = firstname.text;
+					obj.lastname = lastname.text;
+					
+					registerUser(obj);
+				}
+				
+				if ((successFlag == true) && (this.currentState == "default")){
+					obj.username=username.text;
+					obj.password=password.text;
+					
+					loginUser(obj);
+				}
+				
+				if ((successFlag == true) && (this.currentState == "Retrieve")){
+					obj.username = username.text;
+					obj.email = email.text;
+					obj.firstname = firstname.text;
+					obj.lastname = lastname.text;
+					
+					retrievePassword(obj);
+				}
+			}
+			
+			private function loginUser(o:UserEvent):void{
+				getUserResult.token = UserRPC.GetUser(o.UserObj);
+			}
+			
+			private function registerUser(o:UserEvent):void{
+				inserUserResult.token = UserRPC.InsertUser(o.UserObj);
+			}
+			
+			private function retrievePassword(o:UserEvent):void{
+				retrieveUserPassword.token = UserRPC.RetrievePassword(o.UserObj);
+			}
+			
+			private function retrievePasswordHandler(event:ResultEvent):void{
+				var success:Boolean = event.result as Boolean;
+				
+				if (success){
+					Alert.show("An email has been sent to you with your user info.", "Password Retrieval", Alert.OK);
+				} else {
+					Alert.show("Sorry we couldn't not find user matching information you provided.", "Password Retrieval", Alert.OK);
+				}
+			}
+			
+			private function loginResultHandler(event:ResultEvent):void{
+				var now:Date = new Date();
+				
+				// items obj are userId,groupId,username,password,institute,
+				// email,firstname,lastname,annotation,viewdetail,god,upload,
+				// download,noOfLogins,msg,type,libraryId
+				// password is encrypted, and all fields are all uppercase.
+				var obj:Object = event.result as Object;
+				var _uEvent:UserEvent = new UserEvent();
+				
+				if (obj.MSG == 'failed'){
+					Alert.show("USERNAME/PASSWORD does not match. Try again.", "Login/Register", Alert.OK);
+				} else {					
+					//udpate no of logins.
+					updateUserLogin.token = UserRPC.updateLogin(obj.USERID,obj.NOOFLOGINS+1);
+					
+					obj.NOOFLOGINS=obj.NOOFLOGINS+1;
+					obj['EXPIRE'] = new Date(now.getTime() + (1000 * 60 * 60 * 24));
+					
+					_uEvent.copy(obj);
+					_uEvent.login = true;
+					
+					//dispatch userlogIn event.
+					this.dispatchEvent(_uEvent);
+					
+					removeMe();
+					if (obj.TYPE == 'register'){
+						Alert.show("Registration successfull.<br/> You are now Logged in", "Register", Alert.OK);	
+					} else {
+						Alert.show("Login successfull.", "Login", Alert.OK);
+					}
+				} 
+			}
+			
+			private function faultHandler(event:FaultEvent):void{
+				Alert.show(event.toString(), "User Service Error", Alert.OK);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<user:User id="UserRPC" showBusyCursor="true" fault="faultHandler(event)"
+				   destination="ColdFusion" endpoint="{_endPoint}" source="{_cfcSourcePath}.User"/>
+		<s:CallResponder id="getUserResult" result="loginResultHandler(event)"/>
+		<s:CallResponder id="inserUserResult" result="loginResultHandler(event)"/>
+		<s:CallResponder id="retrieveUserPassword" result="retrievePasswordHandler(event)"/>
+		<s:CallResponder id="updateUserLogin"/>
+	</fx:Declarations>
+	
+	<!-- 
+	Use the transitions property (array) of 
+	the Application class to store your transitions. 
+	-->
+	<mx:transitions>
+		<!--
+		The "*" indicates that the transition should be applied
+		to any changes in the view state. You can set either 
+		property to "" to refer to the base view state. 
+		-->
+		<mx:Transition fromState="*" toState="*">
+			<!-- Parallel effects execute in unison --> 
+			<mx:Parallel targets="{[loginPanel, registerLink, loginButton, confirm]}">
+				<mx:Resize duration="500" easingFunction="Bounce.easeOut"/>
+				<!-- 
+				Sequence effects execute in turn. The effects
+				in this sequence will only affect the confirm FormItem.
+				-->
+				<mx:Sequence target="{confirm}">
+					
+					<mx:Blur duration="200" blurYFrom="1.0" blurYTo="20.0" />            
+					<mx:Blur duration="200" blurYFrom="20.0" blurYTo="1" />            
+				</mx:Sequence>
+			</mx:Parallel>
+		</mx:Transition>
+	</mx:transitions>
+	
+	<!-- The states property of the Application class 
+	defines the view states. -->
+	<mx:states>
+		<mx:State name="default"/>
+		<mx:State name="Register"/>
+		<mx:State name="Retrieve"/>
+	</mx:states>
+	
+	<mx:Canvas 
+		id="loginPanel"
+		horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		
+		<mx:Form id="loginForm">
+			<mx:FormItem label="Username:" required="true">
+				<mx:TextInput id="username" maxChars="16" enter="{this.password.setFocus()}"/>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Password:" required="true" includeIn="default, Register">
+				<mx:TextInput id="password" maxChars="16" displayAsPassword="true" enter="validateForm(event)"/>
+			</mx:FormItem>
+			
+			<mx:FormItem id="confPassword" label="Confirm Password:" required="true" includeIn="Register">
+				<mx:TextInput id="password2" displayAsPassword="true"/>
+			</mx:FormItem>
+			
+			<mx:FormItem id="fname" label="First Name:" required="true" includeIn="Register, Retrieve">
+				<mx:TextInput id="firstname"/>
+			</mx:FormItem>
+			
+			<mx:FormItem id="lname" label="Last Name:" required="true" includeIn="Register, Retrieve">
+				<mx:TextInput id="lastname"/>
+			</mx:FormItem>
+			
+			<mx:FormItem id="e_mail" label="E-mail:" required="true" includeIn="Register, Retrieve">
+				<mx:TextInput id="email"/>
+			</mx:FormItem>
+			
+			<mx:FormItem id="inst" label="Institute:" required="true" includeIn="Register">
+				<mx:TextInput id="institute"/>
+			</mx:FormItem>   
+			
+			<mx:FormItem id="conf" label="Confirmation Code:" includeIn="Register">
+				<mx:Label id="confCode" text="{getConfCode()}"/>	
+			</mx:FormItem>
+			
+			<mx:FormItem id="confirm" label="Confirm:" includeIn="Register">
+				<mx:TextInput id="confirmCode"/>
+			</mx:FormItem>
+		</mx:Form>
+	</mx:Canvas>
+	
+	<mx:ControlBar>
+		<!-- 
+		Use the LinkButton control to change to
+		the Register view state. 
+		-->
+		<mx:LinkButton label="Register" id="registerLink" click="currentState='Register'" excludeFrom="Register" styleName="lightLink"/>
+		<mx:LinkButton label="Retrieve Password" id="retrieve" click="currentState='Retrieve'" excludeFrom="Retrieve" styleName="lightLink"/>
+		<mx:LinkButton label="Return to Login" click="currentState=''" includeIn="Register, Retrieve" styleName="lightLink"/>
+		
+		<mx:Spacer width="100%" id="spacer1"/>
+		<mx:Button label="Login" id="loginButton" label.Register="Register" label.Retrieve="Retrieve Password" click="validateForm(event)"/>
+		
+	</mx:ControlBar>
+	
+</mx:TitleWindow>

@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+    xmlns:cfservice="services.*" 
+    height="100%" verticalGap="0" 
+    paddingLeft="4" paddingRight="12" 
+    paddingTop="12" paddingBottom="8" 
+	addedToStage="onAddtoStage()"
+    creationComplete="onCreationComplete()" xmlns:library="services.library.*">
+    
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.SearchDBEvent;
+			import com.events.SetSearchDBFormEvent;
+			
+			import mx.core.FlexGlobals;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var readyNessBit:Boolean = false;
+			[Bindable] private var pendingEvent:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+			[Bindable] private var _libs:ArrayCollection = new ArrayCollection();
+			[Bindable] private var eval:ArrayCollection = new ArrayCollection();
+			
+			//main use of this var is to prepopulate lib drop down
+			//when directed here.
+			private var _tempLibId:Number = 0;
+						
+			protected function onAddtoStage():void{
+				_util.app.addEventListener(SetSearchDBFormEvent.SET_SEARCH_DB_FORM_EVENT,updateFormValues);
+				
+				//local event listner to udpate form when its ready.
+				this.addEventListener(SetSearchDBFormEvent.SET_SEARCH_DB_FORM_EVENT,updateFormValues);
+			}
+			
+			protected function onCreationComplete():void{
+				//add event listner for log in/out, to refresh library drop down with appropriate private data.
+				_util.app.addEventListener("userLogInOut",refreshLibraryList);
+				
+				//parameter passed is groupId
+				environmentRequest.token = Library.getEnvironmentObject('');
+				
+				//create extensive list of evalues
+				for (var i:int=0; i<50; i++){
+					var tobj:Object = new Object();
+					tobj['label'] = "<=10^-"+i;
+					tobj['data'] = Math.pow(10,(i*-1));
+					eval.addItem(tobj);
+				}
+				eval_list.selectedIndex=3;
+			}
+
+			protected function environmentResponse(event:ResultEvent):void{
+				env_item.dataProvider = event.result as ArrayCollection;
+				readyNessBit=true;
+				
+				if (pendingEvent.pending){
+					this.dispatchEvent(pendingEvent);
+					pendingEvent.pending = false;
+				}
+			}
+			
+			protected function refreshLibraryList(event:Event):void{
+				getlibReq();
+			}
+			
+			protected function getlibReq():void{
+				var libraryIdList:String = "";
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
+					libraryIdList = _util.app.cookie.LIBRARYID;
+				
+				if (env_item.selectedIndex != 0)	
+					libraryRequest.token=Library.getLibraryObject(env_item.selectedItem.data,libraryIdList);
+			}
+			
+			protected function libraryResponse(event:ResultEvent):void{
+				_libs = event.result as ArrayCollection;
+				
+				lib_item.validateNow();
+				lib_item.selectedIndex=0;
+				
+				for (var i:int=0;i<_libs.length; i++){
+					if (_libs.getItemAt(i).data == _tempLibId){
+						lib_item.selectedIndex=i;
+						break;
+					}
+				}
+			}
+			
+			protected function submitForm(event:SetSearchDBFormEvent=null):void{
+				var _sf:SearchDBEvent = new SearchDBEvent();
+				var success:Boolean = false;
+				
+				if ((parseInt(env_item.selectedItem.data) < 0) && (seqname.text.length <= 0)){
+					Alert.show("You must select an Environment", "Form validation", Alert.OK);
+				} else if (event != null) {
+					_sf.duplicateEvent(event.getStruct());
+					success = true;	
+					//dispatch search db event.
+					//_util.app.dispatchEvent(_sf);
+				} else {
+					_sf.blastDB = db_item.selectedItem.data;
+					_sf.environment = env_item.selectedItem.data;
+					
+					//if env is not selected and searching only based on sequence 
+					//name then library set will be empty.
+					if ((_libs.length <= 0) || (_libs == null))
+						_sf.library = -1;
+					else
+						_sf.library = parseInt(lib_item.selectedItem.data);
+					
+					_sf.evalue = eval_list.selectedItem.data;
+					_sf.vircat = vircat_list.selectedItem.data;
+					_sf.orftype = orf_list.selectedItem.data;
+					_sf.sequence = seqname.text;
+					_sf.term = term_item.text;
+					_sf.inTerm = term_list.selectedItem.data;
+					_sf.taxonomy = tax_item.text;
+					_sf.inTax = tax_list.selectedItem.data;
+					_sf.accession = acc_item.text;
+					
+					if (_sf.vircat == 'orfan')
+						_sf.blastDB = 'NOHIT';
+					else if ((_sf.vircat == 'topviral') || (_sf.vircat == 'allviral') || (_sf.vircat == 'topmicrobial') || (_sf.vircat == 'allmicrobial'))
+						_sf.blastDB = 'METAGENOMES';
+					
+					if (_sf.accession.length)
+						_sf.blastDB = _sf.inTerm;
+					
+					if (_sf.term.length)
+						_sf.blastDB = _sf.inTerm;
+					
+					success = true;
+					//dispatch search db event.
+					//_util.app.dispatchEvent(_sf);
+				}
+				
+				if (success){
+					if (event != null && event.recall != null){
+						_util.app.dispatchEvent(_sf);
+					} else {
+						var searchAlias:SearchAlias = SearchAlias(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), SearchAlias, true));
+						searchAlias.searchDB = _sf;
+						
+						PopUpManager.bringToFront(searchAlias);
+						PopUpManager.centerPopUp(searchAlias);
+					}
+				}
+			}
+			
+			protected function resetForm(event:Event):void{
+				env_item.selectedIndex = 0;
+				eval_list.selectedIndex=3;
+				orf_list.selectedIndex=0;
+				vircat_list.selectedIndex=0;
+				term_list.selectedIndex=0;
+				tax_list.selectedIndex=0;
+				
+				acc_item.text="";
+				tax_item.text="";
+				seqname.text="";
+				
+				if (_libs.length)
+					lib_item.selectedIndex=0;	
+			}
+			
+			protected function updateFormValues(event:SetSearchDBFormEvent):void{
+				//Alert.show("serach db event heard");
+				// use when directed to search page from some place else.
+				var ac:ArrayCollection;
+				var i:int=0;
+
+				if (readyNessBit){
+					// select environment
+					ac = this.env_item.dataProvider as ArrayCollection;
+					env_item.selectedIndex=0;
+					for (i=0; i<ac.length; i++)
+						if (ac.getItemAt(i).data == event.environment){
+							env_item.selectedIndex=i;
+							_tempLibId=event.library;
+							getlibReq();
+						}
+					
+					// select evalue
+					eval_list.selectedIndex=0;
+					for (i=0; i<eval.length; i++)
+						if (eval.getItemAt(i).data == event.evalue)
+							eval_list.selectedIndex=i;
+
+					//populate orftype
+					orf_list.selectedIndex=0;
+					for (i=0;i<orftype.length;i++)
+						if (orftype.getItemAt(i).data == event.orftype)
+							orf_list.selectedIndex = i;
+					
+					//populate vircat
+					vircat_list.selectedIndex=0;
+					for (i=0;i<vircat.length;i++)
+						if (vircat.getItemAt(i).data == event.vircat)
+							vircat_list.selectedIndex = i;
+
+					// select database
+					db_item.selectedIndex=0;
+					for (i=0;i<blastdb.length; i++)
+						if (blastdb.getItemAt(i).data == event.blastDB)
+							db_item.selectedIndex=i;
+					
+					// populate sequence name
+					seqname.text = event.sequence;
+					
+					//populate term
+					term_item.text = event.term;
+					term_list.selectedIndex=0;
+					for (i=0;i<dbList.length; i++)
+						if (dbList.getItemAt(i).data == event.inTax)
+							term_list.selectedIndex=i;
+					
+					//populate accession
+					acc_item.text = event.accession;
+					term_list.selectedIndex=0;
+					for (i=0;i<dbList.length; i++)
+						if (dbList.getItemAt(i).data == event.inAcc)
+							term_list.selectedIndex=i;
+					
+					//populate taxonomy
+					tax_item.text = event.taxonomy;
+					tax_list.selectedIndex=0;
+					for (i=0;i<taxList.length; i++)
+						if (taxList.getItemAt(i).data == event.inTax)
+							tax_list.selectedIndex=i;
+					
+					//submit form
+					submitForm(event);
+				} else { 
+					pendingEvent.duplicateEvent(event.getStruct());
+					pendingEvent.pending = true;
+				}
+			}
+			 
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />
+		<s:CallResponder id="libraryRequest" result="libraryResponse(event)" />
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library"/>
+
+		<!-- array for various types of database -->
+		<mx:ArrayCollection id="dbList">
+			<fx:Object label="All" data=""/>
+			<fx:Object label="ACLAME" data="ACLAME"/>
+			<fx:Object label="COG" data="COG"/>
+			<fx:Object label="KEGG" data="KEGG"/>
+			<fx:Object label="SEED" data="SEED"/>
+			<fx:Object label="UNIREF100 PLUS" data="UNIREF100P"/>
+		</mx:ArrayCollection>
+		
+		<!-- array for tax categories -->
+		<mx:ArrayCollection id="taxList">
+			<fx:Object label="Domain" data="domain"/>
+			<fx:Object label="Kingdom" data="kingdom"/>
+			<fx:Object label="Phylum" data="phylum"/>
+			<fx:Object label="Class" data="clas"/>
+			<fx:Object label="Order" data="ord"/>
+			<fx:Object label="Family" data="family"/>
+			<fx:Object label="Genus" data="geno"/>
+			<fx:Object label="Species" data="sub"/>
+		</mx:ArrayCollection>
+
+		<mx:ArrayCollection id="blastdb">
+			<fx:Object label="Select One" data=""/>
+			<fx:Object label="METAGENOMES" data="METAGENOMES"/>
+			<fx:Object label="UNIREF100 PLUS" data="UNIREF100P"/>
+			<fx:Object label="NO HIT" data="NOHIT"/>
+		</mx:ArrayCollection>
+		
+		<mx:ArrayCollection id="pagesize">
+			<fx:Object label="500" data="500"/>
+			<fx:Object label="100" data="100"/>
+			<fx:Object label="250" data="250"/>
+			<fx:Object label="1000" data="1000"/>
+		</mx:ArrayCollection>
+		
+		<mx:ArrayCollection id="vircat">
+			<fx:Object label="Select One" data=""/>
+			<fx:Object label="rRNA" data="rRNA"/>
+			<fx:Object label="tRNA" data="tRNA"/>
+			<fx:Object label="ORFANs" data="orfan"/>
+			<fx:Object label="Top Viral hit" data="topviral"/>
+			<fx:Object label="Only Viral hit" data="allviral"/>
+			<fx:Object label="Top Micorbial hit" data="topmicrobial"/>
+			<fx:Object label="Only Microbial hit" data="allmicrobial"/>
+			<fx:Object label="Functional protein" data="fxn"/>
+			<fx:Object label="Unassigned protein" data="unassignfxn"/>
+		</mx:ArrayCollection>
+		
+		<mx:ArrayCollection id="orftype">
+			<fx:Object label="Select One" data=""/>
+			<fx:Object label="Complete" data="complete"/>
+			<fx:Object label="Missing both ends" data="incomplete"/>
+			<fx:Object label="Missing 3'" data="lackstop"/>
+			<fx:Object label="Missing 5'" data="lackstart"/>
+		</mx:ArrayCollection>
+		
+		<!-- button effects. -->
+		<mx:Zoom id="shrink" duration="100" zoomHeightTo=".9" zoomWidthTo=".9" />
+	    <mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
+	</fx:Declarations>
+	
+	<!--<mx:Label text="Text Search"/>-->
+	<!--<mx:HBox width="100%" paddingBottom="15">
+		<mx:Spacer width="100%"/>
+		<mx:LinkButton label="BLAST Search" icon="@Embed(source='assets/icons/Forward.png')" labelPlacement="left"
+					   textAlign="left" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>	
+	</mx:HBox>-->
+
+	<mx:Grid width="100%" height="100%" borderStyle="none" id="searchDBForm">
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Environment" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="env_item" change="getlibReq()" width="175" rowCount="10"/>	
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Query Library" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="175" top="10"/> 
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Subject DB."/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="db_item" dataProvider="{blastdb}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Qry. Sequence Id."/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="seqname" maxChars="100" width="175"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="E-value"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="eval_list" dataProvider="{eval}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Virome Categories"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="vircat_list" dataProvider="{vircat}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="ORF Type"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="orf_list" dataProvider="{orftype}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow paddingTop="10">
+			<mx:GridItem>
+				<mx:Label text="Descriptive Terms"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="term_item" maxChars="100" width="150"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow paddingTop="10">
+			<mx:GridItem colSpan="2">
+				<mx:Label text="AND/OR"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow paddingTop="10">
+			<mx:GridItem>
+				<mx:Label text="Accession Id"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="acc_item" maxChars="100" width="150"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow>	
+			<mx:GridItem>
+				<mx:Text text="in database"/>
+			</mx:GridItem>						
+			<mx:GridItem>
+				<mx:ComboBox id="term_list" dataProvider="{dbList}" width="175" rowCount="10"/>	
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow paddingTop="10">
+			<mx:GridItem>
+				<mx:Label text="Taxonomy"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="tax_item" maxChars="100" width="150"/>
+			</mx:GridItem>
+		</mx:GridRow>			
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Text text="in Level"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="tax_list" dataProvider="{taxList}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+
+	</mx:Grid>
+
+	<mx:HBox>
+		<mx:Button 	label="Search" width="100" 
+					id="submitSearchForm" 
+					mouseDownEffect="{shrink}" 
+					mouseUpEffect="{revert}" 
+					click="submitForm();"/>
+		
+		<mx:Button 	label="Reset" width="100" 
+					id="resetSearchForm" 
+					mouseDownEffect="{shrink}" 
+					mouseUpEffect="{revert}" 
+					click="resetForm(event);"/>
+	</mx:HBox>
+</mx:VBox>

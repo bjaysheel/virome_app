@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" creationComplete="init()"
+		 horizontalAlign="center">
+	
+	<fx:Script>
+		<![CDATA[
+			private function init():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				dbtext.styleSheet = textStyle;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Text width="100%" condenseWhite="true" id="dbtext" paddingTop="10">
+		<mx:htmlText>
+			<![CDATA[
+			Viral metagenome libraries tend to contain a large proportion of predicted
+			ORFs showing no homology to previously annotated genes in curated
+			databases such as UniRef or GenBank nr. In contrast, a larger proportion
+			of viral metagenome ORFs show homology to predicted genes within
+			metagenome libraries. To enable classification of these viral metagenome
+			ORFs an environmental protein database called MetaGenomes On-line
+			was constructed. MGOL contains over 40,000,000 predicted
+			environmental protein sequences which are annotated with pertinent
+			information on the environmental context of the metagenome library.
+			]]>
+		</mx:htmlText>
+	</mx:Text>
+	
+	<mx:Image source="assets/viromepipe/metagenomedb.png"/>
+</mx:VBox>

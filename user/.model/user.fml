@@ -1,0 +1,77 @@
+
+<model xmlns="http://ns.adobe.com/Fiber/1.0">
+  <annotation name="ActionScriptGeneration">
+    <item name="FullyQualifyReferences">true</item>
+  </annotation>
+  <service name="User">
+    <annotation name="ActionScriptGeneration">
+      <item name="Source">cfc.User</item>
+      <item name="ServiceType">RemoteObject</item>
+      <item name="Package">services.user</item>
+      <item name="Destination">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceTypeGroup">
+      <item name="ServiceBackendType">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceConfig">
+      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
+      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
+      <item name="LINKED_FILE">User.cfc</item>
+      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
+      <item name="CFC_CLASS_NAME">User</item>
+      <item name="CFC_RELATIVE_LOCATION">cfc/User.cfc</item>
+      <item name="ABSOLUTE_ENDPOINT">http://localhost/flex2gateway/</item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/cfc/User.cfc</item>
+    </annotation>
+    <function name="RetrievePassword" return-type="boolean">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque</item>
+        <item name="returnType">boolean</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+    </function>
+    <function name="UpdateUser" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+    </function>
+    <function name="InsertUser" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+    </function>
+    <function name="GetUser" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+    </function>
+    <function name="updateLogin" return-type="void">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float,float</item>
+      </annotation>
+      <parameter name="userId" type="float"/>
+      <parameter name="num" type="float"/>
+    </function>
+  </service>
+</model>

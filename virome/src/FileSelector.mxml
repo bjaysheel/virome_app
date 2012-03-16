@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  xmlns:cfservice="services.*" width="100%" height="100%" 
+		  title="Select download type"
+		  creationComplete="init()" showCloseButton="true" close="removeMe()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.FileSelectorEvent;
+			
+			import mx.containers.HBox;
+			import mx.controls.Alert;
+			import mx.controls.LinkButton;
+			import mx.controls.ProgressBar;
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			
+			private var _currentCount:Number = 0;
+			private var _totalCount:Number = 0;
+			private var fsObject:FileSelectorEvent = new FileSelectorEvent();
+						
+			public function get totalCount():Number
+			{
+				return _totalCount;
+			}
+
+			[Bindable] public function set totalCount(value:Number):void
+			{
+				_totalCount = value;
+			}
+
+			public function get currentCount():Number
+			{
+				return _currentCount;
+			}
+
+			[Bindable] public function set currentCount(value:Number):void
+			{
+				_currentCount = value;
+			}
+
+			protected function init():void{
+				csv.selected = false;
+				pep.selected = false;
+				read.selected = false;
+				nuc.selected = false;
+			}
+			
+			protected function removeMe():void{
+				PopUpManager.removePopUp(this);	
+			}
+			
+			protected function updateFileSelectorObject(event:MouseEvent):void{
+				var cb:CheckBox = event.currentTarget as CheckBox;
+				if (cb.name == 'csv')
+					fsObject.csv = cb.selected;
+				else if (cb.name == 'pep')
+					fsObject.peptide = cb.selected;
+				else if (cb.name == 'nuc')
+					fsObject.nucleotide = cb.selected;
+				else if (cb.name == 'read')
+					fsObject.read = cb.selected;
+			}
+			
+			protected function submitForm():void{
+				_util.app.dispatchEvent(fsObject);
+				removeMe();
+			}
+		]]>
+	</fx:Script>
+	<mx:Grid id="fs_grid" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:CheckBox id="csv" name="csv" click="updateFileSelectorObject(event)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:Label text="Comma-separated values file of search results [{currentCount} of {totalCount}]"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:CheckBox id="pep" name="pep" click="updateFileSelectorObject(event)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:Label text="Fasta file of search result peptides [{totalCount} seq(s).]"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:CheckBox id="nuc" name="nuc" click="updateFileSelectorObject(event)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:Label text="Fasta file of search result nucleotide ORFs [{totalCount} seq(s).]"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:CheckBox id="read" name="read" click="updateFileSelectorObject(event)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:Label text="Fasta file of search result sequence reads  [{totalCount} read(s).]"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem colSpan="2">
+				<mx:Button id="submit" label="Submit" name="Submit" click="submitForm()"/>
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>
+	
+</mx:TitleWindow>

@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="100%" height="100%" verticalAlign="top"
+		 horizontalAlign="left" creationComplete="ini()" initialize="myConstructor()"
+		 xmlns:effects="effects.*" xmlns:com="com.*">
+	
+	<!-- chart created wth the help of code from 
+	http://demo.quietlyscheming.com/drillDown/app.html
+	edited by Jaysheel Bhavsar -->
+	<fx:Script>
+		<![CDATA[
+			import com.ChartnData;
+			import com.MyUtility;
+			import com.component.MyAlert;
+			import com.component.MyNumberFormatter;
+			import com.events.SetSearchDBFormEvent;
+			
+			import mx.charts.ChartItem;
+			import mx.charts.HitData;
+			import mx.charts.chartClasses.ChartBase;
+			import mx.charts.chartClasses.Series;
+			import mx.charts.events.ChartItemEvent;
+			import mx.charts.series.items.BarSeriesItem;
+			import mx.charts.series.items.ColumnSeriesItem;
+			import mx.charts.series.items.PieSeriesItem;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.core.UIComponent;
+			import mx.events.ToolTipEvent;
+			import mx.graphics.IFill;
+			
+			private var _rootNode:XML = new XML;
+			private var tXML:XML = <root/>;
+			private var _hTitle:String = "";
+			private var _libraryId:Number;
+			private var _environment:String;
+			private var _sequenceId:String;
+			private var _database:String;
+			private var _vircat:String;
+			private var _libraryName:String;
+			private var _chartName:String;
+			private var _setLibFlag:Boolean = true;
+			private var _evalue:Number=0.001;
+			private var _labelType:String = 'orf';
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			private var chart:ChartBase;
+			private var series:Series;
+			private var doubleClickFlag:Boolean = true;
+			
+			[Bindable] public function set rootNode(v:XML):void{
+				_rootNode = v;
+			}
+			[Bindable] public function set hTitle(v:String):void{
+				_hTitle = v;
+			}
+			[Bindable] public function set libraryId(v:Number):void{
+				_libraryId=v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set sequenceId(v:String):void{
+				_sequenceId=v;
+			}
+			[Bindable] public function set database(v:String):void{
+				_database=v;
+			}
+			[Bindable] public function set vircat(v:String):void{
+				_vircat=v;
+			}
+			[Bindable] public function set libraryName(v:String):void{
+				_libraryName=v;
+			}
+			[Bindable] public function set chartName(v:String):void{
+				_chartName=v;
+			}
+			[Bindable] public function set setLibFlag(v:Boolean):void{
+				_setLibFlag=v;
+			}
+			[Bindable] public function set evalue(v:Number):void{
+				_evalue = v;
+			}
+			[Bindable] public function set labelType(v:String):void{
+				_labelType = v;
+			}
+			
+			public function get rootNode():XML{
+				return _rootNode;
+			}
+			public function get hTitle():String{
+				return _hTitle;
+			}
+			public function get libraryId():Number{
+				return _libraryId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get sequenceId():String{
+				return _sequenceId;
+			}
+			public function get database():String{
+				return _database;
+			}
+			public function get vircat():String{
+				return _vircat;
+			}
+			public function get libraryName():String{
+				return _libraryName;
+			}
+			public function get chartName():String{
+				return _chartName;
+			}
+			public function get setLibFlag():Boolean{
+				return _setLibFlag;
+			}
+			public function get evalue():Number{
+				return _evalue;
+			}
+			public function get labelType():String{
+				return _labelType;
+			}
+			
+			public function showPie():void{
+				if (rootNode.children().length()){
+					this.pieChart.dataProvider = rootNode.children();
+					chart = this.pieChart;
+					series = this.pieSeries;
+					chartStack.selectedIndex = 1;
+					bAxis.text = hTitle + " [" + (rootNode.children()[0] as XML).name().localName + "]";
+					
+					if (rootNode.children().length() > 15)
+						this.pieSeries.setStyle("labelPosition","");
+					else 
+						this.pieSeries.setStyle("labelPosition","insideWithCallout");
+				} else { chartStack.selectedIndex = 2; }
+			}
+			
+			public function showBar():void{
+				if (rootNode.children().length()){
+					this.barChart.dataProvider = rootNode.children();
+					chart = this.barChart;
+					series = this.colSeries;
+					bAxis.text = hTitle + " [" + (rootNode.children()[0] as XML).name().localName + "]";
+					chartStack.selectedIndex = 0;
+					
+					if (rootNode.children().length() > 15){
+						this.chartStack.height = 600;
+						this.validateNow();
+					}
+				} else { chartStack.selectedIndex = 2; }
+			}
+			
+			protected function myConstructor():void{
+				_rootNode = new XML;
+				_hTitle = new String;
+				tXML = <root/>;
+			}			
+			
+			public function ini():void{
+				toggleLevel();
+				_util = new MyUtility();
+				
+				barChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.allTips);
+				pieChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.allTips);
+			}
+			
+			protected function toggleLevel():void{
+				if (tXML.children().length()){
+					lev.enabled = true;
+					lev.visible = true;
+					lbl.visible = true;
+				}
+				else {
+					lev.enabled = false;
+					lev.visible = false;
+					lbl.visible = false;
+				}
+			}
+			
+			protected function drillDown(e:ChartItemEvent):void
+			{
+				var xml:XML = XML(e.hitData.chartItem.item);
+				if (xml.children().length()){
+					chart.mouseChildren = false;
+					effD.drillFromIndex = e.hitData.chartItem.index;
+					series.setStyle("showDataEffect",effD);
+					rootNode = xml;
+					chart.dataProvider = rootNode.children();
+					
+					var node:XML = <node/>;
+					node.@LABEL = rootNode.@LABEL;
+					node.@NAME = rootNode.@NAME;
+					node.@VALUE = rootNode.@VALUE;
+					
+					tXML = addNode(node,tXML);
+					crumbs.leaf = rootNode;
+					
+					var fxn_label:String = (rootNode.children()[0] as XML).name().localName;
+					if ((database == 'SEED') && (fxn_label == 'FUNCTION_3')){
+						fxn_label = 'SUB_SYSTEM';
+					}
+					bAxis.text = hTitle + " [" + fxn_label + "]";
+					
+					toggleLevel();
+				}
+			}
+			
+			protected function drillUp():void
+			{
+				if (rootNode.parent() == null){
+					tXML = <root/>;
+					return;
+				}
+				
+				drillUpTo(rootNode.parent());
+			}
+			
+			protected function drillUpTo(node:XML):void
+			{
+				if(rootNode == node)
+					return;
+				
+				while(rootNode.parent() != node)
+					rootNode = rootNode.parent();
+				
+				chart.mouseChildren = false;
+				series.setStyle("showDataEffect",effU);
+				effU.drillToIndex = rootNode.childIndex();		
+				rootNode = rootNode.parent();
+				chart.dataProvider = rootNode.children();
+				
+				tXML = removeNode(node,tXML);
+				crumbs.leaf = rootNode;
+				
+				var fxn_label:String = (rootNode.children()[0] as XML).name().localName;
+				if ((database == 'SEED') && (fxn_label == 'FUNCTION_3')){
+					fxn_label = 'SUB_SYSTEM';
+				}
+				bAxis.text = hTitle + " [" + fxn_label + "]";
+				toggleLevel();
+			}
+			
+			protected function categoryLabel(value:XML,field:String,index:Number,percent:Number):String{
+				var temp:String= percent.toString().substr(0,6);
+				var str:String = '';
+				
+				if (labelType != 'orf')
+					str = value.@LABEL + ": " + temp + "%";
+				else
+					str = value.@LABEL + ": " + '\n' + "Total ORFs: " + value.@VALUE + '\n' + temp + "%";
+				
+				if (value.@LIBNAME != undefined)
+					return (str + "\n" + "Library: " + value.@LIBNAME);
+				else return str;
+			}
+						
+			protected function LabelFunc(item:Object, prevValue:Object, axis:CategoryAxis, categoryItem:XML):String {
+				var str:String = item.toString();
+				if (str.length > 25){
+					str = str.substr(0,20);					
+					str = str + "..."; 
+				}				
+				return str;
+			}
+			
+			protected function columnLabelFunc(element:ChartItem, series:Series):String {				
+				var csi:ColumnSeriesItem = ColumnSeriesItem(element);
+				var n:Number = csi.item.@VALUE;
+				return nf.format(n);
+			}
+			
+			protected function dataTipFunc(hd:HitData):String {
+				var str:String = '';
+				
+				if (labelType != 'orf')
+					str = hd.item.@LABEL + ": " + nf.format(hd.item.@VALUE);
+				else
+					str = hd.item.@LABEL + "\n" + "ORF Count: " + nf.format(hd.item.@VALUE);
+				
+				if (hd.item.@LIBNAME != undefined)
+					str += "\n" + "Library: " + hd.item.@LIBNAME;
+				
+				//str += "\n\n"+_util.zoomIn+"\n"+_util.doubleClick+"\n"+_util.downloadChart;
+				
+				return str;
+				
+			}
+			
+			protected function pieChart_dataTipFunction(item:HitData):String{
+				var pSI:PieSeriesItem = item.chartItem as PieSeriesItem;
+				var str:String = '';
+				
+				if (labelType != 'orf')
+					str = "<b>" + pSI.item.@LABEL + ": " + pSI.percentValue.toFixed(2) + "%";
+				else
+					str = "<b>" + pSI.item.@LABEL + ":</b><br />" +
+						pSI.item.@VALUE + " ORFs (<i>" +
+						pSI.percentValue.toFixed(2) + "%</i>)";
+				
+				if (pSI.item.@LIBNAME != undefined)
+					str += "\n" + "Library: " + pSI.item.@LIBNAME;
+				
+				//str += "\n\n"+_util.zoomIn+"\n"+_util.doubleClick+"\n"+_util.downloadChart;
+				
+				return str;
+			}
+			
+			protected function addNode(node:XML, x:XML):XML{
+				if (x.children().length() == 0)
+					x.appendChild(node);
+				else addNode(node,XML(x.children()));
+				
+				return x;
+			}
+			
+			protected function removeNode(node:XML, x:XML):XML{
+				if (x.@NAME == node.@NAME)
+					for (var i:int=0; i< x.children().length(); i++)
+						delete x.children()[i];
+				else removeNode(node,XML(x.children()));
+				
+				return x;
+			}
+			
+			protected function chartClick(event:MouseEvent):void{
+				var str:String = chartName+'_'+(rootNode.children()[0] as XML).name().localName;
+				new ChartnData(event,libraryName,str);
+			}
+
+			protected function checkDoubleClick(event:ChartItemEvent):void{
+				if (event.shiftKey || event.ctrlKey){
+					chartClick(event as MouseEvent);
+					return;
+				}
+				
+				if (doubleClickFlag){
+					var timer:Timer = new Timer(500,1);
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function (e:TimerEvent):void {
+						timer_complete(e,event); });
+					timer.start();
+					doubleClickFlag = false;
+					
+				} else {
+					
+					doubleClickFlag=true;
+					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+					var xnode:XML = (event.hitData.chartItem.item as XML);
+					
+					_sf.environment = environment;
+					if (setLibFlag)
+						_sf.library = libraryId;
+					
+					if (xnode.@TAG != undefined) {	
+						_sf.tag = xnode.@TAG;
+						_sf.idFile = xnode.@IDFNAME;
+					} else {
+						_sf.sequenceId = xnode.@IDLIST;
+					}
+
+					_sf.blastDB = database;
+					_sf.vircat = vircat;
+					_sf.evalue = evalue;
+					
+					_util.simulateSearchClick(_sf);
+				}	
+			}
+			
+			protected function timer_complete(evt:TimerEvent, item:ChartItemEvent):void{
+				if (!doubleClickFlag){
+					doubleClickFlag=true;
+					drillDown(item);
+				}
+			}
+			
+			protected function myFillFunc(element:ChartItem,index:Number):IFill{
+				var c:SolidColor = new SolidColor(0x00cc00);
+				
+				switch (database){
+					case "ACLAME":
+						return (new SolidColor(0x83AF9B,1));
+					case "COG":
+						return (new SolidColor(0xC8C8A9,1));
+					case "UNIREF100P":
+						return (new SolidColor(0xF9CDAD,1));
+					case "KEGG":
+						return (new SolidColor(0xFC9D9C,1));
+					case "SEED":
+						return (new SolidColor(0xFE4365,1));					
+				}
+				return c;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<effects:DrillDownEffect id="effD" duration="1500"  effectEnd="chart.mouseChildren = true;" />
+		<effects:DrillUpEffect id="effU" duration="1500" effectEnd="chart.mouseChildren = true;" />
+		
+		<s:SolidColor id="barFill" color="0x0ABFBC" alpha="0.8"/>
+		
+		<mx:NumberFormatter id="nf" precision="0"/>
+	</fx:Declarations>
+	
+	<mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Label text="Navigation:" id="lbl" />
+			<com:BreadCrumb id="crumbs" width="100%" labelField="@NAME" itemClick="drillUpTo(XML(event.data))"/>
+		</mx:HBox>
+		<mx:HBox>
+			<mx:LinkButton label="&lt;&lt; Level" click="drillUp()" id="lev" />
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:HBox width="100%">
+		<mx:Text text="{hTitle}" id="bAxis" styleName="strong" textAlign="center" width="100%"/>
+	</mx:HBox>
+	
+	<mx:ViewStack id="chartStack" creationPolicy="all" width="100%" height="100%">
+		<mx:VBox id="boxCont" width="100%" height="100%" verticalGap="0" horizontalGap="0">
+			<mx:BarChart id="barChart" width="100%" height="100%"
+						 showDataTips="true"  
+						 dataTipFunction="dataTipFunc" 
+						 itemClick="checkDoubleClick(event)"
+						 click="chartClick(event)"
+						 toolTip="tip"
+						 paddingBottom="0" paddingLeft="0" 
+						 paddingRight="0" paddingTop="0">
+				
+				<mx:horizontalAxis>
+					<mx:LinearAxis id="hAxis" title="Number of viral metagenome ORFs"/>
+				</mx:horizontalAxis>
+				<mx:horizontalAxisRenderers>
+					<mx:AxisRenderer labelRotation="-45" axis="{hAxis}"/>
+				</mx:horizontalAxisRenderers>
+				<mx:verticalAxis>
+					<mx:CategoryAxis id="vAxis" categoryField="@LABEL" labelFunction="LabelFunc"/>
+				</mx:verticalAxis>
+				
+				<mx:series>
+					<mx:BarSeries id="colSeries" xField="@VALUE" fillFunction="myFillFunc" />
+				</mx:series>
+			</mx:BarChart>
+		</mx:VBox>
+		
+		<mx:VBox width="100%" height="100%" verticalGap="0" horizontalGap="0">			
+			<mx:PieChart id="pieChart" width="100%" height="100%" 
+						 dataTipFunction="pieChart_dataTipFunction" 
+						 itemClick="checkDoubleClick(event);"
+						 toolTip="tip"
+						 paddingBottom="0" showDataTips="true"
+						 paddingLeft="0" paddingRight="0" paddingTop="0">
+				<mx:series>
+					<mx:PieSeries field="@VALUE" id="pieSeries" labelFunction="categoryLabel">
+						<mx:itemRenderer>
+							<fx:Component>
+								<com:RollOverWedgeItemRenderer overColor="#8888E0" downColor="#4444AA" />	
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:PieSeries>
+				</mx:series>
+			</mx:PieChart>
+		</mx:VBox>
+		
+		<mx:VBox width="100%" height="100%" verticalAlign="middle" horizontalAlign="center">
+			<mx:Label text="No hits against this database" styleName="strong"/>
+		</mx:VBox>
+	</mx:ViewStack>
+</mx:VBox>

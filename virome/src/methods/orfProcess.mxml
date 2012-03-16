@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" creationComplete="init()"
+		 horizontalAlign="center">
+	
+	<fx:Script>
+		<![CDATA[
+			private function init():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				dbtext.styleSheet = textStyle;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Text width="100%" condenseWhite="true" id="dbtext" paddingTop="10">
+		<mx:htmlText>
+			<![CDATA[
+			Open reading frames (ORFs) are predicted from sequences within the
+			rRNA-free viral metagenome library using 
+			<a href="http://metagene.cb.k.u-tokyo.ac.jp/metagene/">MetaGene Annotator</a>. 
+			These ORFs are analyzed by BLASTP against two protein databases
+			representing all known proteins (UniRef 100+) and environmental
+			proteins (MetaGenomes On-Line-MGOL). BLAST results for each
+			predicted ORF are stored in a back-end MySQL database.
+			]]>
+		</mx:htmlText>
+	</mx:Text>
+	
+	<mx:Image source="assets/viromepipe/orfCalls.png"/>
+</mx:VBox>

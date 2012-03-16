@@ -1,0 +1,50 @@
+
+<model xmlns="http://ns.adobe.com/Fiber/1.0">
+  <annotation name="ActionScriptGeneration">
+    <item name="FullyQualifyReferences">true</item>
+  </annotation>
+  <service name="Bookmark">
+    <annotation name="ActionScriptGeneration">
+      <item name="Source">VIROME.cfc.Bookmark</item>
+      <item name="ServiceType">RemoteObject</item>
+      <item name="Package">services.bookmark</item>
+      <item name="Destination">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceTypeGroup">
+      <item name="ServiceBackendType">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceConfig">
+      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
+      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
+      <item name="LINKED_FILE">Bookmark.cfc</item>
+      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
+      <item name="CFC_CLASS_NAME">Bookmark</item>
+      <item name="CFC_RELATIVE_LOCATION">VIROME/cfc/Bookmark.cfc</item>
+      <item name="ABSOLUTE_ENDPOINT">http://localhost/flex2gateway/</item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Bookmark.cfc</item>
+    </annotation>
+    <function name="get_method" return-type="opaque[]">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="ActionScriptGeneration">
+        <item name="remoteFunction">get</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="userId" type="float"/>
+    </function>
+    <function name="add" return-type="void">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque,string</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+      <parameter name="jname" type="string"/>
+    </function>
+  </service>
+</model>

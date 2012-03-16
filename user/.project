@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>user</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.project.flexbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.adobe.flexbuilder.project.flexnature</nature>
+		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>bin-debug</name>
+			<type>2</type>
+			<location>/Library/WebServer/Documents/VIROME/assets/modules</location>
+		</link>
+		<link>
+			<name>bin-release</name>
+			<type>2</type>
+			<location>/Users/jbhavsar/Documents/workspace/virome-rc/assets/modules</location>
+		</link>
+		<link>
+			<name>services/User.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/cfc/User.cfc</location>
+		</link>
+	</linkedResources>
+</projectDescription>

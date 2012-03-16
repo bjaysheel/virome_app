@@ -1,0 +1,543 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				creationComplete="ini();"
+				xmlns:cfservice="services.*"
+				width="100%" height="100%" xmlns:orfrpc="services.orfrpc.*">
+				<!--width="{this.parent.width}" height="{this.parent.height}">-->
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.MyUtility;
+			import com.component.MyGridItem;
+			import com.component.MyGridRow;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Grid;
+			import mx.containers.HBox;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import mx.controls.Label;
+			import mx.controls.LinkButton;
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var tbox:HBox;
+			
+			[Bindable] public var _sequence:Number;
+			[Bindable] public var _database:String;
+			[Bindable] public var _environment:String;
+			[Bindable] private var _adgDP:ArrayCollection;
+			
+			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			[Bindable] [Embed ("assets/icons/fxnHit.png")] private var fxnImg:Class;
+			[Bindable] [Embed ("assets/icons/sysHit.png")] private var sysImg:Class;
+			[Bindable] [Embed ("assets/icons/sameHit.png")] private var sameImg:Class;
+			
+			public function set sequence(v:Number):void{
+				_sequence = v;
+			}
+			public function set database(v:String):void{
+				_database = v;
+			}
+			public function set environment(v:String):void{
+				_environment=v;
+			}
+			public function get sequence():Number{
+				return _sequence;
+			}
+			public function get database():String{
+				return _database;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			
+			public function init():void{
+				getBlastHits.token = OrfRPC.orfBlastDetails(sequence,environment,database);
+			}
+			
+			protected function ini():void{
+				this.width = this.parent.width * 0.99;
+				this.maxHeight = this.parent.height * 0.99;
+				
+				var cls:LinkButton = new LinkButton();
+				cls.width=16;
+				cls.height=16;
+				cls.setStyle("icon",closeImg);
+				//img.source = closeImg;
+				cls.addEventListener(MouseEvent.CLICK,removeMe);
+				
+				var txt:Text = new Text();
+				txt.text = "BLAST Sequence Detail";
+				txt.setStyle("color","0xFFFFFF");
+				
+				var sp:Spacer = new Spacer();
+				sp.percentWidth=100;
+				
+				tbox = new HBox();
+				tbox.setStyle("verticalAlign","middle");
+				tbox.setStyle("paddingLeft",10);
+				tbox.setStyle("paddingRight",10);
+				tbox.width = this.parent.width * 0.99;
+				tbox.height = this.titleBar.height;
+				tbox.addChild(txt);
+				
+				if (database != "METAGENOMES"){
+					//top fxnal hit.
+					var fxnIcon:Image = new Image();
+					fxnIcon.setStyle("paddingLeft",25);
+					fxnIcon.source = fxnImg;
+					tbox.addChild(fxnIcon);
+					
+					txt = new Text();
+					txt.text = "= TOP Fxnal Hit";
+					txt.setStyle("color","0xFFFFFF");
+					tbox.addChild(txt);
+					
+					//top fxnal and blast hit being the same
+					var sameIcon:Image = new Image();
+					sameIcon.source = sameImg;
+					tbox.addChild(sameIcon);
+					
+					txt = new Text();
+					txt.text = "= Top Fxnal & BLAST Hit";
+					txt.setStyle("color","0xFFFFFF");
+					tbox.addChild(txt);
+					
+					tbox.addChild(sp);					
+				}
+				
+				//top system hit or blast hit icon
+				var sysIcon:Image = new Image();
+				sysIcon.source = sysImg;
+				tbox.addChild(sysIcon);
+				
+				txt = new Text();
+				txt.text = "= Top BLAST Hit";
+				txt.setStyle("color","0xFFFFFF");
+				tbox.addChild(txt);
+				
+				//close image icon
+				tbox.addChild(cls);
+				
+				this.titleBar.addChild(tbox);
+				PopUpManager.centerPopUp(this);
+			}
+						
+			protected function removeMe(event:MouseEvent):void{
+				PopUpManager.removePopUp(this);
+			}
+
+			protected function gridHeader():void{
+				var gr:MyGridRow = new MyGridRow();
+				var gi:MyGridItem = new MyGridItem();
+				
+				gr.percentWidth=100;
+				var twidth:Number = this.width-110;
+				
+				//hit number
+				var lb:Label = new Label();
+				lb.text = "#";
+				//lb.width = gi.width = this.width*0.05;
+				lb.width = gi.width = 20;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				//hit name
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Hit Name";
+				//gi.width=150;
+				//gi.width = twidth*0.20;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				//hit description
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Hit description";
+				if (database.search("METAGENOMES") < 0)
+					gi.width=250;
+				else gi.width = 400;
+				
+				//gi.width = twidth*0.20;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				//Image
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "BLAST Image";
+				gi.width=90;
+				//gi.width = this.width*0.05;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				//Evalue
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "E-Value";
+				//lb.width = 75;
+				gi.width = 75;
+				//gi.width = lb.width = twidth*0.05;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				//Bit Score
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Bit Score";
+				gi.width=75;
+				//lb.width = gi.width = twidth*0.05;
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				if (database.search("METAGENOMES") < 0){
+					//domain
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Domain";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//kingdom
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Kingdom";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//phylum
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Phylum";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//class
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Class";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//order
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Order";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//family
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Family";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//genus
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Genus";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//species
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Species";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+				} else {
+					//Genesis
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Genesis";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//Sphere
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Sphere";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+					
+					//Eco-system
+					lb = new Label();
+					gi = new MyGridItem();
+					lb.text = "Eco-system";
+					//lb.width = gi.width = twidth*0.05;
+					gi.addChild(lb);
+					gr.addChild(gi);
+				}
+				gr.header();
+
+				g.addChild(gr);
+			}
+			
+			protected function blastHitResponse(event:ResultEvent):void{
+				var rslt:ArrayCollection = event.result as ArrayCollection;
+				var gr:MyGridRow = new MyGridRow();
+				var gi:MyGridItem = new MyGridItem();
+				var flag:Boolean = true;
+				
+				//clear grid
+				g.removeAllChildren();
+				gr.percentWidth=100;
+				
+				//add header.
+				gridHeader();
+				
+				//var from:int = 10;
+				var from:int = rslt.length;
+				
+				if (rslt.length < from)
+					from = rslt.length;
+				
+				for (var i:int=0; i<from; i++){
+					if ((rslt.getItemAt(i).FXN_TOPHIT == 1) && (rslt.getItemAt(i).SYS_TOPHIT == 1))
+						flag = false;
+					else if (rslt.getItemAt(i).FXN_TOPHIT == 1)
+						flag = false;
+					
+					addDetailRow(i,rslt.getItemAt(i));
+				}
+				
+				if (flag){
+					for (var j:int=from; j<rslt.length; j++){
+						
+						if (rslt.getItemAt(j).FXN_TOPHIT == 1){
+							var txt:Text = new Text();
+							txt.text = "..............";
+							txt.styleName="strong";
+							gi = new MyGridItem();
+							gi.colSpan=14;
+							gi.setStyle("verticalAlign","middle");
+							gi.setStyle("horizontalAlign","center");
+							gi.addChild(txt);
+							gr.addChild(gi);
+							g.addChild(gr);
+							
+							addDetailRow(j,rslt.getItemAt(j));
+						}
+					}
+				}
+				PopUpManager.centerPopUp(this);
+			}
+			
+			protected function addDetailRow(i:int, obj:Object):void{
+				var gr:MyGridRow = new MyGridRow();
+				var gi:MyGridItem = new MyGridItem();
+				var twidth:Number = this.width-110;
+				
+				gr.percentWidth=100;
+				//row color
+				if ((i%2) == 0)
+					gr.even();
+				else gr.odd();
+				
+				if ((obj.FXN_TOPHIT == 1) && (obj.SYS_TOPHIT == 1))
+					gr.sameHit();
+				else if (obj.FXN_TOPHIT == 1)
+					gr.fxnHit();
+				else if (obj.SYS_TOPHIT == 1)
+					gr.sysHit();
+				
+				//hit number
+				var txt:Text = new Text();
+				gi = new MyGridItem();
+				txt.text = (i+1).toString();
+				gi.width = txt.width = 20;
+				//txt.width = gi.width = twidth*0.05;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				//hit name
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = obj.HIT_NAME;
+				txt.percentWidth=100;
+				//gi.width=150;
+				//gi.width = twidth*0.20;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				//hit description
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = obj.HIT_DESCRIPTION;
+				txt.percentWidth=100;
+				if (database.search("METAGENOMES") < 0)
+					gi.width=250;
+				else gi.width = 400;
+				
+				//gi.width = twidth*0.20;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				//image
+				var img:Image = new Image();
+				img.source = obj.IMAGE;
+				gi = new MyGridItem();
+				gi.setStyle("verticalAlign","middle");
+				gi.setStyle("horizontalAlign","center");
+				gi.width=90;
+				//gi.width = twidth *0.05;
+				gi.addChild(img);
+				gr.addChild(gi);
+				
+				//evalue
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = obj.E_VALUE;
+				txt.percentWidth=100;
+				gi.width=75;
+				//gi.width = twidth *0.05;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				//bit score
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = obj.BIT_SCORE
+				txt.percentWidth=100;
+				gi.width=75;
+				//gi.width = twidth *0.05;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				if (database.search("METAGENOMES") < 0) {
+					//domain
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.DOMAIN;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//kingdom
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.KINGDOM;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//phylum
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.PHYLUM;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//class
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.CLASS;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//order
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.ORDER;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//family
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.FAMILY;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//genus
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.GENUS;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//species
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = obj.Species;
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+				} else {
+					//genesis
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = _util.properCase(obj.GENESIS);
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//sphere
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = _util.properCase(obj.SPHERE);
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					//Eco-system
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = _util.properCase(obj.ECOSYSTEM);
+					txt.percentWidth=100;
+					//gi.width = twidth *0.05;
+					gi.addChild(txt);
+					gr.addChild(gi);
+				}
+				
+				g.addChild(gr);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<orfrpc:OrfRPC id="OrfRPC" showBusyCursor="true" fault="_util.faultHandler(event)"
+						  destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.OrfRPC" />
+		<s:CallResponder id="getBlastHits" result="blastHitResponse(event)"/>		
+	</fx:Declarations>
+	
+	<mx:Canvas width="100%" height="100%">
+		<mx:VBox width="100%" height="100%" id="box" verticalGap="4">
+			<mx:Grid width="100%" height="100%" id="g" verticalGap="0"/>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>

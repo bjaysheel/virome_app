@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" creationComplete="init()"
+		 horizontalAlign="center">
+	
+	<fx:Script>
+		<![CDATA[
+			private function init():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				dbtext.styleSheet = textStyle;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Text width="100%" condenseWhite="true" id="dbtext" paddingTop="10">
+		<mx:htmlText>
+			<![CDATA[
+			Viral metagenome ORFs showing significant homology (E!10e-3) to
+			peptides in UniRef 100P are assigned a possible taxonomic origin
+			according to the taxonomy associated with the top BLASTP hit. A
+			consensus taxonomy for a metagenome read is assembled from the
+			common taxonomy terms from UniRef 100P hits to each member ORF.
+			]]>
+		</mx:htmlText>
+	</mx:Text>
+	
+	<mx:Image source="assets/viromepipe/taxonomy.png"/>
+</mx:VBox>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:ViewStack xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			  xmlns:s="library://ns.adobe.com/flex/spark" 
+			  xmlns:mx="library://ns.adobe.com/flex/mx"
+			  xmlns:methods="methods.*"
+			  creationComplete="init()"
+			  width="100%" height="100%">
+	
+	<fx:Script>
+		<![CDATA[
+			import methods.*;
+			
+			public var _curr:Number = 0;
+			
+			public function set curr(v:Number):void{
+				_curr = v;
+			}
+			public function get curr():Number{
+				return _curr;
+			}
+			
+			protected function init():void{
+				this.addChild((new methods.ViromePipeOverview) as DisplayObject);
+				this.addChild((new methods.UnirefDB) as DisplayObject);
+				this.addChild((new methods.MetagenomeDB) as DisplayObject);
+				this.addChild((new methods.rRNAScreen) as DisplayObject);
+				this.addChild((new methods.tRNAScreen) as DisplayObject);
+				this.addChild((new methods.orfProcess) as DisplayObject);
+				this.addChild((new methods.Functional) as DisplayObject);
+				this.addChild((new methods.MetaCategories) as DisplayObject);
+				this.addChild((new methods.Taxonomy) as DisplayObject);
+				changeView();
+			}
+			
+			public function changeView():void{
+				this.selectedIndex = curr;
+			}
+		]]>
+	</fx:Script>	
+</mx:ViewStack>

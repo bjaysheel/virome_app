@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"  
+    xmlns:cfservice="services.*"
+    xmlns:com="com.*"
+    height="100%" 
+    paddingLeft="4" 
+    paddingRight="12" 
+    paddingTop="12" 
+    paddingBottom="8" 
+    verticalGap="0" 
+	creationComplete="initBlastForm()" xmlns:library="services.library.*" xmlns:searchrpc="services.searchrpc.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import com.MyUtility;
+			import com.events.SearchBlastEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var eval:ArrayCollection = new ArrayCollection();
+			[Bindable] private var _database:ArrayCollection = new ArrayCollection();
+
+			protected function initBlastForm():void{
+				blastDBRequest.token = Library.getBLASTDBObject();
+				
+				//create extensive list of evalues
+				for (var i:int=0; i<50; i++){
+					var tobj:Object = new Object();
+					tobj['label'] = "<=10^-"+i;
+					tobj['data'] = Math.pow(10,(i*-1));
+					eval.addItem(tobj);
+				}
+				expect.selectedIndex=3;
+			}
+			
+			protected function submitBlastForm():void{
+				var obj:Object = new Object;
+				obj['PROGRAM'] = program.selectedItem.data;
+				obj['DATABASE'] = database.selectedItem.data;
+				obj['SEQUENCE'] = sequence.text;
+				obj['EXPECT'] = expect.selectedItem.data;
+				obj['DESCRIPTION'] = description.selectedItem.data;
+				
+				//set token to cfc
+				_blastsearch.token = Search.getBlastSearch(obj);
+			}
+			
+			protected function resetBlastForm():void{
+				this.sequence.text = "";
+				this.expect.selectedIndex = 0;
+				this.description.selectedIndex = 0;
+				this.database.selectedIndex = 0;
+				this.program.selectedIndex = 0;
+			}
+			
+			protected function blastSearchHandler(event:ResultEvent):void{
+				dispatchEvent(new SearchBlastEvent(event.result.toString()));
+			}			
+			
+			protected function blastDBResponse(event:ResultEvent):void{
+				var ac:ArrayCollection = event.result as ArrayCollection;
+				_database = event.result as ArrayCollection;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="blastDBRequest" result="blastDBResponse(event)" />
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+						   destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library"/>
+
+		<s:CallResponder id="_blastsearch" result="blastSearchHandler(event)"/>
+		<searchrpc:SearchRPC id="Search" showBusyCursor="true" fault="_util.faultHandler(event)"
+							 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.SearchRPC"/>
+	</fx:Declarations>
+
+	
+	<fx:Declarations>
+		<mx:ArrayCollection id="_program">
+			<fx:Object label="BLASTP" data="blastp"/>
+		</mx:ArrayCollection>
+		
+		<mx:ArrayCollection id="_descrip">
+			<fx:Object label="10" data="10"/>
+			<fx:Object label="50" data="50"/>
+			<fx:Object label="100" data="100"/>
+		</mx:ArrayCollection>
+		
+		<!-- button effects. -->
+		<mx:Zoom id="shrink" duration="100" zoomHeightTo=".9" zoomWidthTo=".9" />
+		<mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />		
+	</fx:Declarations>
+		
+	<!-- <mx:Label text="Blast Search"/> -->
+	<mx:LinkButton label="DB Search" textAlign="right"
+			   icon="@Embed(source='assets/icons/back.png')" 
+			   click="_util.app.searchPage.currentState = 'showSearchPanel'"/>
+	
+	<mx:Grid width="100%" height="100%" paddingTop="15" paddingBottom="15" borderStyle="none" id="blastForm">
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="BLAST Program" styleName="strong"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="program" dataProvider="{_program}" width="175"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Database" styleName="strong"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="database" dataProvider="{_database}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Evalue" styleName="strong"/>				
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="expect" dataProvider="{eval}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Description" styleName="strong"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="description" dataProvider="{_descrip}" width="175" rowCount="10"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow height="100%">
+			<mx:GridItem>
+				<mx:Label text="FASTA Seq." styleName="strong"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextArea id="sequence" height="100%" width="100%"/>
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>
+	
+	<mx:HBox>
+		<mx:Button id="submit" label="Submit"
+				   mouseDownEffect="{shrink}" 
+				   mouseUpEffect="{revert}"
+				   click="submitBlastForm()"/>
+		<mx:Button id="reset" label="Reset"
+				   mouseDownEffect="{shrink}" 
+				   mouseUpEffect="{revert}"
+				   click="resetBlastForm()"/>	
+	</mx:HBox>
+</mx:VBox>

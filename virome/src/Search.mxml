@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas 	xmlns:mx="http://www.adobe.com/2006/mxml" 
+			xmlns:search="search.*"
+			xmlns:sequenceView="sequenceView.*"
+			width="100%" 
+			height="100%" 
+			horizontalScrollPolicy="auto"
+			addedToStage="onAddtoStage()"
+			show="onShow()">
+	
+	<mx:Script>
+        <![CDATA[
+        	import com.events.SearchDBEvent;
+            import com.events.SearchResultEvent;
+            import com.MyUtility;
+			
+			import com.google.analytics.GATracker;
+			import com.google.analytics.AnalyticsTracker;
+            
+            import mx.collections.ArrayCollection;
+        	import mx.controls.Alert;
+        	import mx.effects.Move;
+        	import mx.effects.easing.Bounce;
+            import mx.rpc.events.ResultEvent;
+        	import mx.rpc.events.FaultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			
+        	private var _util:MyUtility = new MyUtility();
+        	[Bindable] private var sequenceId:Number = 0;
+        	[Bindable] private var evalue:Number = 0;
+        	[Bindable] private var server:String = "";
+        	[Bindable] private var aa:Number = 0;
+        	
+			protected function onShow():void{
+				//set google tracker				
+				tracker.trackPageview( "/Search" );
+			}
+        	
+			protected function searchViewScreen(event:Event):void{
+        		this.currentState = '';
+        		_util.app.updateURL();
+        	}
+        	
+			protected function onAddtoStage():void{
+        		//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+				
+				_util.app.addEventListener("changeToSearchPage",searchViewScreen);
+        	}
+        ]]>
+    </mx:Script>
+    	
+	 <!-- Define the transition to animate the change of view state. -->
+    <mx:transitions>
+       <mx:Transition fromState="showBlastPanel" toState="showSearchPanel">
+       		<mx:Parallel id="p1" target="{searchResultPnl}">
+				<mx:Move duration="400"/>
+			</mx:Parallel>
+       </mx:Transition>
+
+		<mx:Transition fromState="showSearchPanel" toState="showBlastPanel">
+          	<mx:Parallel id="p2" target="{searchResultPnl}">
+				<mx:Move duration="400"/>
+			</mx:Parallel>
+       </mx:Transition>
+    </mx:transitions>
+
+    <mx:states>	
+    	<mx:State name="showSearchPanel">
+        	<mx:SetStyle target="{searchResultPnl}" name="left" value="325"/>
+       	</mx:State>        
+       	<mx:State name="showBlastPanel">
+           	<mx:SetStyle target="{searchResultPnl}" name="right" value="325"/>
+       	</mx:State>
+	
+		<mx:State name="show_seq_detail">
+			<!--<mx:RemoveChild target="{searchGrip1}"/>
+			<mx:RemoveChild target="{searchGrip2}"/>
+			<mx:RemoveChild target="{blastSearch}"/>-->
+			<mx:RemoveChild target="{textSearch}"/>
+			<mx:RemoveChild target="{searchResultPnl}"/>
+		</mx:State>
+    </mx:states>
+    
+	<mx:HBox id="searchWindow" width="100%" height="100%" dropShadowEnabled="true">
+		<!--<search:Grip id="searchGrip1" 
+						 gripIcon="@Embed('assets/icons/text.png')"
+            			 gripTip="TEXT SEARCH PANEL" 
+            			 click="currentState = 'showSearchPanel'"/>-->
+            			 
+        <search:DBForm id="textSearch" width="302" horizontalScrollPolicy="off" borderStyle="none"/>
+        
+		<!--<mx:Spacer width="100%"/>
+        
+        <search:BlastForm id="blastSearch" width="299" horizontalScrollPolicy="off" borderStyle="none"/>
+        
+        <search:Grip id="searchGrip2" 
+						 gripIcon="@Embed('assets/icons/blast.png')" 
+            			 gripTip="BLAST SEARCH PANEL" 
+            			 click="currentState = 'showBlastPanel'"/>-->
+	</mx:HBox>
+	
+	<search:ResultPanel id="searchResultPnl" x="325" width="{this.width-340}" height="100%"/>
+	    
+</mx:Canvas>

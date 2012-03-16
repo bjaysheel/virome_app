@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" creationComplete="init()"
+		 horizontalAlign="center">
+	
+	<fx:Script>
+		<![CDATA[
+			private function init():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				dbtext.styleSheet = textStyle;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Text width="100%" condenseWhite="true" id="dbtext" paddingTop="10">
+		<mx:htmlText>
+			<![CDATA[
+			Viral metagenome reads which have been edited for quality and scrubbed
+			of contaminating sequence (eg., linkers, primers, bar-codes) are
+			compared to a database of around 90 thousand 5, 16, & 23S ribosomal
+			RNA gene sequences. Reads showing significant hits to rRNA genes
+			(E!10e-3) are considered <b>VIROME category 1-rRNA sequences</b> and
+			are removed from the library prior to ORF calling.
+			]]>
+		</mx:htmlText>
+	</mx:Text>
+	
+	<mx:Image source="assets/viromepipe/rRNAScreen.png"/>
+</mx:VBox>

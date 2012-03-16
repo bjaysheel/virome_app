@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx"  
+		   show="init()"
+		   width="100%">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.component.MyNumberFormatter;
+			import com.MyUtility;
+			
+			private var util:MyUtility = new MyUtility();
+			private var _libraryInfoObject:Object = new Object();
+			
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject=v;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			
+			protected function init():void{
+				_project.text = util.properCase(libraryInfoObject['PROJECT']);
+				_env.text = util.properCase(libraryInfoObject['ENVIRONMENT']);
+				_library.text = util.properCase(libraryInfoObject['LIBNAME']) + " (" + libraryInfoObject['PREFIX'] + ")";
+				_libType.text = libraryInfoObject['LIBTYPE'];
+				_samdate.text = libraryInfoObject['SAMPLEDATE'].toString().length ? libraryInfoObject['SAMPLEDATE'] : "N/A";
+				
+				//create citation links.
+				_citation.label = (libraryInfoObject['CITATION'].toString().length > 50) ? libraryInfoObject['CITATION'].substr(0,50) + "..." : libraryInfoObject['CITATION'];
+				_citation.toolTip = libraryInfoObject['CITATION'];
+				_citation.name = libraryInfoObject['LINK'];
+				
+				//mean and stdev
+				_mrl.text = new MyNumberFormatter().format(libraryInfoObject['RMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['RSTDEV']) + ")";
+				_mol.text = new MyNumberFormatter().format(libraryInfoObject['OMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['OSTDEV']) + ")";
+				
+			}
+			
+			public function showValues():void{
+				init();
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Form>
+		<mx:FormItem label="Project:" styleName="strong">
+			<mx:Text id="_project" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Environment:" styleName="strong">
+			<mx:Text id="_env" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Library:" styleName="strong">
+			<mx:Text id="_library" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Library Type:" styleName="strong">
+			<mx:Text id="_libType" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Citation:" styleName="strong">
+			<mx:LinkButton id="_citation" label="" click="util.followLink(event)" />
+		</mx:FormItem>
+		
+		<mx:FormItem label="Sample Date:" styleName="strong">
+			<mx:Text id="_samdate" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Mean Read length:" styleName="strong">
+			<mx:Text id="_mrl" text="" fontWeight="normal"/>
+		</mx:FormItem>
+		
+		<mx:FormItem label="Mean ORF length:" styleName="strong">
+			<mx:Text id="_mol" text="" fontWeight="normal"/>
+		</mx:FormItem>
+	</mx:Form>
+	
+</mx:VBox>

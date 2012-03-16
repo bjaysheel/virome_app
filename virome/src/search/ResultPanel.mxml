@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	
+	xmlns:searchrpc="services.searchrpc.*" 
+	xmlns:local="com.component.*"
+	
+	width="100%" height="100%" 
+	paddingLeft="0" paddingRight="0"
+	horizontalGap="0" verticalGap="0" 
+	layout="vertical" 
+	styleName="catalogPanel"
+	
+	addedToStage="onAddtoStage()"
+	creationComplete="initSearchResultPanel()">
+
+	<fx:Script>
+		<![CDATA[
+			import com.DataGridUtils;
+			import com.MyBlastResult;
+			import com.MyDBResult;
+			import com.MyUtility;
+			import com.component.MyAlert;
+			import com.component.MyToolTip;
+			import com.events.FileSelectorEvent;
+			import com.events.SearchBlastEvent;
+			import com.events.SearchDBEvent;
+			import com.google.analytics.debug._Style;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.collections.errors.ItemPendingError;
+			import mx.containers.Canvas;
+			import mx.containers.HBox;
+			import mx.controls.Alert;
+			import mx.controls.DataGrid;
+			import mx.controls.LinkButton;
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.core.FlexGlobals;
+			import mx.events.CloseEvent;
+			import mx.events.CollectionEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncResponder;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var _ncRNAFlag:Boolean = false;
+			[Bindable] private var _currentGridRowCount:Number = 0;
+			[Bindable] private var _totalGridRowCount:Number = 0;
+			private var gridResultSet:ArrayCollection = new ArrayCollection();
+			
+			private static const PAGE_SIZE:Number = 500;
+			
+    		private var searchBlastResult:MyBlastResult = new MyBlastResult();
+    		private var searchDBResultGrid:MyDBResult = new MyDBResult();
+    		private var downloadBttn:LinkButton = new LinkButton();
+			private var searchDBRequestObject:Object = new Object();
+			
+			
+			[Bindable] public function set ncRNAFlag(v:Boolean):void{
+				_ncRNAFlag = v;
+			}
+			[Bindable] public function set currentGridRowCount(v:Number):void{
+				_currentGridRowCount = v;
+			}
+			[Bindable] public function set totalGridRowCount(v:Number):void{
+				_totalGridRowCount = v;
+			}
+			
+			public function get ncRNAFlag():Boolean{
+				return _ncRNAFlag;
+			}
+			public function get currentGridRowCount():Number{
+				return _currentGridRowCount;
+			}
+			public function get totalGridRowCount():Number{
+				return _totalGridRowCount;
+			}
+			
+			
+			private function onAddtoStage():void{
+				_util.app.addEventListener(SearchDBEvent.SEARCH_DB_EVENT,searchDBRequest);
+				_util.app.addEventListener(SearchBlastEvent.SEARCH_BLAST_EVENT,searchBlastResultHandler);
+				_util.app.addEventListener(FileSelectorEvent.FILE_SELECTOR_EVENT,prepareFileToDownload);
+			}
+			
+			private function initSearchResultPanel():void{
+        		initDBRSLT();
+        		initBlastRSLT();
+				
+				this.title = "Search Result [" + currentGridRowCount + " of " + totalGridRowCount + "]";
+			}
+			
+			private function initDBRSLT():void{
+				searchDBResultGrid = new MyDBResult();
+				gridResultSet = new ArrayCollection();
+				
+				currentGridRowCount = 0;
+				totalGridRowCount = 0;
+				
+				searchDBResultGrid.dataProvider = gridResultSet;
+			}
+			
+			private function initBlastRSLT():void{
+				searchBlastResult = new MyBlastResult();
+			}
+			
+			private function searchDBRequest(event:SearchDBEvent):void{
+				if (event.recall != null){
+					var evt:CloseEvent = new CloseEvent("Alert.YES",false,false);
+					evt.detail = Alert.YES;
+					getRS(evt,event.recall);
+				} else {
+					searchDBRequestObject = event.getStruct();
+					
+					if ((searchDBRequestObject.VIRCAT != null) && ((searchDBRequestObject.VIRCAT == "tRNA") || (searchDBRequestObject.VIRCAT == "rRNA"))){
+						ncRNAFlag = true;
+					} 
+					
+					searchDBResultGrid.ncRNAFlag = ncRNAFlag;
+					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);
+					
+					downloadBttn = new LinkButton();
+					downloadBttn.label = "Download Search Sequences";
+					downloadBttn.addEventListener(MouseEvent.CLICK, downloadRequest);	
+				}
+			}
+						
+			private function downloadRequest(e:MouseEvent):void{
+				var downloadPanel:FileSelector = FileSelector(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), FileSelector, true));
+				downloadPanel.currentCount = currentGridRowCount;
+				downloadPanel.totalCount = totalGridRowCount;
+				PopUpManager.bringToFront(downloadPanel);
+				PopUpManager.centerPopUp(downloadPanel);
+			}
+			
+			private function prepareFileToDownload(event:FileSelectorEvent):void{
+				var gridContent:String = '';
+				if (event.csv) {
+					gridContent = DataGridUtils.loadDataGridInExcel(this.searchDBResultGrid);
+				}
+				
+				var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+				
+				downloadPanel._fileSelector = event.getFileSelectorObject();
+				downloadPanel._searchDBObj = searchDBRequestObject;
+				downloadPanel._content = gridContent;
+				
+				PopUpManager.bringToFront(downloadPanel);
+				PopUpManager.centerPopUp(downloadPanel);
+			}
+			
+			private function prepareRSResponse(event:ResultEvent):void{
+				Alert.noLabel = "View later";
+				Alert.yesLabel = "View now";
+				Alert.buttonWidth = 90;
+				
+				if (event.result.MSG == "Success"){
+					//add new search to bookmark object
+					_util.app.addBookmarkHandler(event.result as Object); 
+
+					Alert.show("Your search results of " + event.result.RCD_COUNT + " for " + event.result.JOBALIAS + " are ready, would you like to view them?", 
+						  "Results ready", Alert.YES|Alert.NO, this,
+						  function (e:CloseEvent):void{getRS(e,event.result);}, null, Alert.YES);
+				} else {
+					Alert.show("There has been a problem while gathering data. Please try again or contact the administrator",
+								"Search error", Alert.OK);
+				}
+			}
+			
+			private function getRS(event:CloseEvent, obj:Object):void{
+				if (event.detail == Alert.YES){
+					getRSRequest.token = GetSearch.getSearchRSLT(obj);
+				}
+			}
+			
+			private function getRSResponse(event:ResultEvent):void{
+				// init grid
+				initDBRSLT();
+				
+				//remove all previous children
+				if (this.numChildren != 0)
+					this.removeAllChildren();				
+				
+				var ac:ArrayCollection = event.result as ArrayCollection;
+				
+				totalGridRowCount = ac.length;
+				
+				if (totalGridRowCount > 0){
+					gridResultSet = ac;
+					
+					searchDBResultGrid.dataProvider = gridResultSet;
+					
+					currentGridRowCount = PAGE_SIZE;
+					currentGridRowCount = (totalGridRowCount > PAGE_SIZE) ? currentGridRowCount : totalGridRowCount; 
+					
+					//temp hack getting all rows
+					currentGridRowCount = totalGridRowCount;
+					
+					this.title = "Search Result [" + currentGridRowCount + " of " + totalGridRowCount + "]";
+					this.addChild(searchDBResultGrid);
+					this.addChild(downloadBttn);
+				} else {
+
+				}
+				
+				_util.app.simulateMenuClick("Search");
+			}
+		    
+		    private function searchBlastResultHandler(event:SearchBlastEvent):void{	
+		    	// remove all previous children
+				if (this.numChildren != 0)
+					this.removeAllChildren();
+				
+				// init blast reports
+				initBlastRSLT();
+	
+		    	// some local vars
+		    	var can:Canvas = new Canvas;
+		    	can.percentHeight = 100;
+		    	can.percentWidth = 100;
+		    	
+		    	var spacer:Spacer = new Spacer;
+		    	spacer.height = 15;
+		    	
+		    	// add header space
+		    	searchBlastResult.addChild(spacer);
+
+				// get the blast report
+		    	searchBlastResult.formatResult(event.getBlastResult());
+		    	
+		    	// add report to canvas, and then to stage
+		    	can.addChild(searchBlastResult);
+		    	this.addChild(can);
+		    	this.title = "Blast Search Result";
+		    }
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<searchrpc:SearchRPC id="PrepSearch" showBusyCursor="false" fault="_util.faultHandler(event)"
+			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.SearchRPC"/>
+		<s:CallResponder id="prepareRSRequest" result="prepareRSResponse(event)"/>
+		
+		<searchrpc:SearchRPC id="GetSearch" showBusyCursor="true" fault="_util.faultHandler(event)"
+							 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.SearchRPC"/>
+		<s:CallResponder id="getRSRequest" result="getRSResponse(event)"/>
+	</fx:Declarations>
+	
+</mx:Panel>

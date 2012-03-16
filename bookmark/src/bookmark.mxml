@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx"
+		   xmlns:user="services.user.*"
+		   layout="horizontal" verticalAlign="middle" 
+		   xmlns:bookmark="services.bookmark.*"		   
+		   creationComplete="onCreationComplete()"
+		   implements="com.IModuleInterface.IBookmarkInterface"
+		   percentWidth="100" percentHeight="100">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.events.RecallBookmarkEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var serviceEndPoint:String;
+			[Bindable] private var serviceSource:String;
+			[Bindable] private var bmark:Object;
+			[Bindable] private var userId:Number = 0;
+			[Bindable] private var bookmarkDP:ArrayCollection = new ArrayCollection();
+			
+			public function setEndPoint(s:String):void{
+				serviceEndPoint = s;
+			}
+			public function setCFCSource(s:String):void{
+				serviceSource = s;
+			}
+			public function setUserId(n:Number):void{
+				userId = n;
+			}
+			public function addToBookmark(o:Object):void{
+				bookmarkDP.addItem(o);
+			}
+			public function getBookmark():Object{
+				return bmark;
+			}
+						
+			private function onCreationComplete():void{
+				parentApplication.addEventListener("userLogInOut", getUserId);
+				parentApplication.addEventListener("USER_ID_SET",getBookmarks);
+			}
+			
+			private function getBookmarks(event:Event):void{
+				getBookmarkRequest.token = Bookmark.get_method(userId);
+			}
+			
+			private function getBookmarkResponse(event:ResultEvent):void{
+				bookmarkDP = event.result as ArrayCollection;
+			}
+			
+			private function getUserId(event:Event):void{
+				parentApplication.dispatchEvent(new Event("USER_ID_REQUEST",true,true));
+			}
+			
+			private function showBM():void{
+				var sHistory:SearchHistory = SearchHistory(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), SearchHistory, true));
+				sHistory.showCloseButton = true;
+				sHistory.addEventListener(RecallBookmarkEvent.RECALL_BOOKMARK_EVENT,recallSearch);
+				sHistory.endPoint = serviceEndPoint;
+				sHistory.cfcSourcePath = serviceSource;
+				sHistory.bookmarkDP = bookmarkDP
+				PopUpManager.bringToFront(sHistory);
+				PopUpManager.centerPopUp(sHistory);
+			}
+			
+			private function recallSearch(event:RecallBookmarkEvent):void{
+				bmark = event.getObj();
+				parentApplication.dispatchEvent(new Event("RECALL_SEARCH",true,true));
+			}
+
+			private function faultHandler(event:FaultEvent):void{
+				Alert.show(event.toString(), "Bookmark CFC Error", Alert.OK);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<bookmark:Bookmark id="Bookmark" showBusyCursor="true" fault="faultHandler(event)"
+						   destination="ColdFusion" endpoint="{serviceEndPoint}" source="{serviceSource}.Bookmark"/>
+		<s:CallResponder id="getBookmarkRequest" result="getBookmarkResponse(event)"/>
+	</fx:Declarations>
+	
+	<mx:Button label="Bookmark" id="bmbutton" click="showBM()" styleName="menu"/>
+</mx:Module>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:UIComponent  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark"  
+		   xmlns:mx="library://ns.adobe.com/flex/mx" initialize="ini()"
+		   width="100%" height="100%" resize="mapContainer_resize(event);">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.component.MyToolTip;
+			import com.google.maps.LatLng;
+			import com.google.maps.Map;
+			import com.google.maps.MapEvent;
+			import com.google.maps.MapOptions;
+			import com.google.maps.MapType;
+			import com.google.maps.controls.MapTypeControl;
+			import com.google.maps.controls.ZoomControl;
+			import com.google.maps.overlays.Marker;
+			import com.google.maps.overlays.MarkerOptions;
+			import com.google.maps.services.ClientGeocoder;
+			import com.google.maps.services.GeocodingEvent;
+			import com.google.maps.services.GeocodingResponse;
+			import com.google.maps.services.Placemark;
+			
+			import mx.events.ResizeEvent;
+			import mx.managers.ToolTipManager;
+			import mx.controls.Alert;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			private var googleMap:Map = new Map();
+			private var geocoder:ClientGeocoder;
+			private var xmark:Marker;
+			private var _lat:Number;
+			private var _lon:Number;
+			private var _txt:String;
+			
+			public function get lat():Number{
+				return _lat;
+			}
+			public function set lat(value:Number):void{
+				_lat = value;
+			}
+			public function get lon():Number{
+				return _lon;
+			}
+			public function set lon(value:Number):void{
+				_lon = value;
+			}
+			public function get txt():String{
+				return _txt;
+			}
+			public function set txt(v:String):void{
+				_txt = v;
+			}
+			
+			protected function ini():void{
+			}
+			
+			protected function evtHandler(event:Event):void{
+			}
+			
+			public function init(x:Number,y:Number,s:String):void {
+				ToolTipManager.toolTipClass = MyToolTip;
+				lat=x;
+				lon=y;
+				txt=s;
+				
+				googleMap = new Map();
+				googleMap.key = _util.mapKey;
+				
+				googleMap.addEventListener(MapEvent.MAP_READY, googleMap_mapReady);
+				googleMap.addEventListener(MapEvent.MAP_PREINITIALIZE,mapevent_mappreinitialize);
+				this.addChild(googleMap);
+			}
+			
+			protected function geocoder_geocodingSuccess(evt:GeocodingEvent):void {
+				var result:Placemark = GeocodingResponse(evt.response).placemarks[0];
+				googleMap.setCenter(result.point,5);
+			}
+			
+			protected function geocoder_geocodingFailure(evt:GeocodingEvent):void {
+				//Alert.show("Unable to geocode address: " + evt.name);
+			}
+			
+			protected function googleMap_mapReady(evt:MapEvent):void {
+				googleMap.setSize(new Point(this.width, this.height));
+				googleMap.addControl(new ZoomControl());
+				googleMap.addControl(new MapTypeControl());
+				
+				var latlng:LatLng = new LatLng(lat,lon);
+				//Alert.show("Lat lng is: " + lat +  "   /   " + lon);
+				geocoder = new ClientGeocoder();
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocoder_geocodingSuccess);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocoder_geocodingFailure);
+				geocoder.reverseGeocode(latlng);
+				
+				xmark = new Marker(latlng,new MarkerOptions({tooltip:txt}));
+				googleMap.addOverlay(xmark);
+				
+				googleMap.setCenter(latlng);
+			}
+			
+			protected function mapevent_mappreinitialize(evt:MapEvent):void{
+				var myMapOptions:MapOptions = new MapOptions();
+				
+				myMapOptions.mapType = MapType.SATELLITE_MAP_TYPE;
+				googleMap.setInitOptions(myMapOptions);
+			}
+
+			protected function mapContainer_resize(evt:ResizeEvent):void {
+				if (googleMap)
+					googleMap.setSize(new Point(this.width, this.height));
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:TraceTarget includeLevel="true"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	
+</mx:UIComponent>

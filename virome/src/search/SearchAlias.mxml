@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				xmlns:library="services.library.*"
+				width="100%" height="100%"
+				title="Search alias"
+				showCloseButton="true"
+				close="removeMe()"
+				creationComplete="onCreationComplete()" >
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.SearchDBEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _searchDB:SearchDBEvent;
+			private var _util:MyUtility = new MyUtility();
+			
+			public function get searchDB():SearchDBEvent{
+				return _searchDB;
+			}
+			[Bindable] public function set searchDB(s:SearchDBEvent):void{
+				_searchDB = s;
+			}
+			
+			private function removeMe():void{
+				PopUpManager.removePopUp(this);	
+			}
+			
+			private function onCreationComplete():void{
+				if ((_util.app.cookie == null) || (! this.hasOwnProperty(_util.app.cookie.USERID)) || (_util.app.cookie.USERID < 0)){
+					var label:Label = new Label();
+					label.text = "Note: Recall past search jobs will be available shortly. Please login before running this search if you would to recall it later.";
+					this.addChildAt(label,2);
+				}
+			}
+			
+			
+			private function submitAlias():void{
+				// set alias for search job
+				_searchDB.alias = alias.text;
+				_searchDB.userId = (_util.app.cookie.hasOwnProperty("USERID")) ? _util.app.cookie.USERID : 0;
+				_searchDB.username = (_util.app.cookie.hasOwnProperty("USERNAME")) ? _util.app.cookie.USERNAME : "";
+				
+				// dispatch search event.
+				_util.app.dispatchEvent(searchDB);
+				
+				removeMe();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- button effects. -->
+		<mx:Zoom id="shrink" duration="100" zoomHeightTo=".9" zoomWidthTo=".9" />
+		<mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
+	</fx:Declarations>
+	
+	<mx:Label text="Your search request will be submitted shortly. You will be notified once results are ready."/>
+	<mx:Label text="Please assign a name to this search for easy of identifying later."/>
+	
+	<mx:Grid>
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Alias:"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput text="Search alias" maxChars="32" id="alias"/>
+			</mx:GridItem>
+	</mx:GridRow>	
+	</mx:Grid>
+	
+	<mx:ControlBar>
+		<mx:Button id="cancel" click="removeMe()" label="Cancel"/>
+		<mx:Button id="submit" click="submitAlias()" label="Submit" mouseDownEffect="{shrink}" mouseUpEffect="{revert}"/>
+	</mx:ControlBar>
+</mx:TitleWindow>

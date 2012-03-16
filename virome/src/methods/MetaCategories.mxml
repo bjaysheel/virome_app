@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" height="100%" creationComplete="init()"
+		 horizontalAlign="center">
+	
+	<fx:Script>
+		<![CDATA[
+			private function init():void{
+				var textStyle:StyleSheet = new StyleSheet();
+				textStyle.setStyle(".body", {fontSize:"11", fontWeight:"normal", textDecoration:"none"});
+				textStyle.setStyle("a", {color:"#3366FF", textDecoration:"none"});
+				textStyle.setStyle("a:link", { textDecoration: "none", color: "#3366FF" });
+				textStyle.setStyle("a:hover", { textDecoration: "underline" });
+				dbtext.styleSheet = textStyle;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:Text width="100%" condenseWhite="true" id="dbtext" paddingTop="10">
+		<mx:htmlText>
+			<![CDATA[
+			Results from BLAST searches against the MetaGenomes On-Line
+			database are split into one of six classes. Sequences showing homology
+			to only MGOL peptides are placed in 
+			<b>VIROME category 5-Environmental Proteins</b>. 
+			These viral metagenome ORFs are further
+			grouped into four sub-classes: Top hit viral; Only viral; Top hit microbial;
+			Only microbial. Viral metagenome ORFs showing no homology to the >50
+			million peptides in UniRef 100+ or MGOL are placed in 
+			<b>VIROME category 6-True ORFan</b>. 
+			]]>
+		</mx:htmlText>
+	</mx:Text>
+	
+	<mx:Image source="assets/viromepipe/metagenomeCat.png"/>
+</mx:VBox>

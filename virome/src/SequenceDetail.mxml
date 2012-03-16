@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:cfservice="services.*"
+	width="100%" height="100%"
+	name="Sequence Detail" 
+	addedToStage="onAddtoStage()" 
+	show="onShow()"
+	creationComplete="onCreationComplete()" 
+	xmlns:orfrpc="services.orfrpc.*" xmlns:readrpc="services.readrpc.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.MyChgTabEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import detail.MyDBHit;
+			import detail.MyHeatMap;
+			import detail.MyTaxGrid;
+			import detail.SeqDem;
+			
+			import mx.containers.HBox;
+			import mx.containers.VBox;
+			import mx.controls.Image;
+			import mx.controls.Label;
+			import mx.controls.Spacer;
+			import mx.controls.Text;
+			import mx.controls.VRule;
+			import mx.rpc.events.ResultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			
+			private var _sequenceId:Number = 0;
+			private var	_readId:Number = 0;
+			private var _environment:String = "undefined";
+			private var _seqname:String="undefined";
+			private var _ncRNAFlag:Boolean = false;
+			
+			private var _seqbasepair:String="";
+			private var _tabSelected:Number = 0;
+			private var _loadTab:Array = new Array();
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			
+			[Bindable] public function set sequenceId(v:Number):void{
+				_sequenceId = v;
+			}
+			[Bindable] public function set readId(v:Number):void{
+				_readId = v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set seqname(v:String):void{
+				_seqname=v;
+			}
+			[Bindable] public function set ncRNAFlag(value:Boolean):void {
+				_ncRNAFlag = value;
+			}
+			
+			public function get sequenceId():Number{
+				return _sequenceId;
+			}
+			public function get readId():Number{
+				return _readId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get seqname():String{
+				return _seqname;
+			}
+			public function get ncRNAFlag():Boolean{
+				return _ncRNAFlag;
+			}
+
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );				
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/SequenceDetail" );
+				
+				_tabNav.removeAllChildren();
+				_loadTab = new Array();
+				
+				onCreationComplete();
+			}
+			
+			protected function onCreationComplete():void{
+				//set panel title
+				_panel.title = "Sequence Detail for "  + seqname.substring(0,seqname.search(/_\d+_\d+_\d+$/));
+				
+				//set selected tab id based on orf name.
+				_tabSelected = parseInt(seqname.substr(seqname.search(/_d+$/),seqname.length));
+				if (ncRNAFlag){
+					_tabSelected=0;
+				}
+				
+				//get sequence information.
+				getReadSeqRequest.token=ReadRPC.getSequenceInfo(sequenceId,seqname,environment);
+				var v:virome = _util.app;
+				v.addEventListener(MyChgTabEvent.CHANGE_TAB_EVENT,changeTabEventHandler);
+			}  
+			
+			//test
+			
+			protected function changeTabEventHandler(event:MyChgTabEvent):void{
+				this._tabNav.selectedIndex = event.num;
+			}
+			
+			protected function readSeqResponse(event:ResultEvent):void{
+				var obj:Object = event.result;
+				
+				readTab(obj.read);
+				orfTab(obj.orf);
+			}
+			
+			protected function readTab(obj:Object):void{
+				//create read tab 
+				var read:SeqDem = new SeqDem();
+				var hbox:HBox = new HBox();
+				var vbox:VBox = new VBox();
+				var vbar:VRule = new VRule();
+			
+				vbar.percentHeight=100;
+				vbox.id = "leftbox";
+				vbox.name = "leftbox";
+				
+				hbox.percentHeight=100;
+				hbox.percentWidth=100;
+				hbox.id = obj.ID;
+				hbox.name= obj.NAME;
+				hbox.label="Read";
+				_tabNav.addChild(hbox);
+				
+				//keep read seq.
+				_seqbasepair=obj.BASEPAIR;
+				
+				//keep read id.
+				this.readId = obj.ID;
+				
+				// init read seq object
+				read.sname = obj.NAME;
+				read.size = obj.SIZE;
+				read.readbasepair = obj.BASEPAIR;
+				read.start = 0;
+				read.end = 0;
+				read.show();
+				read.validateNow();
+				
+				//add read info to vertical box first so that 
+				//taxonomy can be added later to the bottom section.
+				vbox.addChild(read);
+				
+				hbox.addChild(vbox);
+				hbox.addChild(vbar);
+				hbox.validateNow();
+				
+				getTaxInfo.token = ReadRPC.getTaxonomicInfo(readId,environment);
+			}
+			
+			protected function orfTab(arr:Array):void{
+				var hbox:HBox = new HBox();
+				// create orf tab(s)
+				for (var i:int=0; i<arr.length; i++){
+					hbox = new HBox();
+					hbox.percentHeight=100;
+					hbox.percentWidth=100;
+					hbox.id = arr[i].ID;
+					hbox.name = arr[i].NAME;
+					hbox.label="ORF "+ (i+1);
+					
+					_loadTab.push(0);
+					_tabNav.addChild(hbox);
+					_tabNav.validateNow();
+					
+					colorTab(arr[i].TYPE);
+				}
+				
+				//change tab view to the selected orf from search view.
+				//eg _1 or _2 or _3
+				_tabNav.selectedIndex = _tabSelected;				
+			}
+			
+			protected function taxInfoResponse(event:ResultEvent):void{
+				var obj:Object = event.result as Object;
+				var hbox:HBox = _tabNav.getChildAt(0) as HBox;
+				var vbox:VBox;
+				
+				vbox = new VBox();
+				vbox = hbox.getChildByName("leftbox") as VBox;
+				
+				if ((obj.TAXONOMY != undefined) && ((obj.TAXONOMY as Array).length)){
+					var taxObj:MyTaxGrid = new MyTaxGrid();
+					taxObj.makeGrid(obj.TAXONOMY);
+					
+					// add subheading divider
+					var headerbox:HBox = new HBox();
+					var header:Label = new Label();
+					headerbox.percentWidth = 100;
+					headerbox.styleName = "subheading";
+					header.text = "Taxonomic Information according to UniRef homologs";
+					headerbox.addChild(header);
+					vbox.addChild(headerbox);
+					
+					
+					// add taxonomy grid
+					vbox.addChild(taxObj);
+					
+					var t:Text = new Text();
+					t.percentWidth = 100;
+					t.setStyle("paddingTop",10);
+					t.text="Consensus taxonomy lineage (in order at 100% match)";
+					t.styleName="strong";
+					vbox.addChild(t);
+					
+					t = new Text();
+					t.percentWidth = 100;
+					t.setStyle("paddingBottom",15);
+					t.text = "     " + taxObj.lineage;
+					vbox.addChild(t);
+				}
+				
+				if ((obj.ACLAME != undefined) && ((obj.ACLAME as Array).length)){
+					var aclarr:Array = obj.ACLAME as Array;
+					
+					if (aclarr.length){
+						// add subheading divider
+						headerbox = new HBox();
+						header = new Label();
+						headerbox.percentWidth = 100;
+						headerbox.styleName = "subheading";
+						header.text = "Taxonomic Information according to ACLAME homologs";
+						headerbox.addChild(header);
+						vbox.addChild(headerbox);
+					}
+					
+					for (var i:int=0; i<aclarr.length; i++){
+						t = new Text();
+						t.percentWidth=100;
+						t.text = "     " + aclarr[i];
+						
+						vbox.addChild(t);
+					}
+				}
+
+				vbox.validateNow();
+
+				// remove left box and add the updated one
+				hbox.removeChildAt(0);
+				hbox.addChildAt(vbox,0);
+				
+				getORFTopHit.token = ReadRPC.getORFSummary(readId,environment,"",1);
+			}
+			
+			protected function allTopHitResponse(event:ResultEvent):void{
+				var obj:Object = event.result as Object;
+				var hbox:HBox = _tabNav.getChildAt(0) as HBox;
+				var vbox:VBox;
+				
+				// add image to the top right side.
+				vbox = new VBox();
+				vbox.id = "rightbox";
+				vbox.name = "rightbox";
+				var image:Image = new Image();
+
+				if (obj.IMAGE != undefined)
+					image.source = obj.IMAGE;
+				
+				vbox.addChild(image);
+				
+				// add top hit per database.
+				if (obj.UNIREF100P != undefined){
+					vbox.addChild(showTopHits(obj.UNIREF100P,"UNIREF100P",false));
+				}
+				if (obj.SEED != undefined){
+					vbox.addChild(showTopHits(obj.SEED,"SEED",false));
+				}
+				if (obj.KEGG != undefined){
+					vbox.addChild(showTopHits(obj.KEGG,"KEGG",false));
+				}
+				if (obj.COG != undefined){
+					vbox.addChild(showTopHits(obj.COG,"COG",false));
+				}
+				if (obj.ACLAME != undefined){
+					vbox.addChild(showTopHits(obj.ACLAME,"ACLAME",false));
+				}
+				if (obj.METAGENOMES != undefined){
+					vbox.addChild(showTopHits(obj.METAGENOMES,"METAGENOMES",false));
+				}
+				
+				// add right box to the tab window
+				hbox.addChild(vbox);
+				hbox.validateNow();
+			}
+			
+			protected function showTopHits(arr:Array, str:String, flag:Boolean):VBox{
+				var dbObj:MyDBHit = new MyDBHit();
+				var vbox:VBox = new VBox();
+				var top_arr:Array = new Array();
+				var fxn_arr:Array = new Array();
+				var lstr:String = new String();
+				
+				vbox.percentWidth = 100;
+				
+				// add subheading divider
+				var headerbox:HBox = new HBox();
+				var header:Label = new Label();
+				var _spacer:Spacer = new Spacer();
+				
+				headerbox.percentWidth = 100;
+				headerbox.styleName = "subheading";
+				header.text = str + " BLAST Hits";
+				headerbox.addChild(header);
+				
+				_spacer.height = 25;
+				
+				vbox.addChild(_spacer);
+				vbox.addChild(headerbox);
+				
+				if (flag){
+					top_arr.push(arr[0].hsp);
+					fxn_arr.push(arr[0].fxn);
+					lstr = "Top BLAST Hit";
+				}
+				else{
+					top_arr = arr;
+					lstr = "";
+				}
+				
+				if (str != "METAGENOMES"){
+					dbObj.knownHeader();
+					dbObj.showKnownHits(top_arr,str,lstr);
+
+					//add top FXN hit
+					if (flag){
+						lstr = "Top FXNal Hit";
+						if ((fxn_arr[0] != undefined) && (fxn_arr[0].EVALUE != undefined))
+							dbObj.showKnownHits(fxn_arr,str,lstr);
+					}
+				} else {
+					//add top BLAST hit
+					dbObj.knownHeader();
+					dbObj.showKnownHits(top_arr,str,lstr);
+				}
+				
+				vbox.addChild(dbObj);
+				
+				return vbox;
+			}
+			
+			protected function colorTab(v:String):void{
+				var color:String = "#CCCCCC";
+				
+				if (v.localeCompare("lack stop") == 0){
+					color = "#FF6600";
+				}
+				else if (v.localeCompare("lack start") == 0){
+					color = "#0066FF";
+				}
+				else if (v.localeCompare("incomplete") == 0){
+					color = "#FF00CC";
+				}
+				else if (v.localeCompare("complete") == 0){
+					color = "#33FF00";
+				}
+				
+				_tabNav.getTabAt(_tabNav.numChildren-1).setStyle("fillColors", ["white", color]);
+				_tabNav.getTabAt(_tabNav.numChildren-1).setStyle("backgroundColor", color);
+			}
+			
+			protected function changeTabView():void{
+				var newIndex:int=_tabNav.selectedIndex;
+				if ((!_loadTab[newIndex-1]) && (newIndex > 0)){
+					_loadTab[newIndex-1]=1;
+					var hbox:HBox = _tabNav.getChildAt(newIndex) as HBox;
+					getOrfSeqRequest.token = OrfRPC.getSequenceInfo(parseInt(hbox.id),_seqname,_environment,newIndex);
+				}
+			}
+			
+			protected function orfSeqResponse(event:ResultEvent):void{
+				var obj:Object = event.result as Object;
+				var hbox:HBox = _tabNav.getChildAt(obj.TABINDEX) as HBox;
+				var vbox:VBox = new VBox();
+				var vbar:VRule = new VRule();
+				
+				vbar.percentHeight=100;
+				vbox.id = "leftbox";
+				vbox.name = "leftbox";
+				
+				// init read seq object
+				var orf:SeqDem = new SeqDem();
+				orf.sname = obj.NAME;
+				orf.size = obj.SIZE;
+				orf.readbasepair = _seqbasepair;
+				orf.start = obj.START;
+				orf.end = obj.END;
+				orf.model = obj.MODEL;
+				orf.type = obj.TYPE;
+				orf.orfbasepair = obj.BASEPAIR;
+				orf.strand = obj.STRAND;
+				orf.frame = obj.FRAME;
+				orf.score = obj.SCORE;
+				orf.show();
+				orf.validateNow();
+				
+				//add orf object to vbox first
+				vbox.addChild(orf);
+				
+				hbox.addChild(vbox);
+				hbox.addChild(vbar);
+				hbox.validateNow();
+				
+				//get orf blast details
+				getBlastHit.token=OrfRPC.orfBlastHit(parseInt(hbox.id),environment,obj.TABINDEX,"",1);
+			}
+			
+			protected function orfBlastHitResponse(event:ResultEvent):void{
+				var obj:Object=event.result as Object;
+				var hbox:HBox = _tabNav.getChildAt(obj.TABINDEX) as HBox;
+				var image:Image = new Image();
+
+				var vbox:VBox = new VBox();
+				vbox.id = "rightbox";
+				vbox.name = "rightbox";
+				
+				if (obj.IMAGE != undefined){
+					image.source = obj.IMAGE;
+					vbox.addChild(image);
+					
+					// add top uniref hit per database.				
+					if (obj.UNIREF100P != undefined){
+						vbox.addChild(showTopHits(obj.UNIREF100P,"UNIREF100P",true));
+					}
+					if (obj.SEED != undefined){
+						vbox.addChild(showTopHits(obj.SEED,"SEED",true));
+					}
+					if (obj.KEGG != undefined){
+						vbox.addChild(showTopHits(obj.KEGG,"KEGG",true));
+					}
+					if (obj.COG != undefined){
+						vbox.addChild(showTopHits(obj.COG,"COG",true));
+					}
+					if (obj.ACLAME != undefined){
+						vbox.addChild(showTopHits(obj.ACLAME,"ACLAME",true));
+					}
+					if (obj.METAGENOMES != undefined){
+						vbox.addChild(showTopHits(obj.METAGENOMES,"METAGENOMES",true));
+					}
+					
+					hbox.addChild(vbox);
+					hbox.validateNow();
+					getBlastHeatMap.token = OrfRPC.heatMap(parseInt(hbox.id),_environment,obj.TABINDEX);
+					
+				}
+				else {
+					var t:Text = new Text();
+					t.text = "No significant hits found";
+					t.styleName = "strong";
+					vbox.addChild(t);
+					hbox.addChild(vbox);
+					hbox.validateNow();
+				}
+				
+			}
+			
+			protected function heatMapResponse(event:ResultEvent):void{
+				var obj:Object=event.result as Object;
+				var hm:MyHeatMap = new MyHeatMap();
+				var hbox:HBox = _tabNav.getChildAt(obj.TABINDEX) as HBox;
+				
+				var vbox:VBox = new VBox();
+				vbox = hbox.getChildByName("leftbox") as VBox;
+				
+				// add subheading divider
+				var headerbox:HBox = new HBox();
+				var header:Label = new Label();
+				headerbox.percentWidth = 100;
+				headerbox.styleName = "subheading";
+				header.text = "Heat Map of blast results (max 10)";
+				headerbox.addChild(header);
+				vbox.addChild(headerbox);
+				
+				hm.makeMap(obj);
+				
+				// add taxonomy grid
+				vbox.addChild(hm);
+				vbox.validateNow();
+				
+				// remove left box and add the updated one
+				hbox.removeChildAt(0);
+				hbox.addChildAt(vbox,0);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<readrpc:ReadRPC id="ReadRPC" showBusyCursor="true" fault="_util.faultHandler(event)"
+							 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.ReadRPC" />
+		<s:CallResponder id="getReadSeqRequest" result="readSeqResponse(event)" />
+		<s:CallResponder id="getTaxInfo" result="taxInfoResponse(event)"/>
+		<s:CallResponder id="getORFTopHit" result="allTopHitResponse(event)" />
+		
+		<orfrpc:OrfRPC id="OrfRPC" showBusyCursor="true" fault="_util.faultHandler(event)"
+						   destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.OrfRPC" />
+		<s:CallResponder id="getOrfSeqRequest" result="orfSeqResponse(event)" />
+		<s:CallResponder id="getBlastHit" result="orfBlastHitResponse(event)" />
+		<s:CallResponder id="getBlastHeatMap" result="heatMapResponse(event)" />
+	</fx:Declarations>
+	
+	<mx:Panel title="Sequence Details" layout="vertical" width="100%" height="100%" name="Sequence Detail" id="_panel">
+		<mx:TabNavigator id="_tabNav" width="100%" height="100%" change="changeTabView()" />
+	</mx:Panel>
+</mx:Canvas>

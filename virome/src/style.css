@@ -1,0 +1,239 @@
+/*
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2003-2006 Adobe Macromedia Software LLC and its licensors.
+// All Rights Reserved.
+// The following is Sample Code and is subject to all restrictions on such code
+// as contained in the End User License Agreement accompanying this product.
+// If you have received this file from a source other than Adobe,
+// then your use, modification, or distribution of it requires
+// the prior written permission of Adobe.
+//
+////////////////////////////////////////////////////////////////////////////////
+*/
+
+/*
+//----------------------------
+//  Global styles
+//----------------------------
+*/
+
+@namespace fx "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+global {
+	modalTransparency:0.85;
+	modalTransparencyBlur:8;
+	modalTransparencyColor:#333333;
+}
+
+mx|Button {
+   themeColor: #cc3300;
+}
+
+mx|LinkButton {
+	color: #0066CC;
+	disabledColor: #999999;
+	textDecoration: underline;
+}
+
+mx|TitleWindow {
+	closeButtonSkin: Embed(source="assets/icons/Stop.png"); 
+}
+
+mx|CursorManager {
+	busyCursor: Embed(source="assets/BusyCursor.swf");
+}
+
+mx|Text.htmlText.a:link, mx|Text.htmlText.a:visited {text-decoration:none; color:#cc3300; font-weight:bold}
+mx|Text.a:hover {text-decoration:underline}
+mx|Text.a:active {text-decoration:none}
+mx|Text.a:focus {outline:none}
+mx|Text.li {margin-left:15px}
+
+/*
+//----------------------------
+// Named styles
+//----------------------------
+*/
+.glass {
+    borderColor:		    #767473;
+    fillAlphas: 		    .60, .60, .60, .60;
+    fillColors: 		    #888888, #F3F3F3, #9E9E9E, #FCFCFC;
+    highlightAlphas:	    .07, .45;
+}
+
+.glassSlider {
+    fillAlphas: 		    .80, .80, .80, .80;
+    fillColors: 		    #F3F3F3, #BBBBBB, #FCFCFC, #CCCCCC;
+}
+
+.listItem {
+    paddingLeft:            4;
+    paddingRight:           4;
+    horizontalGap:          5;
+    verticalAlign:          "middle";
+    backgroundColor:        #FFFFFF;
+    backgroundAlpha:        .5;
+    borderStyle:            "outset";
+}
+
+.odd {
+	backgroundColor: #F4FBFF;
+}
+
+.sectionHeader {
+    fontWeight:             "bold";
+    fontSize:               11;
+}
+
+.homeSection {
+    cornerRadius:           4;
+    borderStyle:            "solid";
+}
+
+mx|Application {
+    backgroundColor:		#AAB2B7;
+}
+
+.sequence {
+	fontFamily: "Courier, monospace";
+	font-size: 11px;
+}
+
+.currentHit {
+	backgroundColor: 		#66FF66;    
+	cornerRadius: 			3;
+	fillAlphas: 			.60, .40;
+}
+
+.removeHit {
+	backgroundColor:		#FFFFFF;
+}
+
+.complete {
+	color: 		#33FF00;
+}
+
+.prime5 {
+	color: 		#0066FF;
+}
+
+.prime3 {
+	color:		#FF6600;
+}
+
+.incomplete {
+	color:		#FF00CC;
+}
+
+.completeSeq {
+	color: 		#33FF00;
+	fontFamily: "Courier, monospace";
+	fontSize: 11px;
+}
+
+.prime5Seq {
+	color: 		#0066FF;
+	fontFamily: "Courier, monospace";
+	fontSize: 11px;
+}
+
+.prime3Seq {
+	color:		#FF6600;
+	fontFamily: "Courier, monospace";
+	fontSize: 11px;
+}
+
+.incompleteSeq, .errorBlast {
+	color:		#FF00CC;
+	fontFamily: "Courier, monospace";
+	fontSize: 11px;
+}
+
+.mid {
+	textAlign: center;
+}
+
+.strong {
+	fontWeight: bold;
+}
+
+.menu {
+	paddingBottom: 5; 
+	alpha: 0.3;
+	horizontalGap: 10;
+	letterSpacing: 1;
+}
+
+.header {
+	font-weight: bold;
+	font-size: 12pt;
+	font-variant: small-caps;
+	letterSpacing: 1px;
+	color: #FF6633
+}
+
+.labels {
+	color: #FF33FF;
+	font-weight: bold;
+}
+
+.subheading {
+	backgroundColor: #ffcc99;
+	font-weight: bold;
+	font-variant: small-caps;
+	letterSpacing: 1px;
+}
+
+.error {
+	backgroundColor: #eac7c7;
+}
+
+.ok {
+	backgroundColor: #ffffff;
+}
+
+.rightLine {
+	borderStyle: solid;
+	border-right: thin solid #E7E9E9;
+}
+
+.rowLine {
+	border-bottom: thin solid #E9E7E7;
+}
+
+.total {
+	font-weight: bold;
+	font-vairant: small-caps;
+}
+
+.home {
+	font-size: 11px;
+}
+
+.acrd {
+   fillColors: #339900, #cccccc, #cccccc, #66cc00;
+}
+
+mx|Panel {
+	borderAlpha: 0.1;
+}
+
+.catalogPanel {
+    highlightAlphas:        .5, .25;
+    headerColors:           #456F84, #9ABBC9;
+    borderAlpha:            1;
+    borderColor:            #FFFFFF;
+    borderThicknessRight:   1;
+    borderThicknessBottom:  1;
+    paddingLeft:			0;
+    paddingTop:				0;
+    paddingRight:           3;
+    paddingBottom:          0;
+}
+
+.lightLink{
+	color: #AAB2B7;
+	textDecoration: underline;	
+}

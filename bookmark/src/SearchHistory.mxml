@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				layout="absolute" width="100%" height="100%" minWidth="500"
+				close="removeMe()" showCloseButton="true" 
+				x="{(this.parent.width/2)-(this.width/2)}" y="50" 
+				title="Bookmark">
+
+	<fx:Script>
+		<![CDATA[
+			import com.events.UpdateBookmarkEvent;
+			import com.events.RecallBookmarkEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			[Bindable] private var _endPoint:String = null;
+			[Bindable] private var _cfcSourcePath:String = null;
+			[Bindable] private var _bookmarkDP:ArrayCollection = new ArrayCollection();
+			
+			[Bindable] public function set endPoint(s:String):void{
+				_endPoint = s;
+			}
+			[Bindable] public function set cfcSourcePath(s:String):void{
+				_cfcSourcePath = s;
+			}
+			[Bindable] public function set bookmarkDP(a:ArrayCollection):void{
+				_bookmarkDP = a;
+			}
+			
+			public function get endPoint():String{
+				return _endPoint;
+			}
+			public function get cfcSourcePath():String{
+				return _cfcSourcePath;
+			}
+			public function get bookmarkDP():ArrayCollection{
+				return _bookmarkDP;
+			}
+			
+			private function recallSearch(event:ListEvent):void{
+				var recall:RecallBookmarkEvent = new RecallBookmarkEvent();
+				recall.userId = event.currentTarget.selectedItem.USERID;
+				recall.jobName = event.currentTarget.selectedItem.JOBNAME;
+				recall.jobAlias = event.currentTarget.selectedItem.JOBALIAS;
+				recall.searchParam = event.currentTarget.selectedItem.SEARCHPARAM;
+				
+				this.dispatchEvent(recall);
+				
+				removeMe();
+			}
+
+			private function removeMe():void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<mx:DataGrid id="searchhistory" dataProvider="{bookmarkDP}" itemClick="recallSearch(event)" width="100%">
+		<mx:columns>
+			<mx:DataGridColumn dataField="JOBNAME" headerText="Job Name"/>
+			<mx:DataGridColumn dataField="JOBALIAS" headerText="Job Alias"/>
+			<mx:DataGridColumn dataField="RCD_COUNT" headerText="No. of Records"/>
+			<mx:DataGridColumn dataField="DATECREATED" headerText="Search Date"/>
+		</mx:columns>
+	</mx:DataGrid> 
+</mx:TitleWindow>

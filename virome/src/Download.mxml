@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:mx="library://ns.adobe.com/flex/mx"
+			xmlns:library="services.library.*"
+			width="100%" height="100%" minWidth="500" 
+			showCloseButton="true" 
+			layout="vertical"
+			title="Download multi-FASTA file(s)"
+			addedToStage="onAddtoStage()"
+			show="onShow()" close="removeMe()"
+			creationComplete="onCreationComplete()" >
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.FileSelectorEvent;
+			import com.events.SearchDBEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] private var _libs:ArrayCollection = new ArrayCollection();
+			
+			//main use of this var is to prepopulate lib drop down
+			//when directed here.
+			private var _tempLibId:Number = 0;
+			
+			public var tracker:AnalyticsTracker;
+			
+			protected function removeMe():void{
+				PopUpManager.removePopUp(this);	
+			}
+			
+			protected function onAddtoStage():void{
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/Download" );
+			}
+			
+			protected function onCreationComplete():void{
+				//add event listner for log in/out, to refresh library drop down with appropriate private data.
+				_util.app.addEventListener("userLogInOut",refreshLibraryList);
+				
+				reads.selected = false;
+				orf.selected = false;
+				orf_nuc.selected = false;
+				
+				//parameter passed is groupId
+				environmentRequest.token = Library.getEnvironmentObject('');
+			}
+			
+			protected function environmentResponse(event:ResultEvent):void{
+				env_item.dataProvider = event.result as ArrayCollection;
+			}
+			
+			protected function refreshLibraryList(event:Event):void{
+				getlibReq();
+			}
+			
+			protected function getlibReq():void{
+				var libraryIdList:String = "";
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
+					libraryIdList = _util.app.cookie.LIBRARYID;
+				
+				if (env_item.selectedIndex != 0)	
+					libraryRequest.token=Library.getLibraryObject(env_item.selectedItem.data,libraryIdList);
+			}
+			
+			protected function libraryResponse(event:ResultEvent):void{
+				_libs = event.result as ArrayCollection;
+				
+				lib_item.validateNow();
+				lib_item.selectedIndex=0;
+				
+				for (var i:int=0;i<_libs.length; i++){
+					if (_libs.getItemAt(i).data == _tempLibId){
+						lib_item.selectedIndex=i;
+						break;
+					}
+				}
+			}
+			
+			protected function submitForm(event:Event):void{
+				var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+				
+				var tObject:SearchDBEvent = new SearchDBEvent();
+				tObject.environment = env_item.selectedItem.data;
+				tObject.library = parseInt(lib_item.selectedItem.data);
+				
+				var fObject:FileSelectorEvent = new FileSelectorEvent();
+				fObject.libRead = reads.selected;
+				fObject.libPeptide = orf.selected;
+				fObject.libNucleotide = orf_nuc.selected;
+				
+				downloadPanel._fileSelector = fObject.getFileSelectorObject();
+				downloadPanel._searchDBObj = tObject.getStruct();
+				
+				PopUpManager.bringToFront(downloadPanel);
+				PopUpManager.centerPopUp(downloadPanel);
+
+				removeMe();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />
+		<s:CallResponder id="libraryRequest" result="libraryResponse(event)" />
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library"/>
+		
+		<!-- button effects. -->
+		<mx:Zoom id="shrink" duration="100" zoomHeightTo=".9" zoomWidthTo=".9" />
+		<mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
+	</fx:Declarations>
+
+	<mx:Grid width="100%" height="100%" borderStyle="none" id="downloadForm">
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Environment" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="env_item" change="getlibReq()" width="100%" rowCount="10"/>	
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Query Library" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="100%" top="10"/> 
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Reads"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:CheckBox id="reads"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Orfs (peptides)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:CheckBox id="orf"/>
+			</mx:GridItem>
+		</mx:GridRow>
+
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Orfs (nucleotide)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:CheckBox id="orf_nuc"/>
+			</mx:GridItem>
+		</mx:GridRow>
+
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Button id="submit" label="Downlaod" name="Download" mouseDownEffect="{shrink}" 
+						   mouseUpEffect="{revert}" 
+						   click="submitForm(event);"/>
+			</mx:GridItem>
+			
+			<mx:GridItem>
+				<mx:Button id="cancel" label="Cancel" name="Cancel" mouseDownEffect="{shrink}" 
+						   mouseUpEffect="{revert}" 
+						   click="removeMe();"/>
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>	
+
+</mx:TitleWindow>

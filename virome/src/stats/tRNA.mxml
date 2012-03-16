@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx"   
+		   xmlns:cfservice="services.*"
+		   xmlns:stats="stats.*" 
+		   xmlns:local="*"		    
+		   styleName="catalogPanel" 
+		   width="100%" height="100%" 
+		   borderStyle="solid" 
+		   title="tRNA" 
+		   addedToStage="onAddtoStage()" 
+		   show="onShow()" xmlns:statistics="services.statistics.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.ChartnData;
+			import com.MyUtility;
+			import com.component.MyGridItem;
+			import com.component.MyGridRow;
+			import com.component.MyNumberFormatter;
+			import com.events.SetSearchDBFormEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.charts.HitData;
+			import mx.charts.events.ChartItemEvent;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Label;
+			import mx.controls.LinkButton;
+			import mx.controls.Text;
+			import mx.events.ToolTipEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var doubleClickFlag:Boolean = true;
+			
+			public var tracker:AnalyticsTracker;
+
+			private var _libraryId:Number = 0;
+			private var _environment:String = "";
+			private var _libraryInfoObject:Object;
+			private var _flag:Boolean = true;			
+			
+			[Bindable] public function set libraryId(v:Number):void{
+				_libraryId = v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject = v;
+			}
+			[Bindable] public function set flag(v:Boolean):void{
+				_flag = v;
+			}
+			
+			public function get libraryId():Number{
+				return _libraryId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			public function get flag():Boolean{
+				return _flag;
+			}
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );			
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/STATISTICS/tRNA" );
+				
+				if ((flag) && (libraryId > 0) && (environment.length > 0)){
+					flag = false;
+					trnaStat.token = Statistics.gettRNAStats(libraryId,environment);
+				}
+				
+				
+				tRNAChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+			}
+			
+			protected function tRNAResponse(event:ResultEvent):void{
+				demo.libraryInfoObject = libraryInfoObject;
+				demo.showValues();
+				
+				var xml:XML = new XML(new String(event.result));
+				
+				if (xml.children().length()){
+					graph.visible = true;
+					msg.visible = false;
+					tRNAChart.dataProvider = xml.children();
+					trnaSeq.token = Statistics.gettRNASeq(libraryId,environment);
+					
+				}else {
+					graph.visible = false;
+					msg.visible = true;
+				}
+				
+				demo.validateNow();
+			}
+			
+			protected function tRNASeqResponse(event:ResultEvent):void{
+				var ac:ArrayCollection = event.result as ArrayCollection;				
+				var gr:MyGridRow = new MyGridRow();
+				var gi:MyGridItem = new MyGridItem();
+				var lb:Label = new Label();
+				var t:Text = new Text();
+				
+				dg.removeAllChildren();
+				
+				lb.text = "Sequence Name";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "tRNA No.";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Start";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "End";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Codon";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Intron";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				
+				lb = new Label();
+				gi = new MyGridItem();
+				lb.text = "Score";
+				lb.styleName = "strong";
+				gi.addChild(lb);
+				gr.addChild(gi);
+				gr.header();
+				
+				dg.addChild(gr);
+				
+				for (var i:int=0; i<ac.length; i++){
+					gr = new MyGridRow();
+					gi = new MyGridItem();
+					
+					if ((i%2)!=0)
+						gr.odd();
+					    
+					t = new Text();
+					t.text = ac.getItemAt(i).NAME;
+					var link:LinkButton = new LinkButton();
+					link.label = ac.getItemAt(i).NAME;
+					link.addEventListener(MouseEvent.CLICK,seqClickEvent);
+					gi.addChild(link);
+					gr.addChild(gi);
+					
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = ac.getItemAt(i).NUM;
+					gi.addChild(t);
+					gr.addChild(gi);
+						
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = ac.getItemAt(i).TRNA_START;
+					gi.addChild(t);
+					gr.addChild(gi);
+					
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = ac.getItemAt(i).TRNA_END;
+					gi.addChild(t);
+					gr.addChild(gi);
+					
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = ac.getItemAt(i).ANTI;
+					gi.addChild(t);
+					gr.addChild(gi);
+					
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = ac.getItemAt(i).INTRON;
+					gi.addChild(t);
+					gr.addChild(gi);
+					
+					t = new Text();
+					gi = new MyGridItem();
+					t.text = new MyNumberFormatter().format(ac.getItemAt(i).SCORE);
+					gi.addChild(t);
+					gr.addChild(gi);
+					
+					dg.addChild(gr);
+				}
+			}
+			
+			protected function dataTipFunc(hd:HitData):String {
+				return ("Codon: " + hd.item.@LABEL + "\n" + "Count: " + hd.item.@VALUE);
+			}
+			
+			protected function chartClick(event:MouseEvent,str:String):void{
+				new ChartnData(event,libraryInfoObject['LIBNAME'],str);
+			}
+			
+			protected function seqClickEvent(e:MouseEvent):void{
+				var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+				_sf.environment = environment;
+				_sf.library = libraryId;
+				_sf.sequence = e.currentTarget.label;
+				_sf.vircat = "tRNA";
+				_sf.evalue = 0.1;
+				
+				_util.simulateSearchClick(_sf);
+			}
+			
+			protected function tRNAClickHandler(event:ChartItemEvent):void{
+				//check if double click or single click
+				var timer:Timer = new Timer(500,1);
+				var xml:XML = (event.hitData.chartItem.item as XML);
+				
+				if (doubleClickFlag){
+					timer.addEventListener(TimerEvent.TIMER_COMPLETE,function ():void{doubleClickFlag=true;});
+					timer.start();
+					doubleClickFlag = false;
+				} else {
+					timer.stop();
+					doubleClickFlag = true;
+					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+					_sf.environment = environment;
+					_sf.library = libraryId;
+					_sf.readId = xml.@IDLIST;
+					_sf.vircat = "tRNA";
+					_sf.evalue = 0.1;
+					
+					_util.simulateSearchClick(_sf);
+				}	
+			}
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<s:CallResponder id="trnaStat" result="tRNAResponse(event)"/>
+		<s:CallResponder id="trnaSeq" result="tRNASeqResponse(event)"/>
+		<statistics:Statistics id="Statistics" showBusyCursor="true" fault="_util.faultHandler(event)"
+							  destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Statistics" />
+	</fx:Declarations>
+
+	<mx:Canvas width="100%" height="100%" horizontalScrollPolicy="off">
+		<mx:VBox width="100%" horizontalGap="0" verticalGap="0" paddingRight="20" paddingBottom="15">
+			<stats:LibraryDemograph id="demo" libraryInfoObject="{libraryInfoObject}" width="100%"/>
+			
+			<mx:Text text="No tRNA found for the give library" width="100%" textAlign="center" styleName="strong" visible="false" id="msg"/>
+
+			<mx:VBox id="graph" width="100%" visible="false">				
+				<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">
+					<mx:text>
+						The histogram below shows the distribution of tRNA. 
+						Each bar represents the number of sequences for a certain codon.
+					</mx:text>
+				</mx:Text>
+				
+				<mx:BarChart id="tRNAChart" width="100%" height="100%"
+							 showDataTips="true" dataTipFunction="dataTipFunc"  
+							 itemClick="tRNAClickHandler(event);" 
+							 click="chartClick(event,'tRNA');"
+							 toolTip="tip"
+							 paddingBottom="0" paddingLeft="0" 
+							 paddingRight="0" paddingTop="0">
+					
+					<mx:horizontalAxis>
+						<mx:LinearAxis id="hAxis"/>
+					</mx:horizontalAxis>
+					<mx:horizontalAxisRenderers>
+						<mx:AxisRenderer labelRotation="-45" axis="{hAxis}"/>
+					</mx:horizontalAxisRenderers>
+					<mx:verticalAxis>
+						<mx:CategoryAxis id="vAxis" categoryField="@LABEL"/>
+					</mx:verticalAxis>
+					
+					<mx:series>
+						<mx:BarSeries id="colSeries" xField="@VALUE"/>
+					</mx:series>
+				</mx:BarChart>
+				
+				<mx:Grid width="100%" id="dg" paddingTop="35" verticalGap="0" />
+			</mx:VBox>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>

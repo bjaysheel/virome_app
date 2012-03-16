@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  xmlns:cfservice="services.*"
+		  xmlns:com="com.*"
+		  xmlns:local="*"
+		  width="100%" height="100%" 
+		  creationComplete="onCreationComplete()" xmlns:statistics="services.statistics.*"> 
+	
+	<fx:Script>
+		<![CDATA[
+			import com.GeneralObject;
+			import com.MyUtility;
+			import com.google.analytics.debug.Label;
+			
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] public var isPrivate:Boolean = false;
+						
+			protected function onCreationComplete():void{
+				var obj:GeneralObject = new GeneralObject();
+				obj.sType = 'overview';
+				obj.libraryId = -1;
+				
+				if (isPrivate && _util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined){
+					obj.userId = _util.app.cookie.USERID;
+					obj.libraryIdList = _util.app.cookie.LIBRARYID;
+				}
+					
+				bevRequest.token = Statistics.getXMLDoc(obj.struct);
+			}
+			
+			protected function bevResponse(event:ResultEvent):void{
+				var obj:Object = event.result as Object;
+				if (obj.msg != "Success"){
+					this.removeChild(bevchart);
+					var msg:Label = new Label();
+					msg.text = obj.msg;
+					this.addChild(msg);	
+				} else {
+					var xml:XML = new XML(new String(obj.xdoc));
+					bevchart.rootNode = xml;
+					bevchart.children = xml.@CHILDREN;
+					
+					//if its a private view then no need to go to browse page
+					if (!isPrivate)
+						bevchart.direct = xml.@DIRECT;
+					
+					bevchart.showBar();
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CallResponder id="bevRequest" result="bevResponse(event)" />
+		<statistics:Statistics id="Statistics" showBusyCursor="true" fault="_util.faultHandler(event)"
+							  destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Statistics" />
+	</fx:Declarations>
+	
+	<local:BirdsEyeViewChart id="bevchart" width="100%" height="100%" isPrivate="{isPrivate}"/>
+</mx:VBox>

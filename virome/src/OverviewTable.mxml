@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:cfservice="services.*"
+		 xmlns:component="com.component.*"
+		 xmlns:com="com.*"
+		 xmlns:local="*"
+		 width="100%" height="100%" 
+		 creationComplete="onCreationComplete()" xmlns:library="services.library.*"> 
+	
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.component.MyNumberFormatter;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			[Bindable] public var isPrivate:Boolean = false;
+
+			protected function onCreationComplete():void{
+				var libraryIdList:String = '';
+				var userId:int = -1;
+				
+				if (isPrivate && _util.app.cookie != null && _util.app.cookie.USERID != undefined){
+					libraryIdList = _util.app.cookie.LIBRARYID;
+					userId = _util.app.cookie.USERID;
+				}
+				
+				overviewRequest.token = Library.getServerOverview(userId,libraryIdList,isPrivate);
+			}
+			
+			protected function overviewResponse(event:ResultEvent):void{
+				var ac:ArrayCollection = event.result as ArrayCollection;
+				var nf:MyNumberFormatter = new MyNumberFormatter();
+				var nf0:MyNumberFormatter = new MyNumberFormatter();
+				var gi:MyGridItem;
+				var gr:MyGridRow;
+				var lb:Label;
+				var txt:Text;
+				var tReads:Number = 0;
+				var tORF:Number = 0;
+				var toSize:Number = 0;
+				var trSize:Number = 0;
+				var tLib:Number = 0;
+				
+				nf0.updatePrecision(0);
+				
+				for (var i:int=0;i<ac.length; i++){
+					var obj:Object = ac.getItemAt(i);
+					gr = new MyGridRow();
+					
+					if (i%2 !=0)
+						gr.odd();
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = _util.properCase(obj.ENVIRONMENT);
+					//txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf0.format(obj.LIBCOUNT);
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					tLib += obj.LIBCOUNT;
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf0.format(obj.READS);
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					tReads += obj.READS;
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf.format((obj.R_SIZE/1000000)) + " Mbp";
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					trSize += obj.R_SIZE;
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf0.format(obj.R_SIZE/obj.READS);
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf0.format(obj.ORFS);
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					tORF += obj.ORFS;
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf.format(((obj.O_SIZE*3)/1000000)) + " Mbp";
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					toSize += obj.O_SIZE;
+					
+					txt = new Text();
+					gi = new MyGridItem();
+					txt.text = nf0.format(obj.O_SIZE/obj.ORFS);
+					txt.setStyle("textAlign","right");
+					txt.percentWidth=100;
+					gi.percentWidth=100;
+					gi.addChild(txt);
+					gr.addChild(gi);
+					
+					grid.addChild(gr);
+				}
+				
+				gr = new MyGridRow();
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = "TOTAL";
+				txt.styleName="strong";
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf0.format(tLib);
+				txt.styleName="strong";
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				txt.setStyle("textAlign","right");
+				gi.width=50;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf0.format(tReads);
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf.format((trSize/1000000))+" Mbp";
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf0.format(trSize/tReads);
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf0.format(tORF);
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf.format(((toSize*3)/1000000))+" Mbp";
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				txt = new Text();
+				gi = new MyGridItem();
+				txt.text = nf0.format(toSize/tORF);
+				txt.styleName="strong";
+				txt.setStyle("textAlign","right");
+				txt.percentWidth=100;
+				gi.percentWidth=100;
+				gi.addChild(txt);
+				gr.addChild(gi);
+				
+				grid.addChild(gr);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+						   destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
+		<s:CallResponder id="overviewRequest" result="overviewResponse(event)"/>		
+	</fx:Declarations>
+	
+	<mx:Label text="Summary of VIROME metagenomes by Environment" styleName="strong" paddingBottom="10" paddingTop="10"/>
+	
+	<!--add totals numbers table-->
+	<mx:Grid verticalGap="0" id="grid">
+		<component:MyGridRow width="100%" height="100%" styleName="odd">
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="Environment" styleName="strong"/>
+			</component:MyGridItem>
+			
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="No. of Library(s)" styleName="strong"/>
+			</component:MyGridItem>
+			
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="No. of Reads" styleName="strong"/>
+			</component:MyGridItem>				
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="Mbp of Reads (nt)" styleName="strong"/>
+			</component:MyGridItem>				
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="Mean Read len. (nt)" styleName="strong"/>
+			</component:MyGridItem>
+			
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="No. of ORFs" styleName="strong"/>
+			</component:MyGridItem>
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="Mbp of ORFs (nt)" styleName="strong"/>
+			</component:MyGridItem>
+			<component:MyGridItem width="100%" height="100%">
+				<mx:Text text="Mean ORF len. (aa)" styleName="strong"/>
+			</component:MyGridItem>
+			
+			<!--<com:MyGridItem width="100%" height="100%">
+			<mx:Text text="No. of rRNA" styleName="strong"/>
+			</com:MyGridItem>
+			<com:MyGridItem width="100%" height="100%">
+			<mx:Text text="Mbp of rRNA" styleName="strong"/>
+			</com:MyGridItem>
+			<com:MyGridItem width="100%" height="100%">
+			<mx:Text text="Mean rRNA len." styleName="strong"/>
+			</com:MyGridItem>-->
+		</component:MyGridRow>			
+	</mx:Grid>
+</mx:VBox>

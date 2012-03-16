@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark"  
+		   xmlns:mx="library://ns.adobe.com/flex/mx"
+		   title="General Library Information"
+		   xmlns:cfservice="services.*" 
+		   layout="vertical"
+		   horizontalScrollPolicy="off"
+	       styleName="catalogPanel"
+		   width="100%" height="100%"
+		   initialize="init()" 
+		   hide="onHide();" 
+		   show="onShow();" xmlns:com="com.*" xmlns:library="services.library.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.ChartnData;
+			import com.MyDownloadChart;
+			import com.MyLibraryObject;
+			import com.MyUtility;
+			import com.component.MyNumberFormatter;
+			import com.component.MyToolTip;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.charts.ColumnChart;
+			import mx.charts.HitData;
+			import mx.charts.chartClasses.ChartBase;
+			import mx.charts.events.ChartEvent;
+			import mx.collections.ArrayCollection;
+			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.events.ToolTipEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.ToolTipManager;
+			import mx.rpc.events.ResultEvent;
+			
+			public var tracker:AnalyticsTracker;
+			
+			private var _libraryInfoObject:Object = new Object();
+			private var nf:NumberFormatter = new NumberFormatter();
+			private var lobj:MyLibraryObject = new MyLibraryObject();
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();			
+			[Bindable] private var _nucleotideChartData:XMLListCollection = new XMLListCollection();
+			[Bindable] private var peptideChartData:XMLListCollection = new XMLListCollection();
+			[Bindable] private var _gcChartData:XMLListCollection = new XMLListCollection();
+			
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject = v;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			
+			protected function init():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+				
+				nf.precision = 0;
+				ToolTipManager.toolTipClass = MyToolTip;
+				
+				nucleotideChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+				peptideChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+				gcChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
+			}
+			
+			public function onHide():void{
+				dropMap();
+			}
+			
+			public function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/STATISTICS/General" );
+				
+				addMap();
+			}
+		
+			public function clear():void{
+				_project.text="";
+				_environment.text="";
+				_library.text="";
+				_libType.text="";
+				_citation.label="";
+				_citation.enabled = false;
+				_samdate.text="";
+				_geo.text="";
+				_reads.text="";
+				_orfs.text="";
+				_comorf.text="";
+				_incorf.text="";
+				_strorf.text="";
+				_stporf.text="";
+				_coding.text="";
+				_seqmethod.text="";
+				_ampmethod.text="";
+				_filter.text="";
+				
+				_map.removeAllChildren();
+			}
+			
+			public function populate():void{
+				clear();
+				
+				//library information
+				_project.text = _util.properCase(libraryInfoObject['PROJECT']);
+				_environment.text = _util.properCase(libraryInfoObject['ENVIRONMENT']);
+				_library.text = _util.properCase(libraryInfoObject['LIBNAME']) + " (" + libraryInfoObject['PREFIX'] + ")";
+				_libType.text = libraryInfoObject['LIBTYPE'];
+				_samdate.text = libraryInfoObject['SAMPLEDATE'].toString().length ? libraryInfoObject['SAMPLEDATE'] : "N/A";
+				
+				//mean and stdev
+				_mrl.text = new MyNumberFormatter().format(libraryInfoObject['RMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['RSTDEV']) + ")";
+				_mol.text = new MyNumberFormatter().format(libraryInfoObject['OMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['OSTDEV']) + ")";
+					
+				//geo location
+				_geo.text = (libraryInfoObject['LOCATION'].toString().length) ? libraryInfoObject['LOCATION'] : "N/A";
+				_geo.text += (libraryInfoObject['COUNTRY'].toString().length) ? ", "+ libraryInfoObject['COUNTRY'] : "";
+				_geo.text += ((libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length)) ? 
+							" (" + new MyNumberFormatter().format(libraryInfoObject['LAT'])+ "" + libraryInfoObject['LATHEM'] + 
+							"," + new MyNumberFormatter().format(libraryInfoObject['LON'])+ "" + libraryInfoObject['LONHEM'] + ")" : "";
+				
+				
+				if (_geo.text.length > 50){
+					var t:String = _geo.text.substr(0,50) + "-\n" + _geo.text.substr(50,_geo.text.length);
+					_geo.text = t;
+				}
+				
+				//lib sampeling method
+				_seqmethod.text = (libraryInfoObject['SEQTYPE'].toString().length) ? libraryInfoObject['SEQTYPE'] : "N/A";
+				_ampmethod.text = (libraryInfoObject['AMPLIFICATION'].toString().length) ? libraryInfoObject['AMPLIFICATION'] : "N/A"
+				
+				_filter.text = (libraryInfoObject['FILTER_LOWER'].toString().length) ? libraryInfoObject['FILTER_LOWER'] : " " +
+							   (libraryInfoObject['FILTER_UPPER'].toString().length) ? libraryInfoObject['FILTER_UPPER'] : " ";
+				
+				//create citation links.
+				_citation.label = (libraryInfoObject['CITATION'].toString().length > 50) ? libraryInfoObject['CITATION'].substr(0,50) + "..." : libraryInfoObject['CITATION'];
+				_citation.toolTip = libraryInfoObject['CITATION'];
+				_citation.name = libraryInfoObject['LINK'];
+				
+				addMap();
+				
+				if (libraryInfoObject['LINK'].toString().length)
+					_citation.enabled = true;
+				else _citation.enabled = false;
+				
+				if (libraryInfoObject.DETAIL.READ != undefined  && libraryInfoObject.DETAIL.ORFTYPE != undefined && libraryInfoObject.DETAIL.VIRCAT != undefined){
+					//populate read and orf counts and magebases.
+					populateCount(libraryInfoObject.DETAIL);
+				}
+				
+				getHistogram.addEventListener(ResultEvent.RESULT,nhistogramResponse);
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"read");
+			}
+			
+			protected function addMap():void{
+				var lat:Number=0;
+				var lon:Number=0;
+				
+				_map.removeAllChildren();
+				
+				//set map
+				if ((libraryInfoObject['LAT'] != undefined) && (libraryInfoObject['LON'] != undefined) &&
+					(libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length)){
+					var gmap:MyGoogleMap = new MyGoogleMap();
+					
+					if ((libraryInfoObject['LATHEM'] == "W") || (libraryInfoObject['LATHEM'] == "S"))
+						lat = parseFloat(libraryInfoObject['LAT']) * -1;
+					else lat = parseFloat(libraryInfoObject['LAT']);
+					
+					if ((libraryInfoObject['LONHEM'] == "W") || (libraryInfoObject['LONHEM'] == "S"))
+						lon = parseFloat(libraryInfoObject['LON']) * -1;
+					else lon = parseFloat(libraryInfoObject['LON']);
+					
+					var str:String = _library.text + ", part of\n" 
+						+ _project.text + " project, from\n" 
+						+ _environment.text + " environment.\n" 
+						+ _geo.text;
+					gmap.init(lat,lon,str);
+					_map.addChild(gmap);
+					_map.validateNow();
+				}
+			}
+			
+			protected function nhistogramResponse(event:ResultEvent):void{
+				nucleotideChart.dataProvider = new XML(new String(event.result)).children();
+				getHistogram.removeEventListener(ResultEvent.RESULT,nhistogramResponse);
+				getHistogram.addEventListener(ResultEvent.RESULT,ahistogramResponse);
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"orf");
+			}
+			
+			protected function ahistogramResponse(event:ResultEvent):void{
+				peptideChart.dataProvider = new XML(new String(event.result )).children();
+				getHistogram.removeEventListener(ResultEvent.RESULT,ahistogramResponse);
+				getHistogram.addEventListener(ResultEvent.RESULT,ghistogramResponse);
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"gc");
+			}
+			
+			protected function ghistogramResponse(event:ResultEvent):void{
+				gcChart.dataProvider = new XML(new String(event.result)).children();
+			}
+			
+			protected function dropMap():void{
+				_map.removeAllChildren();
+			}
+			
+			protected function populateCount(obj:Object):void{
+				var cmbp:Number = 0;
+				var imbp:Number = 0;
+				var smbp:Number = 0;
+				var pmbp:Number = 0;
+				var orf:Number = 0;
+				var rmbp:Number = obj.READ[0]['mbp']/1000000;
+				_reads.text = nf.format(obj.READ[0]['count']) + "   /   " + new MyNumberFormatter().format(rmbp) + "Mbp";
+				
+				var _ot:Array = obj.ORFTYPE as Array;
+				for (var i:int=0; i<_ot.length; i++){
+					if (_ot[i]['type'] == "complete"){
+						cmbp = (_ot[i]['mbp']*3)/1000000;
+						_comorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(cmbp) + "Mbp";
+					}
+					else if (_ot[i]['type'] == "lack both ends"){
+						imbp = (_ot[i]['mbp']*3)/1000000;
+						_incorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(imbp) + "Mbp";
+					}
+					else if (_ot[i]['type'] == "lack start"){
+						smbp = (_ot[i]['mbp']*3)/1000000;
+						_strorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(smbp) + "Mbp";
+					}
+					else if (_ot[i]['type'] == "lack stop"){
+						pmbp = (_ot[i]['mbp']*3)/1000000;
+						_stporf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(pmbp) + "Mbp";
+					}
+					orf += _ot[i]['count'];
+				}
+				_orfs.text = nf.format(orf) + "   /   " + new MyNumberFormatter().format(cmbp+imbp+smbp+pmbp) + "Mbp";
+				_coding.text = new MyNumberFormatter().format(((cmbp+imbp+smbp+pmbp)/rmbp)*100) + "%";
+			}
+			
+			protected function dataTipFunction(hd:HitData=null):String{
+				var str:String = "";
+				str += _util.downloadChart+"\n" + _util.viewData;
+				
+				return str;
+			}
+			
+			protected function clickChart(event:MouseEvent,str:String):void{
+				new ChartnData(event,libraryInfoObject['LIBNAME'],str);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="getHistogram"/>
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+						   destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
+	</fx:Declarations>
+	
+	<mx:Canvas width="100%" height="100%" horizontalScrollPolicy="off">
+		<mx:VBox width="100%" height="100%" paddingRight="20">
+			<mx:HBox width="100%" height="100%">
+				<mx:VBox height="100%" width="100%" id="info">
+					<mx:FormItem label="Project:" styleName="strong">
+						<mx:Text id="_project" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Environment:" styleName="strong">
+						<mx:Text id="_environment" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Library:" styleName="strong">
+						<mx:Text id="_library" text="" fontWeight="normal"/><!--library name and (prefix)-->
+					</mx:FormItem>
+					
+					<mx:FormItem label="Library Type:" styleName="strong">
+						<mx:Text id="_libType" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Citation:" styleName="strong">
+						<mx:LinkButton id="_citation" label="" click="_util.followLink(event)" />
+					</mx:FormItem>
+					
+					<mx:FormItem label="Sample Date:" styleName="strong">
+						<mx:Text id="_samdate" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Geographic Location:" styleName="strong">
+						<mx:Text id="_geo" text="" fontWeight="normal" width="100%" height="100%"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Number of Reads:" styleName="strong">
+						<mx:Text id="_reads" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Number of ORFs:" styleName="strong">
+						<mx:Text id="_orfs" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="         Complete ORFs:" styleName="strong">
+						<mx:Text id="_comorf" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="         Missing Both Ends:" styleName="strong">
+						<mx:Text id="_incorf" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="         Missing Start(5'):" styleName="strong">
+						<mx:Text id="_strorf" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="         Missing Stop(3'):" styleName="strong">
+						<mx:Text id="_stporf" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Coding Percentage:" styleName="strong">
+						<mx:Text id="_coding" text="" fontWeight="normal"/>
+					</mx:FormItem>	
+					
+					<mx:FormItem label="Mean Read length:" styleName="strong">
+						<mx:Text id="_mrl" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Mean ORF length:" styleName="strong">
+						<mx:Text id="_mol" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Sequencing Method:" styleName="strong">
+						<mx:Text id="_seqmethod" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Amplication Method:" styleName="strong">
+						<mx:Text id="_ampmethod" text="" fontWeight="normal"/>
+					</mx:FormItem>
+					
+					<mx:FormItem label="Filters:" styleName="strong">
+						<mx:Text id="_filter" text="" fontWeight="normal"/>
+					</mx:FormItem>
+				</mx:VBox>
+				
+				<mx:VBox height="100%" width="100%" id="charts">
+					<mx:HBox id="_map" width="500" height="500"/>
+				</mx:VBox>
+			</mx:HBox>
+			
+			<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">
+				<mx:text>
+					The histogram below shows the distribution of sequence lengths (in nucleotide). 
+					Each bar represents the number of sequences for a certain length range.
+				</mx:text>
+			</mx:Text>
+			<mx:ColumnChart width="100%" showDataTips="true" id="nucleotideChart"  
+							dataProvider="{_nucleotideChartData}"
+							dataTipFunction="dataTipFunction" 
+							click="clickChart(event,'nucleotide_histogram')"
+							toolTip="dataTipFunction">
+				<mx:horizontalAxis>
+					<mx:CategoryAxis categoryField="@LABEL"/>
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:ColumnSeries id="n_colSeries" xField="@LABEL" yField="@VALUE" labelPosition="outside" labelRotation="-90"/>
+				</mx:series>
+			</mx:ColumnChart>
+			
+			<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">
+				<mx:text>
+					The histogram below shows the distribution of ORF lengths (in amino acid). 
+					Each bar represents the number of sequences for a certain length range.
+				</mx:text>
+			</mx:Text>
+			<mx:ColumnChart width="100%" showDataTips="true" id="peptideChart" 
+							dataProvider="{peptideChartData}"
+							dataTipFunction="dataTipFunction"
+							click="clickChart(event,'peptide_histogram')"
+							toolTip="dataTipFunction">
+				<mx:horizontalAxis>
+					<mx:CategoryAxis categoryField="@LABEL"/>
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:ColumnSeries id="a_colSeries" xField="@LABEL" yField="@VALUE" labelPosition="outside" labelRotation="-90"/>
+				</mx:series>
+			</mx:ColumnChart>
+			
+			<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">
+				<mx:text>
+					The graph below displays the distribution of the GC percentage for the metagenome sequences. 
+					Each bar represents the number of sequences in that GC percentage range.
+				</mx:text>
+			</mx:Text>
+			<mx:ColumnChart width="100%" showDataTips="true" id="gcChart"							
+							dataProvider="{_gcChartData}"
+							dataTipFunction="dataTipFunction"
+							click="clickChart(event,'percentGC_histogram')"
+							toolTip="dataTipFunction"> 
+				<mx:horizontalAxis>
+					<mx:CategoryAxis categoryField="@LABEL"/>
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:ColumnSeries id="g_colSeries" xField="@LABEL" yField="@VALUE" labelPosition="outside" labelRotation="-90"/>
+				</mx:series>
+			</mx:ColumnChart>
+
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>

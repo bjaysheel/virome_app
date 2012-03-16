@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:user="services.user.*"
+			   layout="horizontal" verticalAlign="middle" 
+			   creationComplete="onCreationComplete()"
+			   implements="com.IModuleInterface.IUserInterface" 
+			   percentWidth="100" percentHeight="100">
+
+	<fx:Script>
+		<![CDATA[
+			import com.events.UserEvent;
+			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			
+			[Bindable] private var serviceEndPoint:String;
+			[Bindable] private var serviceSource:String;
+			[Bindable] private var cookie:Object;
+			[Bindable] private var userEvent:UserEvent = new UserEvent();
+			[Bindable] private var login:Boolean = false;
+			
+			public function setEndPoint(s:String):void{
+				serviceEndPoint = s;
+			}
+			public function setCFCSource(s:String):void{
+				serviceSource = s;
+			}
+			public function setCookieObject(o:Object):void{
+				cookie = o;
+			}
+			public function getUserObject():Object{
+				return userEvent.UserObj;
+			}
+			
+			private function onCreationComplete():void{
+				parentApplication.addEventListener("LOGIN_FROM_COOKIE", loginFromCookieHandler);
+			}
+			
+			private function loginFromCookieHandler(event:Event):void{
+				var now:Date = new Date();
+				var expire:Date = now;
+				userEvent = new UserEvent();
+				
+				if (cookie.hasOwnProperty("EXPIRE") && (cookie.EXPIRE != undefined || cookie.EXPIRE != null)){
+					expire = new Date(cookie.EXPIRE);
+				}
+				
+				if (now.getTime() >= expire.getTime()) {
+					Alert.show("Session has expired; Please login", "Login", Alert.OK);	
+				} else {
+					updateUserLogin.token = UserRPC.updateLogin(cookie.USERID, cookie.NOOFLOGINS+1);
+					user_msg.text = cookie.FIRSTNAME + " " + cookie.LASTNAME;
+					user_button.label = "Log out";
+					
+					userEvent.copy(cookie);
+					userEvent.login = true;
+					this.login = true;
+					
+					parentApplication.dispatchEvent(new Event("USER_LOGIN_EVENT",true,true));
+				}
+			}
+			
+			private function userLogInEventHandler(event:UserEvent):void{
+				//this function is only activated when LoginPanel dispatches
+				//event if login in successfull.
+				userEvent = event;
+				
+				user_msg.text = userEvent.firstname + " " + userEvent.lastname;
+				user_button.label = "Log out";
+				
+				//set login flag to true
+				this.login = true;
+				
+				parentApplication.dispatchEvent(new Event("USER_LOGIN_EVENT",true,true));
+			}
+			
+			private function loginUser():void{
+				if (this.login){
+					//reset user object and dispatch event to parentApplication
+					userEvent = new UserEvent();
+					user_msg.text = "Hello, Guest";
+					user_button.label = "Login";
+					this.login = false;
+					
+					parentApplication.dispatchEvent(new Event("USER_LOGIN_EVENT",true,true));
+				} else {
+					var loginPanel:LoginPanel = LoginPanel(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), LoginPanel, true));
+					loginPanel.showCloseButton = true;
+					loginPanel.addEventListener(UserEvent.USER_LOGIN_EVENT,userLogInEventHandler);
+					loginPanel.endPoint = serviceEndPoint;
+					loginPanel.cfcSourcePath = serviceSource;
+					PopUpManager.bringToFront(loginPanel);
+					PopUpManager.centerPopUp(loginPanel);					
+				}
+			}
+			
+			private function faultHandler(event:FaultEvent):void{
+				Alert.show(event.toString(), "User Service Error", Alert.OK);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<user:User id="UserRPC" showBusyCursor="true" fault="faultHandler(event)"
+				   destination="ColdFusion" endpoint="{serviceEndPoint}" source="{serviceSource}.User"/>
+		<s:CallResponder id="updateUserLogin"/>
+	</fx:Declarations>
+	
+	<mx:Label id="user_msg" text="Hello, Guest"/>
+	<mx:Button id="user_button" label="Login" styleName="menu" click="loginUser()"/>
+</mx:Module>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" 
+		  creationComplete="ini();"
+		  width="100%" height="100%">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.component.MyGridItem;
+			import com.component.MyGridRow;
+			import com.MyUtility;
+			
+			import mx.controls.Label;
+			import mx.controls.Text;
+			import mx.controls.LinkButton;
+			import mx.controls.Spacer;
+			import mx.containers.HBox;
+			import mx.managers.PopUpManager;
+			
+			private var util:MyUtility = new MyUtility();
+			
+			[Bindable] public var _str:String;
+			[Bindable] public var _fxnArray:Array;
+			
+			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			
+			public function set str(v:String):void{
+				_str = v;
+			}
+			public function set fxnArray(v:Array):void{
+				_fxnArray=v;
+			}
+			public function get str():String{
+				return _str;
+			}
+			public function get fxnArray():Array{
+				return _fxnArray;
+			}
+			
+			public function init():void{
+				var gi:MyGridItem = new MyGridItem();
+				var gr:MyGridRow = new MyGridRow();
+				var t:Text = new Text();
+				var lb:Label = new Label();
+				var i:int=0;
+				
+				switch (str){
+					case "KEGG":{
+						gi = new MyGridItem();
+						lb = new Label();
+						lb.text = "Function 1";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gi = new MyGridItem();
+						lb = new Label();
+						lb.text = "Function 2";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gi = new MyGridItem();
+						lb = new Label();
+						lb.text = "Function 3";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gi = new MyGridItem();
+						lb = new Label();
+						lb.text = "EC. No.";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gr.header();
+						g.addChild(gr);
+						
+						for (i=0; i<fxnArray.length; i++){
+							gr = new MyGridRow();
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN1;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN2;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN3;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].ECNO;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							if (i%2 == 0)
+								gr.even();
+							
+							g.addChild(gr);							
+						}
+						break;
+					}
+					case "COG":{
+						gi = new MyGridItem();
+						t = new Text();
+						lb.text = "Function 1";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						lb = new Label();
+						gi = new MyGridItem();
+						lb.text = "Function 2";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						lb = new Label();
+						gi = new MyGridItem();
+						lb.text = "Function 3";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gr.header();
+						g.addChild(gr);
+						
+						for (i=0; i<fxnArray.length; i++){
+							gr = new MyGridRow();
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN1;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN2;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN3;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							if (i%2 == 0)
+								gr.even();
+							
+							g.addChild(gr);
+						}
+						break;
+					}
+					case "SEED":{
+						gi = new MyGridItem();
+						t = new Text();
+						lb.text = "Function 1";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						lb = new Label();
+						gi = new MyGridItem();
+						lb.text = "Function 2";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						lb = new Label();
+						gi = new MyGridItem();
+						lb.text = "Function 3";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						lb = new Label();
+						gi = new MyGridItem();
+						lb.text = "EC. No.";
+						lb.styleName = "header";
+						gi.addChild(lb);
+						gr.addChild(gi);
+						
+						gr.header();
+						g.addChild(gr);
+						
+						for (i=0; i<fxnArray.length; i++){
+							gr = new MyGridRow();
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN1;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN2;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].FXN3;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							gi = new MyGridItem();
+							t = new Text();
+							t.text = fxnArray[i].ECNO;
+							gi.addChild(t);
+							gr.addChild(gi);
+							
+							if (i%2 == 0)
+								gr.even();
+							
+							g.addChild(gr);
+						}
+						break;
+					} //end seed case
+				}// end switch statement
+				PopUpManager.centerPopUp(this);
+			}
+			
+			protected function ini():void{
+				this.width = this.parent.width * 0.99;
+				this.maxHeight = this.parent.height * 0.99;
+				
+				var cls:LinkButton = new LinkButton();
+				cls.width=16;
+				cls.height=16;
+				cls.setStyle("icon",closeImg);
+				//img.source = closeImg;
+				cls.addEventListener(MouseEvent.CLICK,removeMe);
+				
+				var txt:Text = new Text();
+				txt.text = "Functional Details";
+				txt.setStyle("color","0xFFFFFF");
+				
+				var sp:Spacer = new Spacer();
+				sp.percentWidth=100;
+				
+				var tbox:HBox = new HBox();
+				tbox.setStyle("verticalAlign","middle");
+				tbox.setStyle("paddingLeft",10);
+				tbox.setStyle("paddingRight",10);
+				tbox.width = this.parent.width * 0.99;
+				tbox.height = this.titleBar.height;
+				tbox.addChild(txt);
+				tbox.addChild(sp);
+				tbox.addChild(cls);
+				
+				this.titleBar.addChild(tbox);
+			}
+			
+			protected function removeMe(event:MouseEvent):void{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<mx:Canvas width="100%" height="100%">
+		<mx:VBox width="100%" height="100%" id="box" verticalGap="4">
+			<mx:Grid width="100%" height="100%" id="g" verticalGap="0"/>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>

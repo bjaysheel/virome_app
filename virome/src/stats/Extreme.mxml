@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx"   
+		   xmlns:cfservice="services.*" 
+		   xmlns:stats="stats.*" 
+		   xmlns:local="*"
+		   styleName="catalogPanel" 
+		   width="100%" height="100%" 
+		   borderStyle="solid" 
+		   title="Environment::Extreme"
+		   addedToStage="onAddtoStage()"
+		   show="onShow()" xmlns:statistics="services.statistics.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.GeneralObject;
+			import com.MyUtility;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			import com.google.analytics.debug.Label;
+			
+			import mx.charts.events.ChartItemEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			public var tracker:AnalyticsTracker;
+
+			private var _libraryId:Number = 0;
+			private var _environment:String = "";
+			private var _libraryInfoObject:Object = new Object();
+			private var _flag:Boolean = true;
+			
+			[Bindable] public function set libraryId(v:Number):void{
+				_libraryId = v;
+			}
+			[Bindable] public function set environment(v:String):void{
+				_environment = v;
+			}
+			[Bindable] public function set libraryInfoObject(v:Object):void{
+				_libraryInfoObject = v;
+			}
+			[Bindable] public function set flag(v:Boolean):void{
+				_flag = v;
+			}
+			
+			public function get libraryId():Number{
+				return _libraryId;
+			}
+			public function get environment():String{
+				return _environment;
+			}
+			public function get libraryInfoObject():Object{
+				return _libraryInfoObject;
+			}
+			public function get flag():Boolean{
+				return _flag;
+			}
+			
+			protected function onAddtoStage():void{
+				//track
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );				
+			}
+			
+			protected function onShow():void{
+				//set google tracker
+				tracker.trackPageview( "/STATISTICS/Extreme" );
+				
+				var obj:GeneralObject = new GeneralObject();
+				obj.libraryId = libraryId;
+				obj.environment = environment;
+				obj.sType = 'extreme';
+				
+				if ((flag) && (libraryId > 0) && (environment.length > 0)){
+					flag = false;
+					env_stats.token = Statistics.getXMLDoc(obj.struct);
+				}
+			}
+			
+			protected function fxnCatResonse(event:ResultEvent):void{
+				demo.libraryInfoObject = libraryInfoObject;
+				demo.showValues();
+				
+				var obj:Object = event.result as Object;
+				if (obj.msg != "Success"){
+					this.removeChild(drillDownChart);
+					var msg:Label = new Label();
+					msg.text = obj.msg;
+					this.addChild(msg);
+				} else {
+					var xml:XML = new XML(new String(obj.xdoc));
+					drillDownChart.rootNode = xml;
+					drillDownChart.environment=environment;
+					drillDownChart.libraryId=libraryId;
+					drillDownChart.database='METAGENOMES';
+					drillDownChart.vircat='';
+					drillDownChart.hTitle="Environmental breakdown";
+					drillDownChart.labelType='env';
+					drillDownChart.libraryName = libraryInfoObject['LIBNAME'];
+					drillDownChart.chartName = "Extreme";
+					drillDownChart.showPie();
+				}
+			}
+			
+			protected function changeView(event:ChartItemEvent):void{
+				var obj:Object = event.hitData.chartItem.item;
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:CallResponder id="env_stats" result="fxnCatResonse(event)"/>
+		<statistics:Statistics id="Statistics" showBusyCursor="true" fault="_util.faultHandler(event)"
+							  destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Statistics" />
+	</fx:Declarations>
+	
+	<mx:Canvas width="100%" height="100%" horizontalScrollPolicy="off">
+		<mx:VBox width="100%" horizontalGap="0" verticalGap="0" paddingRight="20" paddingBottom="15">
+			<mx:HBox width="100%" paddingBottom="25">
+				<stats:LibraryDemograph id="demo" libraryInfoObject="{libraryInfoObject}" width="100%"/>
+				
+				<mx:VBox width="100%" backgroundColor="0x3399FF" backgroundAlpha="0.3">
+					<mx:HBox width="100%">
+						<mx:Image source="@Embed(source='assets/icons/Info.png')"/>
+						<mx:Text text="VIROME: data-driven Analysis" styleName="strong"/>								
+					</mx:HBox>
+					<mx:Text condenseWhite="true" width="100%">
+						<mx:htmlText>
+							<![CDATA[
+							<ul>
+							<li>Hover pointer over any bar for more information about ORFs hitting sequences within each category.</li><br/>
+							<li>Single click on category bar will navigate down one level in the functional heirarchy.</li><br/>
+							<li>Double click on a category bar will go to search page showing detailed information for all the predicted
+							ORFs in the category.</li>
+							</ul>
+							]]>
+						</mx:htmlText>
+					</mx:Text>
+				</mx:VBox>
+			</mx:HBox>
+			
+			<stats:StatsDrillDownChart id="drillDownChart" width="100%" />
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Panel>
