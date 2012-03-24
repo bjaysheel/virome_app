@@ -125,6 +125,7 @@ while(my $seq = $fsa->next_seq) {
 	my $seqId = $utils->get_sequenceId($seq->id);
 	my $readId = $utils->get_sequenceId($read);
 
+	# revert back type to lack start and lack stop instead of lack_start and lack_stop
 	$info{type} =~ s/_/ /;
 
 	print OUT join("\t",$readId, $seqId, $utils->trim($seq->id), $utils->trim($info{geneNum}), 0, 0
