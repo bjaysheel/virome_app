@@ -120,11 +120,12 @@ while(my $seq = $fsa->next_seq) {
 	map { $info{$1} = $2 if( /([^=]+)\s*=\s*([^=]+)/ ) } split(/\s+/, $seq->desc);
 
 	my @name = split(/_/, $seq->id);
-	my $read = join(/_/,@name[0..$#name-3]);
+	my $read = join('_',@name[0..$#name-3]);
 
 	my $seqId = $utils->get_sequenceId($seq->id);
 	my $readId = $utils->get_sequenceId($read);
 
+	$info{type} =~ s/_/ /;
 
 	print OUT join("\t",$readId, $seqId, $utils->trim($seq->id), $utils->trim($info{geneNum}), 0, 0
 					$utils->trim($info{start}), $utils->trim($info{end}), $utils->trim($info{strand}),
