@@ -459,5 +459,6 @@
 	</mx:ViewStack>
 		
 	<mx:LinkButton label="{copyright} VIROME a product of WommackLab" styleName="mid" width="100%" click="footerLink()"/>
+	<mx:LinkButton label="Submit your library for analysis" styleName="mid" width="100%" click="{_util.submissionLink(event);}"/>
 	
 </mx:Application>

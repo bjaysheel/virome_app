@@ -56,6 +56,11 @@ package com
 		
 		protected function setColumns():void{
 			
+			var col0:DataGridColumn = new DataGridColumn;
+			col0.dataField = "";
+			col0.headerText = "";
+			col0.headerRenderer = new ClassFactory(search.ResultGridMenu);
+			
 			var col1:DataGridColumn = new DataGridColumn;
 			col1.dataField = "DATABASE_NAME";
 			col1.headerText = "Blast DB";
