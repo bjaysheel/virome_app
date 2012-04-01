@@ -457,8 +457,10 @@
 					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Preppy.png')"
 					   creationPolicy="none" visible="false"/>
 	</mx:ViewStack>
-		
-	<mx:LinkButton label="{copyright} VIROME a product of WommackLab" styleName="mid" width="100%" click="footerLink()"/>
-	<mx:LinkButton label="Submit your library for analysis" styleName="mid" width="100%" click="{_util.submissionLink(event);}"/>
+	
+	<mx:HBox styleName="mid" width="100%" horizontalAlign="center">
+		<mx:LinkButton label="{copyright} VIROME a product of WommackLab" click="footerLink()" color="#993333"/>
+		<mx:LinkButton label="Submit your library for analysis" click="{_util.submissionLink(event);}" color="#993333"/>	
+	</mx:HBox>
 	
 </mx:Application>
