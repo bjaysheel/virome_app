@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="Virome User Interface Build Script" default="build" basedir=".">
+    <property file="build.properties"/>
+    <property name="build" location="${basedir}/build"/>
+    <property environment="env"/>
+    <property name="modules_build_location" location="${build}/assets/modules"/>
+    <taskdef resource="flexTasks.tasks" classpath="ant/lib/flexTask.jar"/>
+    <!--<property name="FLEX_HOME" value="${SDK_HOME}"/>-->
+    <!--<property name="APP_ROOT" value="src"/>-->
+
+
+    <target name="install">
+        <copy todir="${deploydir}" overwrite="true">
+            <fileset dir="${build}"/>
+        </copy>
+    </target>
+
+    <target name="clean-install">
+        <delete dir="${deploydir}">
+            <exclude name="xDocs"/>
+            <exclude name="idFiles"/>
+        </delete>
+    </target>
+
+
+    <target name="build" depends="compile_swf, copy_cfcs, copy_assets, wrapper, copy-other-needed-files" />
+
+    <target name="compile_swf" depends="create-bookmark-component">
+        <ant antfile="${basedir}/virome/build.xml" target="virome">
+            <property name="build" location="${basedir}/build"/>
+            <property file="build.properties"/>
+        </ant>
+
+    </target>
+
+    <target name="copyRSLs">
+        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swf"/>
+        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swz"/>
+    </target>
+
+    <target name="copy_cfcs">
+        <mkdir dir="${build}/cfc"/>
+        <copy todir="${build}/cfc" overwrite="true" filtering="true">
+            <fileset dir="virome/src/cfc"/>
+        </copy>
+    </target>
+
+    <target name="copy_assets">
+        <copy todir="${build}/assets" overwrite="true">
+            <fileset dir="virome/src/assets"/>
+        </copy>
+    </target>
+
+    <target name="wrapper">
+        <html-wrapper
+                height="100%"
+                width="100%"
+                file="${EXECUTABLE_NAME}.html"
+                bgcolor="#aab2b7"
+                application="app"
+                swf="${build}/${EXECUTABLE_NAME}.swf"
+                version-major="9"
+                version-minor="0"
+                version-revision="0"
+                history="true"
+                express-install="true"
+                version-detection="true"
+                output="${build}"/>
+    </target>
+
+    <!-- this target works -->
+    <target name="create-virome-lib">
+        <compc output="libs/ViromeLib.swc"
+               include-classes="com.IModuleInterface.IBookmarkInterface com.IModuleInterface.IServiceInterface com.IModuleInterface.IUserInterface">
+            <source-path path-element="ViromeLib/src"/>
+        </compc>
+    </target>
+
+
+    <target name="create-bookmark-component" depends="create-user-component">
+        <mxmlc file="bookmark/src/bookmark.mxml"
+               output="${modules_build_location}/bookmark.swf"
+               keep-generated-actionscript="false">
+
+            <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+
+            <source-path path-element="${FLEX_HOME}/frameworks"/>
+
+            <compiler.library-path dir="${FLEX_HOME}/frameworks" append="true">
+                <include name="libs" />
+                <include name="../bundles/{locale}" />
+            </compiler.library-path>
+
+            <compiler.include-libraries dir="libs" append="true">
+                <include name="ViromeLib.swc" />
+                <include name="fiber.swc" />
+                <include name="fiber_rb.swc" />
+                <include name="serializers.swc" />
+                <include name="serializers_rb.swc" />
+                <include name="fds.swc" />
+                <include name="fds_rb.swc" />
+            </compiler.include-libraries>
+        </mxmlc>
+    </target>
+
+    <target name="create-assets-dir">
+        <mkdir dir="${modules_build_location}"/>
+    </target>
+
+    <target name="copy-other-needed-files">
+        <copy todir="${build}" overwrite="true">
+            <fileset dir="virome/src">
+                <include name="*.cfm"/>
+                <include name="Browserdetection.js"/>
+                <include name="crossdomain.xml"/>
+                <include name="style.css"/>
+                <include name="blastImager/*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="create-user-component" depends="create-virome-lib,create-assets-dir">
+        <mxmlc file="user/src/user.mxml"
+               output="${build}/user.swf"
+               keep-generated-actionscript="false">
+
+            <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+
+            <source-path path-element="${FLEX_HOME}/frameworks"/>
+
+            <compiler.library-path dir="${FLEX_HOME}/frameworks" append="true">
+                <include name="libs" />
+                <include name="../bundles/{locale}" />
+            </compiler.library-path>
+
+            <!--<compiler.theme dir="${FLEX_HOME}/frameworks" append="false">-->
+                    <!--<include name="themes/Spark/"/>-->
+            <!--</compiler.theme>-->
+
+            <compiler.include-libraries dir="libs" append="true">
+                <include name="ViromeLib.swc" />
+                <include name="fiber.swc" />
+                <include name="fiber_rb.swc" />
+                <include name="fds.swc" />
+                <include name="serializers.swc" />
+                <include name="fds_rb.swc" />
+                <include name="serializers_rb.swc" />
+            </compiler.include-libraries>
+        </mxmlc>
+    </target>
+
+
+
+    <target name="clean">
+        <echo message="Removing build directory..."/>
+        <delete dir="${build}"/>
+        <delete file="libs/ViromeLib.swc"/>
+        <echo message="Complete"/>
+    </target>
+</project>
