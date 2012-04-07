@@ -85,7 +85,7 @@
     
 	<mx:HBox id="searchWindow" width="100%" height="100%" dropShadowEnabled="true">
 		<!--<search:Grip id="searchGrip1" 
-						 gripIcon="@Embed('assets/icons/text.png')"
+						 gripIcon="@Embed('/assets/icons/text.png')"
             			 gripTip="TEXT SEARCH PANEL" 
             			 click="currentState = 'showSearchPanel'"/>-->
             			 
@@ -96,7 +96,7 @@
         <search:BlastForm id="blastSearch" width="299" horizontalScrollPolicy="off" borderStyle="none"/>
         
         <search:Grip id="searchGrip2" 
-						 gripIcon="@Embed('assets/icons/blast.png')" 
+						 gripIcon="@Embed('/assets/icons/blast.png')"
             			 gripTip="BLAST SEARCH PANEL" 
             			 click="currentState = 'showBlastPanel'"/>-->
 	</mx:HBox>

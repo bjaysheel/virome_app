@@ -95,7 +95,7 @@
 		
 	<!-- <mx:Label text="Blast Search"/> -->
 	<mx:LinkButton label="DB Search" textAlign="right"
-			   icon="@Embed(source='assets/icons/back.png')" 
+			   icon="@Embed(source='/assets/icons/back.png')"
 			   click="_util.app.searchPage.currentState = 'showSearchPanel'"/>
 	
 	<mx:Grid width="100%" height="100%" paddingTop="15" paddingBottom="15" borderStyle="none" id="blastForm">

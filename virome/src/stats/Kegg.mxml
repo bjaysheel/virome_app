@@ -122,7 +122,7 @@
 				
 				<mx:VBox width="100%" backgroundColor="0x3399FF" backgroundAlpha="0.3">
 					<mx:HBox width="100%">
-						<mx:Image source="@Embed(source='assets/icons/Info.png')"/>
+						<mx:Image source="@Embed(source='/assets/icons/Info.png')"/>
 						<mx:Text text="VIROME: data-driven Analysis" styleName="strong"/>								
 					</mx:HBox>
 					<mx:Text condenseWhite="true" width="100%">

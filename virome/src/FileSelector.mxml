@@ -22,7 +22,7 @@
 			import mx.rpc.events.ResultEvent;
 			
 			[Bindable] private var _util:MyUtility = new MyUtility();
-			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			[Bindable] [Embed ("/assets/icons/Close.png")] private var closeImg:Class;
 			
 			private var _currentCount:Number = 0;
 			private var _totalCount:Number = 0;

@@ -316,7 +316,7 @@
 	<!--<mx:Label text="Text Search"/>-->
 	<!--<mx:HBox width="100%" paddingBottom="15">
 		<mx:Spacer width="100%"/>
-		<mx:LinkButton label="BLAST Search" icon="@Embed(source='assets/icons/Forward.png')" labelPlacement="left"
+		<mx:LinkButton label="BLAST Search" icon="@Embed(source='/assets/icons/Forward.png')" labelPlacement="left"
 					   textAlign="left" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>	
 	</mx:HBox>-->
 

@@ -28,7 +28,7 @@
 			public var tick:Timer;
 			public var tickCount:int = 10;
 			
-			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			[Bindable] [Embed ("/assets/icons/Close.png")] private var closeImg:Class;
 			
 			[Bindable] public var _fileSelector:Object = new Object();
 			[Bindable] public var _searchDBObj:Object = new Object();

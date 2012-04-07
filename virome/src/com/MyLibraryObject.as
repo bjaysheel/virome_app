@@ -29,7 +29,7 @@ package com
 		private var util:MyUtility = new MyUtility;
 		private var _seriesColor:Array;
 		private var nf:NumberFormatter = new NumberFormatter();
-		[Embed(source='assets/icons/Download.png')] [Bindable] private var dl:Class;
+		[Embed(source='/assets/icons/Download.png')] [Bindable] private var dl:Class;
 		
 		public function MyLibraryObject(){
 			super();

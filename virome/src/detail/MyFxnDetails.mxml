@@ -23,7 +23,7 @@
 			[Bindable] public var _str:String;
 			[Bindable] public var _fxnArray:Array;
 			
-			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
+			[Bindable] [Embed ("/assets/icons/Close.png")] private var closeImg:Class;
 			
 			public function set str(v:String):void{
 				_str = v;

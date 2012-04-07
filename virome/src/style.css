@@ -38,7 +38,7 @@ mx|LinkButton {
 }
 
 mx|TitleWindow {
-	closeButtonSkin: Embed(source="assets/icons/Stop.png"); 
+	closeButtonSkin: Embed(source="assets/icons/Stop.png");
 }
 
 mx|CursorManager {

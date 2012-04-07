@@ -406,12 +406,12 @@
 
 	<fx:Declarations>		
 		<fx:Array id="menuItem">
-			<fx:Object id="home" label="Home" name="Home" icon="@Embed(source='assets/icons/Home.png')"/>
-			<fx:Object id="browse" label="Public Browse" name="Browse" icon="@Embed(source='assets/icons/Browse.png')"/>
-			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='assets/icons/Zoom.png')"/>
-			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='assets/icons/Statistics.png')"/>
-			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='assets/icons/Download.png')"/>
-			<fx:Object id="methods" label="General Info." name="Methods" icon="@Embed(source='assets/icons/Lamp.png')"/>
+			<fx:Object id="home" label="Home" name="Home" icon="@Embed(source='/assets/icons/Home.png')"/>
+			<fx:Object id="browse" label="Public Browse" name="Browse" icon="@Embed(source='/assets/icons/Browse.png')"/>
+			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='/assets/icons/Zoom.png')"/>
+			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='/assets/icons/Statistics.png')"/>
+			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='/assets/icons/Download.png')"/>
+			<fx:Object id="methods" label="General Info." name="Methods" icon="@Embed(source='/assets/icons/Lamp.png')"/>
 		</fx:Array>
 		
 		<s:Wipe id="wipeUp" direction="up" duration="1500"/>
@@ -430,31 +430,31 @@
 	
 	<mx:ViewStack width="100%" height="100%" id="page" change="updateURL()" verticalGap="3">
 		<local:Home id="homePage" name="Home" label="Home" height="100%" width="100%"
-				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Home.png')" 
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Home.png')"
 				creationPolicy="auto"/>
 				  
 		<local:Browse id="browsePage" name="Browse" label="Browse" height="100%" width="100%" 
-			 	showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Browse.png')" 
+			 	showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Browse.png')"
 				creationPolicy="none"/>
 					  
 		<local:Search id="searchPage" name="Search" label="Search" height="100%" width="100%"
-				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Zoom.png')"
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Zoom.png')"
 				creationPolicy="none"/>
 		
 		<local:Statistics id="statsPage" name="Statistics" label="Statistics" width="100%" height="100%" 
-				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Statistics.png')"
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
 				creationPolicy="none"/>
 		
 		<local:Method id="methodsPage" name="Methods" label="Methods" width="100%" height="100%" 
-					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Statistics.png')"
+					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
 					  creationPolicy="none"/>
 
 		<local:SequenceDetail id="seqDetail" name="Sequenced" label="Sequence Detail" height="100%" width="100%"
-						 showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Preppy.png')"
+						 showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
 						 creationPolicy="auto" visible="false"/>
 		
 		<local:PrivateLib id="privateLib" name="Private" label="Private Library(s)" height="100%" width="100%"
-					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Preppy.png')"
+					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
 					   creationPolicy="none" visible="false"/>
 	</mx:ViewStack>
 		

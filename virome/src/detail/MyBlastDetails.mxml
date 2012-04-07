@@ -34,10 +34,10 @@
 			[Bindable] public var _environment:String;
 			[Bindable] private var _adgDP:ArrayCollection;
 			
-			[Bindable] [Embed ("assets/icons/Close.png")] private var closeImg:Class;
-			[Bindable] [Embed ("assets/icons/fxnHit.png")] private var fxnImg:Class;
-			[Bindable] [Embed ("assets/icons/sysHit.png")] private var sysImg:Class;
-			[Bindable] [Embed ("assets/icons/sameHit.png")] private var sameImg:Class;
+			[Bindable] [Embed ("/assets/icons/Close.png")] private var closeImg:Class;
+			[Bindable] [Embed ("/assets/icons/fxnHit.png")] private var fxnImg:Class;
+			[Bindable] [Embed ("/assets/icons/sysHit.png")] private var sysImg:Class;
+			[Bindable] [Embed ("/assets/icons/sameHit.png")] private var sameImg:Class;
 			
 			public function set sequence(v:Number):void{
 				_sequence = v;

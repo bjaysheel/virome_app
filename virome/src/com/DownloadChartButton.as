@@ -17,7 +17,7 @@ package com
 	
 	public class DownloadChartButton extends Button
 	{
-		[Embed(source='assets/icons/Download.png')] private var downloadIcon:Class;
+		[Embed(source='/assets/icons/Download.png')] private var downloadIcon:Class;
 		
 		private var _piechart:PieChart;
 		private var _barchart:BarChart;

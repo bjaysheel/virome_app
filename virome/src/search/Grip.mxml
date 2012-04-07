@@ -15,6 +15,6 @@
     </mx:Script>
 
     <mx:Image source="{gripIcon}" />
-    <mx:Image source="@Embed('assets/icons/grip.png')" toolTip="{gripTip}" height="100%" width="100%"/>
+    <mx:Image source="@Embed('/assets/icons/grip.png')" toolTip="{gripTip}" height="100%" width="100%"/>
     
 </mx:VBox>
