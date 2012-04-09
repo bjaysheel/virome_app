@@ -36,8 +36,14 @@
 	<cfset domList = ""/>
 	<cfset objarr = ArrayNew(1)/>
 	
+	<cfscript>
+		fname = "test.txt";		
+	</cfscript>
+	#fname#<br/>
+	#getFileFromPath(fname)#
+	
 	<!---<cfset rt_value = CreateObject("component",  application.cfc & ".Exporter").export(file,obj,binarydecode('',"Base64"),'')/>--->
-	<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>
+	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>--->
 	<!---<cfdump var="#rt_value#">--->
 		
 	<!---<cfscript>

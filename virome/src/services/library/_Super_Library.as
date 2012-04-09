@@ -54,6 +54,15 @@ internal class _Super_Library extends com.adobe.fiber.services.wrapper.RemoteObj
         operation = new mx.rpc.remoting.Operation(null, "getEnvironmentObject");
          operation.resultElementType = Object;
         operations["getEnvironmentObject"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "add_library");
+         operation.resultType = Object;
+        operations["add_library"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "delete_library");
+         operation.resultType = Object;
+        operations["delete_library"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "edit_library");
+         operation.resultType = Object;
+        operations["edit_library"] = operation;
 
         _serviceControl.operations = operations;
         _serviceControl.convertResultHandler = com.adobe.serializers.utility.TypeUtility.convertResultHandler;
@@ -214,6 +223,60 @@ internal class _Super_Library extends com.adobe.fiber.services.wrapper.RemoteObj
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getEnvironmentObject");
 		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(libraryIdList) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'add_library' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function add_library(obj:Object) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("add_library");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'delete_library' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function delete_library(obj:Object) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("delete_library");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'edit_library' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function edit_library(obj:Object) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("edit_library");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
         return _internal_token;
     }
      

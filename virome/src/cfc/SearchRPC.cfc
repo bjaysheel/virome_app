@@ -87,7 +87,8 @@
 				<cfset ids = ""/>
 				<cfif s.recordCount>
 					<cfscript>
-						ids = FileOpen(application.idFilePath & "/" & s.file);
+						filename = #getFileFromPath(s.file)#; //hack for older verion where full path is stored in db.
+						ids = FileRead(application.idFilePath & "/" & filename);
 					</cfscript>
 				</cfif>
 
@@ -108,19 +109,23 @@
 			</cfloop>
 			
 			<cfif len(idList)>
-				<cfset tbl_name = "tmp_" & DateFormat(now(),"mmddyy") & "" & TimeFormat(now(),"hhmmss")/>
+				<cfset tbl_name = "tmp_" & DateFormat(now(),"mmddyy") & "" & TimeFormat(now(),"hhmmssl")/>
 				<cfset values = listsort(idList,"text","asc")/>
 				<cfset values = rereplace(values,",","),(","all" )/>
 				<cfset values = "("&values&")"/>
 					
 				<cftransaction>
+					<cfquery name="dtmp" datasource="#arguments.server#">
+						DROP TEMPORARY TABLE IF EXISTS #tbl_name# 
+					</cfquery>
+					
 					<cfquery name="ctmp" datasource="#arguments.server#">
 						CREATE TEMPORARY TABLE #tbl_name# (id int(8) UNIQUE)
 					</cfquery>
 					
-					<cfquery name="itmp" datasource="#arguments.server#" >
+					<cfquery name="itmp" datasource="#arguments.server#">
 						INSERT INTO #tbl_name# (id) VALUES #values#
-					</cfquery>					
+					</cfquery>
 				</cftransaction>
 				
 				<cfreturn tbl_name/>
@@ -154,8 +159,7 @@
 			<!--- error checking if _server is empty return error and stop --->
 			<cfif NOT len(_server)>
 				<cfset CreateObject("component",  application.cfc & ".Utility").reportServerError(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
-				<!---<cfthrow type="INCORRECT_ENV_SEQ" />--->
-				<cfreturn ""/>
+				<cfthrow type="INCORRECT_ENV_SEQ" />
 			</cfif>
 			
 			<!--- set _libraryId info --->
@@ -173,8 +177,7 @@
 				<cfset seq_tmp_tbl = retrieveSequenceId_B(str=arguments.obj.ORFTYPE & "_id",server=_server,library=_libraryId)/>
 				<!--- if value retuned from retrieveSequenceId_B is empty, assume that there are no seq in orftype return empty array now no need to proceed--->
 				<cfif not len(seq_tmp_tbl)>
-					<!---<cfthrow type="EMPTY_CATEGORY" />--->
-					<cfreturn ""/>
+					<cfthrow type="EMPTY_CATEGORY" />
 				</cfif>
 			<!--- get sequence ids from stats flat files --->				
 			<cfelseif isDefined("arguments.obj.VIRCAT") and len(arguments.obj.VIRCAT)>
@@ -182,8 +185,7 @@
 					<!--- if value retuned from retrieveSequenceId_B is empty, assume that there are no seq in vircat return empty array now no need to proceed--->
 					<cfset seq_tmp_tbl = retrieveSequenceId_B(str=arguments.obj.VIRCAT & "_id",server=_server,library=_libraryId)/>
 					<cfif not len(seq_tmp_tbl)>
-						<!---<cfthrow type="EMPTY_CATEGORY" />--->
-						<cfreturn ""/>
+						<cfthrow type="EMPTY_CATEGORY" />
 					</cfif>	
 				</cfif>
 			</cfif>	
@@ -283,14 +285,24 @@
 				queryStr &= " and b.e_value <= #arguments.obj.EVALUE#";
 			</cfscript>
 		
+			<cfcatch type="EMPTY_CATEGORY">
+				<cfsavecontent variable="obj2str" >
+					<cfdump var="#arguments.obj#">
+				</cfsavecontent>
+				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
+						#obj2str#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+			</cfcatch>
+			
 			<cfcatch type="any">
 				<cfset queryStr = ""/>
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
 						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
-			</cfcatch>		
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn queryStr/>		
+			</cffinally>
 		</cftry>
-		
-		<cfreturn queryStr/>
 	</cffunction>
 
 	<cffunction name="prepareRS" access="remote" returntype="struct">
@@ -323,15 +335,17 @@
 			<cfquery name="srch_qry" datasource="#_server#">
 				SELECT	distinct
 						s.id as sequenceId,
-						s.name,
-						s.size,
 						s.libraryId,
 						b.id as blastId,
+						
+						s.name,
+						s.size,
 						b.query_length,
 						b.algorithm,
 						b.database_name,
 						b.hit_name,
 						b.hit_description,
+						
 						b.qry_start,
 						b.qry_end,
 						b.hit_start,
@@ -342,8 +356,20 @@
 						b.bit_score,
 						b.subject_length,
 						b.e_value,
+						
 						b.sys_topHit,
 						b.user_topHit,
+						
+						b.domain,
+						b.kingdom,
+						b.phylum,
+						b.class,
+						b.order,
+						b.family,
+						b.genus,
+						b.species,
+						b.organism,
+						
 						'#_environment#' as environment
 				
 				#PreserveSingleQuotes(partialQuery)#

@@ -3,7 +3,7 @@
 			   xmlns:s="library://ns.adobe.com/flex/spark" 
 			   xmlns:mx="library://ns.adobe.com/flex/mx"
 			   xmlns:user="services.user.*"
-			   layout="horizontal" verticalAlign="middle" 
+			   layout="vertical" verticalAlign="middle" 
 			   creationComplete="onCreationComplete()"
 			   implements="com.IModuleInterface.IUserInterface" 
 			   percentWidth="100" percentHeight="100">
@@ -111,6 +111,6 @@
 		<s:CallResponder id="updateUserLogin"/>
 	</fx:Declarations>
 	
-	<mx:Label id="user_msg" text="Hello, Guest"/>
 	<mx:Button id="user_button" label="Login" styleName="menu" click="loginUser()"/>
+	<mx:Label id="user_msg" text="Hello, Guest"/>
 </mx:Module>

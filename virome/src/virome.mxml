@@ -176,7 +176,7 @@
 		        if (o.state == undefined)
 		            o.state = '';
 		        
-				urlParam = '';		
+				urlParam = '';
 				
 				if ((o.srch != undefined) && (o.srch == true)){					
 					urlParam="srch=true;";
@@ -283,6 +283,8 @@
 					PopUpManager.bringToFront(downloadPanel);
 					PopUpManager.centerPopUp(downloadPanel);
 					this.nav_buttons.selectedIndex = -1;
+				} else if (s == 'Upload'){
+					_util.submissionLink();
 				} else {
 					//no need to recreate components if they have been so previously.
 					if ((componentLoadedObject[s] == undefined) || (componentLoadedObject[s] == 0)){
@@ -411,6 +413,7 @@
 			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='assets/icons/Zoom.png')"/>
 			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='assets/icons/Statistics.png')"/>
 			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='assets/icons/Download.png')"/>
+			<fx:Object id="upload" label="Upload" name="Upload" icon="@Embed(source='assets/icons/Upload.png')"/>
 			<fx:Object id="methods" label="General Info." name="Methods" icon="@Embed(source='assets/icons/Lamp.png')"/>
 		</fx:Array>
 		
@@ -459,8 +462,7 @@
 	</mx:ViewStack>
 	
 	<mx:HBox styleName="mid" width="100%" horizontalAlign="center">
-		<mx:LinkButton label="{copyright} VIROME a product of WommackLab" click="footerLink()" color="#993333"/>
-		<mx:LinkButton label="Submit your library for analysis" click="{_util.submissionLink(event);}" color="#993333"/>	
+		<mx:LinkButton label="{copyright} VIROME a product of WommackLab" click="footerLink()" color="#993333"/>	
 	</mx:HBox>
 	
 </mx:Application>
