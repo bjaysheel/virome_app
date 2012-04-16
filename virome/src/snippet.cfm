@@ -41,7 +41,10 @@
 	</cfscript>
 	#fname#<br/>
 	#getFileFromPath(fname)#
-	
+		
+	<cfset dna = "ATGC"/>
+	<cfset dna = CreateObject("component",  application.cfc & ".Utility").reverseComplement(dna)/>
+	#dna#
 	<!---<cfset rt_value = CreateObject("component",  application.cfc & ".Exporter").export(file,obj,binarydecode('',"Base64"),'')/>--->
 	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>--->
 	<!---<cfdump var="#rt_value#">--->

@@ -164,7 +164,10 @@
 							r.name,
 							o.seq_name,
 							o.start,
-							o.end
+							o.end,
+							o.strand,
+							o.type,
+							s.basepair as peptide
 						<cfelse>
 							s.id as sequenceId,
 							s.libraryId,
@@ -184,8 +187,9 @@
 			<cfloop query="qry">
 				<cfset seq_desc = CreateObject("component",  application.cfc & ".Utility").getMGOLDescription(qry.name)/>
 				<cfset sequence = qry.basepair/>
+				
 				<cfif arguments.orf_nuc>
-					<cfset sequence = mid(sequence,qry.start,(qry.end-qry.start))/>
+					<cfset sequence = extractORF(sequence, qry.start, qry.end, qry.strand, qry.type) />
 					<cfset qry.name = qry.seq_name/>
 				</cfif>
 				
@@ -233,6 +237,8 @@
 							,o.start
 							,o.end
 							,o.seq_name
+							,o.strand
+							,o.type
 						</cfif>
 				FROM 	sequence s 
 					<cfif arguments.o and arguments.r>
@@ -265,8 +271,9 @@
 			
 			<cfloop query="qry">
 				<cfset sequence = qry.basepair/>
+				
 				<cfif arguments.o and arguments.r>
-					<cfset sequence = mid(sequence,qry.start,(qry.end-qry.start))/>
+					<cfset sequence = extractORF(sequence, qry.start, qry.end, qry.strand, qry.type) />
 					<cfset qry.name = qry.seq_name/>
 				</cfif>
 				
@@ -395,6 +402,41 @@
 		</cftry>
 		
 		<cfreturn "#application.rootHostPath#/charts/#_filename#.pdf">
+	</cffunction>
+	
+	<cffunction name="extractORF" access="private" returntype="String">
+		<cfargument name="seqeunce" type="string" required="true"/>
+		<cfargument name="start" type="numeric" required="true" />
+		<cfargument name="end" type="numeric" required="true" />
+		<cfargument name="strand" type="string" required="true" />
+		<cfargument name="type" type="string" required="true" />
+		
+		<cftry>
+	 		<cfset arguments.sequence = mid(arguments.sequence,arguments.start,(arguments.end-arguments.start)+1)/>
+			
+			<cfif arguments.strand eq "-">
+				<cfset arguments.sequence = CreateObject("component",  application.cfc & ".Utility").reverseComplement(arguments.sequence)/>
+			</cfif>
+			
+			<!--- if missing start codon then make nucleotide sequence a multiple of 3
+				  i.e remove 1 or 2 bases from the start of sequence --->
+			<cfif lcase(arguments.type) eq 'lack start'>
+				<cfif len(arguments.sequence)%3 eq 2>
+					<cfset arguments.sequence = right(arguments.seqeunce, len(arguments.seqeunce)-2) />
+				<cfelseif len(arguments.sequence)%3 eq 1>
+					<cfset arguments.sequence = right(arguments.seqeunce, len(arguments.seqeunce)-1) />
+				</cfif>
+			</cfif>
+			
+			<cfcatch type="any">
+				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXTRACTORF", 
+									#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn arguments.sequence/>
+			</cffinally>
+		</cftry>
 	</cffunction>
 	
 	<cffunction name="formatSequence" access="private" returntype="string">

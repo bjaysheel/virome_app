@@ -155,14 +155,16 @@
 					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 					doubleClickFlag=true;
 					
+					var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+					var tObject:SearchDBEvent = new SearchDBEvent();
+					var fObject:FileSelectorEvent = new FileSelectorEvent();
+					
 					if ((event.hitData.chartItem.item as XML).@CAT == 'tRNA'){
-						var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
-						
-						var tObject:SearchDBEvent = new SearchDBEvent();
+						tObject = new SearchDBEvent();
 						tObject.environment = environment;
 						tObject.library = libraryId;
 						
-						var fObject:FileSelectorEvent = new FileSelectorEvent();
+						fObject = new FileSelectorEvent();
 						fObject.libtRNA = true;
 						
 						downloadPanel._fileSelector = fObject.getFileSelectorObject();
@@ -171,13 +173,11 @@
 						PopUpManager.bringToFront(downloadPanel);
 						PopUpManager.centerPopUp(downloadPanel);
 					} else if ((event.hitData.chartItem.item as XML).@CAT == 'rRNA'){
-						var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
-						
-						var tObject:SearchDBEvent = new SearchDBEvent();
+						tObject = new SearchDBEvent();
 						tObject.environment = environment;
 						tObject.library = libraryId;
 						
-						var fObject:FileSelectorEvent = new FileSelectorEvent();
+						fObject = new FileSelectorEvent();
 						fObject.librRNA = true;
 						
 						downloadPanel._fileSelector = fObject.getFileSelectorObject();
