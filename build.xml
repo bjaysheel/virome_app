@@ -1,64 +1,235 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project name="Virome User Interface Build Script" default="build" basedir=".">
-    <property file="build.properties"/>
+<project name="Virome Flex Application Build Script" default="help" basedir=".">
+    <description>
+        Note:  user specific properties such as SERVER_PRIV_KEY can be stored
+        in a file in user_properties/(yourusername).properties and
+        the build file will use those properties.
+    </description>
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="antlib/ant-contrib-0.3.jar"/>
+        </classpath>
+    </taskdef>
+
     <property name="build" location="${basedir}/build"/>
     <property environment="env"/>
     <property name="modules_build_location" location="${build}/assets/modules"/>
     <taskdef resource="flexTasks.tasks" classpath="ant/lib/flexTask.jar"/>
-    <!--<property name="FLEX_HOME" value="${SDK_HOME}"/>-->
-    <!--<property name="APP_ROOT" value="src"/>-->
+
+    <target name="init">
+        <property file="user_properties/${user.name}.properties"/>
+
+        <if>
+            <isset property="properties.file"/>
+            <then>
+                <property file="${properties.file}"/>
+                <echo message="Deploying to ${SERVER_HOST} with custom ${properties.file} file"/>
+                <if>
+                    <not><isset property="SERVER_HOST"/></not>
+                    <then>
+                        <fail message="SERVER_HOST property is not set.  Is this a valid property file?"/>
+                    </then>
+                    <elseif>
+                        <equals arg1="${SERVER_HOST}" arg2="localhost"/>
+                        <then>
+                            <echo message="This is NOT a remote deploy ..."/>
+                            <property name="REMOTE_DEPLOY" value="false"/>
+                        </then>
+
+                    </elseif>
+                    <else>
+                        <echo message="This is a remote deploy ..."/>
+                        <property name="REMOTE_DEPLOY" value="true"/>
+                    </else>
+                </if>
+            </then>
+            <else>
+                <fail message="$properties.file is not set"/>
+            </else>
+        </if>
+
+        <property name="OLD_RELEASES_DIR" value="${COPY_DIR}"/>
 
 
-    <target name="install">
-        <copy todir="${deploydir}" overwrite="true">
+    </target>
+
+    <target name="install" depends="init">
+        <if>
+            <equals arg1="${REMOTE_DEPLOY}" arg2="true"/>
+            <then>
+                <antcall target="install-remote"/>
+            </then>
+            <elseif>
+                <equals arg1="${REMOTE_DEPLOY}" arg2="false"/>
+                <then>
+                    <antcall target="install-local"/>
+                </then>
+            </elseif>
+            <else>
+                <fail message="$REMOTE_DEPLOY is not set because $SERVER_HOST isn't set"/>
+            </else>
+        </if>
+    </target>
+
+    <target name="deploy" depends="init">
+        <antcall target="build"/>
+        <antcall target="install"/>
+    </target>
+
+    <target name="install-local"
+            description="Copies the contents of the build directory to the installation directory.">
+
+        <echo message="Installing Locally ... Copying files from '${build}' to '${COLD_FUSION_HTML_DIR}'"/>
+        <copy todir="${COLD_FUSION_HTML_DIR}" overwrite="true">
             <fileset dir="${build}"/>
         </copy>
     </target>
 
-    <target name="clean-install">
-        <delete dir="${deploydir}">
-            <exclude name="xDocs"/>
-            <exclude name="idFiles"/>
+    <target name="install-remote"
+            description="SCPs a gzipped tar file from the build directory to $SERVER_HOST:$COPY_DIR and unpacks it to $COLD_FUSION_HTML_DIR">
+
+        <loadfile property="latest.build"
+                  srcFile="${build}/lastbuilt.txt"
+                  failonerror="true"/>
+
+        <echo message="Installing Remotely to '${SERVER_HOST}:${COLD_FUSION_HTML_DIR}'..."/>
+
+        <echo message="Creating and compressing tar file of build directory contents"/>
+        <exec executable="tar" failonerror="true">
+            <arg line="-zxf ${build}/virome_flash_app_${latest.build}.tar.gz -C ${build}"/>
+        </exec>
+        <!--<gzip destfile="${build}/virome_flash_app_${latest.build}.tar.gz" src="${build}/virome_flash_app_${latest.build}.tar"/>-->
+
+        <echo message="Copying the release tar zip to the ${SERVER_HOST}:${OLD_RELEASES_DIR}"/>
+        <echo message="scp ${SERVER_PRIV_KEY} -f ${build}/virome_flash_app_${latest.build}.tar.gz ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
+        <exec executable="scp" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} -r ${build}/virome_flash_app_${latest.build}.tar.gz ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
+        </exec>
+
+        <!--
+        tar -zcvf /var/www/html.backup/virome_html_dir.04-16-2012_18:59:00.tar.gz /var/www/html --exclude 'xDocs' --exclude 'idFiles'
+        mv /var/www/html/idFiles /var/www/html.backup/idFiles
+        mv /var/www/html/xDocs /var/www/html.backup/xDocs
+        rm -fr /var/www/html/*
+        mv /var/www/html.backup/idFiles /var/www/html/idFiles
+        mv /var/www/html.backup/xDocs /var/www/html/xDocs
+        tar -zxf /var/www/html.backup/virome_flash_app_04-16-12_15\:34\:53.tar.gz /var/www/html
+
+         -->
+    </target>
+
+    <target name="clean-local-install"
+            description="Removes all the files from the installation directory, except for the xDocs and idFiles directories.">
+
+        <echo message="Preparing to clean the install directory '${COLD_FUSION_HTML_DIR}'"/>
+        <delete>
+            <fileset dir="${COLD_FUSION_HTML_DIR}">
+                <exclude name="xDocs/*"/>
+                <exclude name="idFiles/*"/>
+            </fileset>
         </delete>
     </target>
 
+    <target name="build" depends="init, create-bookmark-component"
+            description="Builds all the components and places all the needed files into the build directory.">
 
-    <target name="build" depends="compile_swf, copy_cfcs, copy_assets, wrapper, copy-other-needed-files" />
+        <echo message="Calling virome build script '${basedir}/virome/build.xml'"/>
+        <ant target="virome"/>
 
-    <target name="compile_swf" depends="create-bookmark-component">
-        <ant antfile="${basedir}/virome/build.xml" target="virome">
-            <property name="build" location="${basedir}/build"/>
-            <property file="build.properties"/>
-        </ant>
+        <echo message="Compile complete ... preforming post compile tasks."/>
+        <ant target="copy_cfcs"/>
+        <ant target="copy_assets"/>
+        <ant target="wrapper"/>
+        <ant target="copy-other-needed-files"/>
+
+        <tstamp>
+            <format property="build.time" pattern="MM-dd-yy_HH:mm:ss"/>
+        </tstamp>
+
+        <echo file="${build}/lastbuilt.txt" message="${build.time}" append="false"/>
 
     </target>
 
-    <target name="copyRSLs">
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swf"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swz"/>
+    <target name="virome"
+            description="Compiles the virome.mxml into the final swf file."
+            depends="init">
+
+        <echo message="Creating '${build}/virome.swf'"/>
+        <mxmlc file="${basedir}/virome/src/virome.mxml"
+               output="${build}/virome.swf"
+               keep-generated-actionscript="false"
+               as3="true">
+
+            <!-- theme is included otherwise the build throws a bunch of backgroundColor halo, spark style errors -->
+            <theme dir="${FLEX_HOME}/frameworks/themes/Halo">
+                <include name="halo.swc" />
+            </theme>
+
+            <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+            <source-path path-element="${FLEX_HOME}/frameworks"/>
+
+            <compiler.library-path dir="${FLEX_HOME}/frameworks" append="true">
+                <include name="libs" />
+                <include name="../bundles/{locale}" />
+            </compiler.library-path>
+
+            <compiler.include-libraries dir="virome/libs" append="true">
+                <include name="map_1_17.swc"/>
+                <include name="analytics.swc"/>
+            </compiler.include-libraries>
+
+            <compiler.include-libraries dir="libs" append="true">
+                <include name="ViromeLib.swc" />
+                <include name="playerfds.swc" />
+                <include name="fiber.swc" />
+                <include name="fiber_rb.swc" />
+                <include name="fds.swc" />
+                <include name="serializers.swc" />
+                <include name="fds_rb.swc" />
+                <include name="serializers_rb.swc" />
+            </compiler.include-libraries>
+        </mxmlc>
     </target>
 
-    <target name="copy_cfcs">
+    <!--<target name="copyRSLs">-->
+        <!--<copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swf"/>-->
+        <!--<copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_3.2.0.3958.swz"/>-->
+    <!--</target>-->
+
+    <target name="copy_cfcs"
+            description="Copies the ColdFusion components to the ${build}/cfc directory">
+
         <mkdir dir="${build}/cfc"/>
-        <copy todir="${build}/cfc" overwrite="true" filtering="true">
+
+        <echo message="Copying cfc files to '${build}/cfc'"/>
+        <copy todir="${build}/cfc"
+              overwrite="true"
+              filtering="true">
             <fileset dir="virome/src/cfc"/>
         </copy>
     </target>
 
-    <target name="copy_assets">
+    <target name="copy_assets"
+            description="Copies contents of the assets directory to ${build}/assets for dependency resolution.">
+
+        <echo message="Copying all contents of assets to '${build}/assets'"/>
         <copy todir="${build}/assets" overwrite="true">
             <fileset dir="virome/src/assets"/>
         </copy>
     </target>
 
-    <target name="wrapper">
+    <target name="wrapper"
+            description="Creates the virome wrapper html and other associated files (ie. history directory contents)">
+
+        <echo message="Creating html wrapper files."/>
         <html-wrapper
                 height="100%"
                 width="100%"
-                file="${EXECUTABLE_NAME}.html"
+                file="virome.html"
                 bgcolor="#aab2b7"
                 application="app"
-                swf="${build}/${EXECUTABLE_NAME}.swf"
+                swf="${build}/virome.swf"
                 version-major="9"
                 version-minor="0"
                 version-revision="0"
@@ -68,16 +239,23 @@
                 output="${build}"/>
     </target>
 
-    <!-- this target works -->
-    <target name="create-virome-lib">
+    <target name="create-virome-lib"
+            description="Compiles the Virome .swc library file and places it in the libs directory."
+            depends="init">
+
+        <echo message="Creating ViromeLib.swc ... placing it into '${basedir}/libs' once compilation is completed"/>
         <compc output="libs/ViromeLib.swc"
                include-classes="com.IModuleInterface.IBookmarkInterface com.IModuleInterface.IServiceInterface com.IModuleInterface.IUserInterface">
             <source-path path-element="ViromeLib/src"/>
         </compc>
     </target>
 
+    <target name="create-bookmark-component"
+            depends="create-user-component"
+            description="Compiles the bookmark module and places it in the ${modules_build_location} directory.">
 
-    <target name="create-bookmark-component" depends="create-user-component">
+        <echo message="Compiling the bookmark module ... "/>
+        <echo message="    destination: ${modules_build_location}/bookmark.swf"/>
         <mxmlc file="bookmark/src/bookmark.mxml"
                output="${modules_build_location}/bookmark.swf"
                keep-generated-actionscript="false">
@@ -87,7 +265,7 @@
             <source-path path-element="${FLEX_HOME}/frameworks"/>
 
             <compiler.library-path dir="${FLEX_HOME}/frameworks" append="true">
-                <include name="libs" />
+            <include name="libs" />
                 <include name="../bundles/{locale}" />
             </compiler.library-path>
 
@@ -103,23 +281,35 @@
         </mxmlc>
     </target>
 
-    <target name="create-assets-dir">
+    <target name="create-assets-dir"
+            description="Creates the assets/modules directory if it doesn't exist.">
+
+        <echo message="Creating the ${modules_build_location} directory"/>
         <mkdir dir="${modules_build_location}"/>
     </target>
 
-    <target name="copy-other-needed-files">
-        <copy todir="${build}" overwrite="true">
+    <target name="copy-other-needed-files"
+            description="Copies curtain ColdFusion, javascript and xml files that are needed to the build directory.">
+
+        <echo message="Copying other file dependencies to '${build}'"/>
+        <copy todir="${build}"
+              overwrite="true">
             <fileset dir="virome/src">
                 <include name="*.cfm"/>
                 <include name="Browserdetection.js"/>
                 <include name="crossdomain.xml"/>
-                <include name="style.css"/>
                 <include name="blastImager/*"/>
             </fileset>
         </copy>
     </target>
 
-    <target name="create-user-component" depends="create-virome-lib,create-assets-dir">
+
+    <target name="create-user-component"
+            depends="create-virome-lib,create-assets-dir"
+            description="This compiles the user module.">
+
+        <echo message="Compiling the user module ..."/>
+        <echo message="    destination: '${build}/user.swf'"/>
         <mxmlc file="user/src/user.mxml"
                output="${build}/user.swf"
                keep-generated-actionscript="false">
@@ -133,10 +323,6 @@
                 <include name="../bundles/{locale}" />
             </compiler.library-path>
 
-            <!--<compiler.theme dir="${FLEX_HOME}/frameworks" append="false">-->
-                    <!--<include name="themes/Spark/"/>-->
-            <!--</compiler.theme>-->
-
             <compiler.include-libraries dir="libs" append="true">
                 <include name="ViromeLib.swc" />
                 <include name="fiber.swc" />
@@ -149,12 +335,21 @@
         </mxmlc>
     </target>
 
-
-
     <target name="clean">
+
         <echo message="Removing build directory..."/>
         <delete dir="${build}"/>
         <delete file="libs/ViromeLib.swc"/>
-        <echo message="Complete"/>
+        <echo message="Cleaning Complete"/>
+
+    </target>
+
+    <target name="help">
+        <echo message="This is the Virome ant build script. Any important properties are located in the build.properties file."/>
+        <echo message="    build           Builds all the components and places all the needed files into the build directory."/>
+        <echo message="    clean           Cleans all the build files from the build directory."/>
+        <echo message="    install         Copies the contents of the build directory to the installation directory."/>
+        <echo message="    clean-install   Removes all the files from the installation directory, except for the xDocs and idFiles directories."/>
+        <echo message="    backup-install  Creates a gzipped tar of the installation directory."/>
     </target>
 </project>
