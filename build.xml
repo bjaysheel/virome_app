@@ -137,16 +137,6 @@
         <exec executable="ssh" failonerror="true">
             <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zxvf ${OLD_RELEASES_DIR}/${VIROME_DEPLOYMENT_FILE} -C ${COLD_FUSION_HTML_DIR}'"/>
         </exec>
-        <!--
-        tar -zcvf /var/www/html.backup/virome_html_dir.04-16-2012_18:59:00.tar.gz /var/www/html - -exclude 'xDocs' - -exclude 'idFiles'
-        mv /var/www/html/idFiles /var/www/html.backup/idFiles
-        mv /var/www/html/xDocs /var/www/html.backup/xDocs
-        rm -fr /var/www/html/*
-        mv /var/www/html.backup/idFiles /var/www/html/idFiles
-        mv /var/www/html.backup/xDocs /var/www/html/xDocs
-        tar -zxf /var/www/html.backup/virome_flash_app_04-16-12_15\:34\:53.tar.gz /var/www/html
-
-         -->
     </target>
 
     <target name="clean-local-install"
