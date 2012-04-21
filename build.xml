@@ -84,6 +84,20 @@
         </copy>
     </target>
 
+    <target name="package" depends="init">
+        <loadfile property="latest.build"
+                  srcFile="${build}/lastbuilt.txt"
+                  failonerror="true"/>
+        <property name="VIROME_DEPLOYMENT_FILE" value="virome_flash_app_${latest.build}.tar.gz"/>
+
+        <echo message="Creating and compressing tar file of build directory contents"/>
+        <tar basedir="${build}" destfile="${basedir}/${VIROME_DEPLOYMENT_FILE}" compression="gzip"/>
+
+        <move file="${basedir}/${VIROME_DEPLOYMENT_FILE}" tofile="${build}/${VIROME_DEPLOYMENT_FILE}" failonerror="true" overwrite="true"/>
+
+        <echo message="Completed packaging for a archive file or the virome application ...  ${build}/${VIROME_DEPLOYMENT_FILE}"/>
+    </target>
+
     <target name="install-remote"
             description="SCPs a gzipped tar file from the build directory to $SERVER_HOST:$COPY_DIR and unpacks it to $COLD_FUSION_HTML_DIR">
 
