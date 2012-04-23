@@ -4,6 +4,10 @@
         Note:  user specific properties such as SERVER_PRIV_KEY can be stored
         in a file in user_properties/(yourusername).properties and
         the build file will use those properties.
+
+        Another Note:  This build system requires FLEX SDK.  Please see wiki
+                       for this source tree on github 
+                       (https://github.com/CAMERA/Virome/wiki)
     </description>
 
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
