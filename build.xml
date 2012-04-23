@@ -236,13 +236,15 @@
     </target>
 
     <target name="copyRSLs">
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/framework_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/charts_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/mx_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/rpc_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/spark_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/sparkskins_4.5.1.21328.swz"/>
-        <copy todir="${build}" file="${FLEX_HOME}/frameworks/rsls/textLayout_2.0.0.232.swz"/>
+        <copy todir="${build}">
+           <fileset dir="${FLEX_HOME}/frameworks/rsls">
+              <exclude name="**/*.swf"/>
+              <exclude name="advancedgrid*"/>
+              <exclude name="spark_dmv*"/>
+              <exclude name="osmf*"/> 
+              <include name="**/*.swz"/>
+           </fileset>
+        </copy>
     </target>
 
     <target name="copy_cfcs"
