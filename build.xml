@@ -20,6 +20,7 @@
     <property environment="env"/>
     <property name="modules_build_location" location="${build}/assets/modules"/>
     <taskdef resource="flexTasks.tasks" classpath="ant/lib/flexTask.jar"/>
+    <echo message="executing as User: ${user.name}"/>
 
     <target name="init">
         <property file="user_properties/${user.name}.properties"/>
@@ -52,6 +53,8 @@
                 <fail message="$properties.file is not set"/>
             </else>
         </if>
+
+        <echoproperties/>
 
         <property name="OLD_RELEASES_DIR" value="${COPY_DIR}"/>
     </target>
