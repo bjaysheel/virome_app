@@ -191,6 +191,11 @@ package com
 			navigateToURL(url,"_blank");
 		}
 		
+		public function submissionLink(event:MouseEvent=null):void{
+			var url:URLRequest = new URLRequest("http://virome.dbi.udel.edu/submission/index.php");
+			navigateToURL(url,"_blank");
+		}
+		
 		public function faultHandler(event:FaultEvent):void{
 			var myalert:MyAlert = new MyAlert();
 			myalert.error = true;

@@ -5,7 +5,6 @@
 		  xmlns:cfservice="services.*"
 		  xmlns:com="com.*"
 		  xmlns:local="*"
-		  width="100%" height="100%" 
 		  creationComplete="onCreationComplete()" xmlns:statistics="services.statistics.*"> 
 	
 	<fx:Script>
@@ -61,5 +60,5 @@
 							  destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Statistics" />
 	</fx:Declarations>
 	
-	<local:BirdsEyeViewChart id="bevchart" width="100%" height="100%" isPrivate="{isPrivate}"/>
+	<local:BirdsEyeViewChart id="bevchart" isPrivate="{isPrivate}"/>
 </mx:VBox>

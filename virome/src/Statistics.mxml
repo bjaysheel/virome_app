@@ -74,7 +74,7 @@
 			
 			protected function onAddtoStage():void{
 				//track
-				tracker = new GATracker( this, _util.trackerId, "AS3", false );							
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
 
 				_util.app.addEventListener(LibraryStatEvent.LIBRARY_STAT_EVENT,libStatsHandler);
 				_util.app.addEventListener(StatsChangeViewEvent.STATS_CHANGE_VIEW_EVENT,changeViewHandler);

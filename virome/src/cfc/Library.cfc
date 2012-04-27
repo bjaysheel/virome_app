@@ -744,7 +744,7 @@
 		
 		<cftry>
 			<!--- if file does not exist create a new one--->		
-			<cfif not fileExists(applicaiton.xDocsFilePath&"/"&filename)>
+			<cfif not fileExists(application.xDocsFilePath&"/"&filename)>
 				
 				<!---  get size or gc --->
 				<cfset qry = getSizeGC(libraryId=arguments.libraryId,server=arguments.server,type=arguments.type,orf=iif(arguments.type eq "orf",1,0))/>

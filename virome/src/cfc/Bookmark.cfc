@@ -31,9 +31,13 @@
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - GET", 
 						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn arr />
+			</cffinally>
 		</cftry> 
 		
-		<cfreturn arr>
+		
 	</cffunction>
 	
 	<cffunction name="add" access="remote" returntype="void">
@@ -55,7 +59,7 @@
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - ADD", 
 						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
-			</cfcatch>
+			</cfcatch>			
 		</cftry>
 		
 	</cffunction>

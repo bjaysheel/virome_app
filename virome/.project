@@ -27,6 +27,11 @@
 			<location>/Users/jbhavsar/Documents/workspace/virome-rc</location>
 		</link>
 		<link>
+			<name>bin-release1</name>
+			<type>2</type>
+			<location>/Users/jbhavsar/Documents/workspace2/Virome/release_candidate</location>
+		</link>
+		<link>
 			<name>services/Application.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/VIROME/cfc/Application.cfc</location>

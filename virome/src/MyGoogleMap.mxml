@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:UIComponent  xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		   xmlns:s="library://ns.adobe.com/flex/spark"  
-		   xmlns:mx="library://ns.adobe.com/flex/mx" initialize="ini()"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   initialize="onInitialize()"
 		   width="100%" height="100%" resize="mapContainer_resize(event);">
 	
 	<fx:Script>
@@ -54,7 +55,7 @@
 				_txt = v;
 			}
 			
-			protected function ini():void{
+			protected function onInitialize():void{
 			}
 			
 			protected function evtHandler(event:Event):void{
@@ -68,6 +69,7 @@
 				
 				googleMap = new Map();
 				googleMap.key = _util.mapKey;
+				googleMap.sensor = "false";
 				
 				googleMap.addEventListener(MapEvent.MAP_READY, googleMap_mapReady);
 				googleMap.addEventListener(MapEvent.MAP_PREINITIALIZE,mapevent_mappreinitialize);

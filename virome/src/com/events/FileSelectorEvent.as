@@ -10,6 +10,8 @@ package com.events
 		private var _nucleotide:Boolean;
 		private var _image:Boolean;
 		private var _libRead:Boolean;
+		private var _librRNA:Boolean;
+		private var _libtRNA:Boolean;
 		private var _libPeptide:Boolean;
 		private var _libNucleotide:Boolean;
 		
@@ -24,6 +26,8 @@ package com.events
 			nucleotide=false;
 			image=false;
 			libRead=false;
+			librRNA=false;
+			libtRNA=false;
 			libPeptide=false;
 			libNucleotide=false;
 		}
@@ -57,7 +61,27 @@ package com.events
 		{
 			_libRead = value;
 		}
-
+		
+		public function get librRNA():Boolean
+		{
+			return _librRNA;
+		}
+		
+		public function set librRNA(value:Boolean):void
+		{
+			_librRNA = value;
+		}
+		
+		public function get libtRNA():Boolean
+		{
+			return _libtRNA;
+		}
+		
+		public function set libtRNA(value:Boolean):void
+		{
+			_libtRNA = value;
+		}
+		
 		public function get image():Boolean
 		{
 			return _image;
@@ -120,6 +144,8 @@ package com.events
 			obj['read'] = read;
 			obj['image'] = image;
 			obj['libRead'] = libRead;
+			obj['librRNA'] = librRNA;
+			obj['libtRNA'] = libtRNA;
 			obj['libPeptide'] = libPeptide;
 			obj['libNucleotide'] = libNucleotide;
 			

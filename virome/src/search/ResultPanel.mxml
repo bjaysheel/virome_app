@@ -34,6 +34,7 @@
 			import mx.containers.Canvas;
 			import mx.containers.HBox;
 			import mx.controls.Alert;
+			import mx.controls.ComboBox;
 			import mx.controls.DataGrid;
 			import mx.controls.LinkButton;
 			import mx.controls.Spacer;
@@ -41,6 +42,7 @@
 			import mx.core.FlexGlobals;
 			import mx.events.CloseEvent;
 			import mx.events.CollectionEvent;
+			import mx.events.ListEvent;
 			import mx.managers.PopUpManager;
 			import mx.rpc.AsyncResponder;
 			import mx.rpc.AsyncToken;
@@ -48,18 +50,20 @@
 			import mx.rpc.events.ResultEvent;
 			
 			[Bindable] private var _util:MyUtility = new MyUtility();
-			private var _ncRNAFlag:Boolean = false;
 			[Bindable] private var _currentGridRowCount:Number = 0;
 			[Bindable] private var _totalGridRowCount:Number = 0;
+			
+			[Bindable] [Embed(source="assets/icons/Check.png")]
+			public var Check:Class;
+			
 			private var gridResultSet:ArrayCollection = new ArrayCollection();
-			
-			private static const PAGE_SIZE:Number = 500;
-			
-    		private var searchBlastResult:MyBlastResult = new MyBlastResult();
+			private var _ncRNAFlag:Boolean = false;
+			private var searchBlastResult:MyBlastResult = new MyBlastResult();
     		private var searchDBResultGrid:MyDBResult = new MyDBResult();
     		private var downloadBttn:LinkButton = new LinkButton();
 			private var searchDBRequestObject:Object = new Object();
-			
+			private var myHbox:HBox = new HBox();
+			private var cb:ComboBox = new ComboBox();
 			
 			[Bindable] public function set ncRNAFlag(v:Boolean):void{
 				_ncRNAFlag = v;
@@ -81,6 +85,54 @@
 				return _totalGridRowCount;
 			}
 			
+			override protected function createChildren():void{
+				super.createChildren();
+								
+				cb.rowCount = 10;
+				cb.addEventListener(ListEvent.CHANGE,onColumnListChange);
+				cb.dataProvider=columns;
+				cb.enabled = false;
+				
+				myHbox = new HBox( );
+				myHbox.addChild(cb);
+				
+				// Add the HBox and the icons to the titleBar display 
+				titleBar.addChild( myHbox );
+			}
+			
+			override protected function updateDisplayList (unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				
+				// Do this or the HBox won't appear! 
+				myHbox.setActualSize( myHbox.getExplicitOrMeasuredWidth(),
+				myHbox.getExplicitOrMeasuredHeight() );
+				
+				// Position the HBox 
+				var y:int = 4;
+				var x:int = this.width - myHbox.width - 12;
+				myHbox.move(x, y);
+			}
+			
+			private function onColumnListChange(event:ListEvent):void{
+				for(var i:int=0; i<columns.length; i++){
+					if (columns.getItemAt(i).data == event.currentTarget.selectedItem.data){
+						if (columns.getItemAt(i).icon == "Check"){
+							//remove column from view
+							columns.getItemAt(i).icon = "";
+							searchDBResultGrid.columns[event.currentTarget.selectedItem.data].visible = false;
+						} else {
+							//add column to view
+							columns.getItemAt(i).icon = "Check";
+							searchDBResultGrid.columns[event.currentTarget.selectedItem.data].visible = true;
+						}
+					}
+				}
+
+				//reset combobox values
+				cb.dataProvider = columns;
+				cb.selectedIndex = 0;
+			}
 			
 			private function onAddtoStage():void{
 				_util.app.addEventListener(SearchDBEvent.SEARCH_DB_EVENT,searchDBRequest);
@@ -93,6 +145,10 @@
         		initBlastRSLT();
 				
 				this.title = "Search Result [" + currentGridRowCount + " of " + totalGridRowCount + "]";
+				
+				downloadBttn = new LinkButton();
+				downloadBttn.label = "Download Search Sequences";
+				downloadBttn.addEventListener(MouseEvent.CLICK, downloadRequest);
 			}
 			
 			private function initDBRSLT():void{
@@ -101,6 +157,23 @@
 				
 				currentGridRowCount = 0;
 				totalGridRowCount = 0;
+				
+				//reset column select list
+				for(var i:int=0; i<columns.length; i++){
+					columns.getItemAt(i).icon = "";
+				}
+				columns.getItemAt(2).icon = "Check";
+				columns.getItemAt(3).icon = "Check";
+				columns.getItemAt(4).icon = "Check";
+				columns.getItemAt(5).icon = "Check";
+				columns.getItemAt(7).icon = "Check";
+				columns.getItemAt(8).icon = "Check";
+				columns.getItemAt(9).icon = "Check";
+				columns.getItemAt(18).icon = "Check";
+				
+				//reset combobox values
+				cb.dataProvider = columns;
+				cb.selectedIndex = 0;
 				
 				searchDBResultGrid.dataProvider = gridResultSet;
 			}
@@ -122,11 +195,7 @@
 					} 
 					
 					searchDBResultGrid.ncRNAFlag = ncRNAFlag;
-					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);
-					
-					downloadBttn = new LinkButton();
-					downloadBttn.label = "Download Search Sequences";
-					downloadBttn.addEventListener(MouseEvent.CLICK, downloadRequest);	
+					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);	
 				}
 			}
 						
@@ -195,8 +264,8 @@
 					
 					searchDBResultGrid.dataProvider = gridResultSet;
 					
-					currentGridRowCount = PAGE_SIZE;
-					currentGridRowCount = (totalGridRowCount > PAGE_SIZE) ? currentGridRowCount : totalGridRowCount; 
+					//currentGridRowCount = PAGE_SIZE;
+					//currentGridRowCount = (totalGridRowCount > PAGE_SIZE) ? currentGridRowCount : totalGridRowCount; 
 					
 					//temp hack getting all rows
 					currentGridRowCount = totalGridRowCount;
@@ -204,9 +273,8 @@
 					this.title = "Search Result [" + currentGridRowCount + " of " + totalGridRowCount + "]";
 					this.addChild(searchDBResultGrid);
 					this.addChild(downloadBttn);
-				} else {
-
-				}
+					this.cb.enabled = true;
+				} 
 				
 				_util.app.simulateMenuClick("Search");
 			}
@@ -249,6 +317,28 @@
 		<searchrpc:SearchRPC id="GetSearch" showBusyCursor="true" fault="_util.faultHandler(event)"
 							 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.SearchRPC"/>
 		<s:CallResponder id="getRSRequest" result="getRSResponse(event)"/>
+		
+		<s:ArrayCollection id="columns">
+			<fx:Object label="Display Columns" data="-1" icon=""/>
+			<fx:Object label="Blast DB" data="0" icon=""/>
+			<fx:Object label="Sequence Name" data="1" icon="Check"/>
+			<fx:Object label="Accession" data="2" icon="Check"/>
+			<fx:Object label="Description" data="3" icon="Check"/>
+			<fx:Object label="Evalue" data="4" icon="Check"/>
+			<fx:Object label="Bit Score" data="5" icon=""/>
+			<fx:Object label="% Qry Coverage" data="6" icon="Check"/>
+			<fx:Object label="% Similary" data="7" icon="Check"/>
+			<fx:Object label="% Identiy" data="8" icon="Check"/>
+			<fx:Object label="Domain" data="9" icon=""/>
+			<fx:Object label="Kingdom" data="10" icon=""/>
+			<fx:Object label="Phylum" data="11" icon=""/>
+			<fx:Object label="Class" data="12" icon=""/>
+			<fx:Object label="Order" data="13" icon=""/>
+			<fx:Object label="Family" data="14" icon=""/>
+			<fx:Object label="Genus" data="15" icon=""/>
+			<fx:Object label="Species" data="16" icon=""/>
+			<fx:Object label="Organism" data="17" icon="Check"/>
+		</s:ArrayCollection>
 	</fx:Declarations>
 	
 </mx:Panel>

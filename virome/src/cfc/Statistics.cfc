@@ -1479,7 +1479,7 @@
 						
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTRNASTATS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+					reporterror("STATISTICS.CFC - GETTRNASEQ", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -1542,7 +1542,7 @@
 		<cfset createFlag = 1/>
 		
 		<cfset xmlFName = UCASE(arguments.obj.sType) & "_PUBLIC_XMLDOC.xml"/>
-		<cfset idFName = UCASE(arguments.obj.SType) & "_PUBLIC_IDDOC.xml"/>
+		<cfset idFName = UCASE(arguments.obj.sType) & "_PUBLIC_IDDOC.xml"/>
 		
 		<cfif arguments.obj.libraryId gt 0>
 			<cfset xmlFName = UCASE(arguments.obj.sType) & "_XMLDOC_" & arguments.obj.libraryId & ".xml"/>

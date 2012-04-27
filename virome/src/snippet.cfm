@@ -3,23 +3,27 @@
 <cfoutput>
 	<cfscript>
 		obj = StructNew();
-		obj['ENVIRONMENT']="ORGANISMAL SUBSTRATE";
+		obj['ENVIRONMENT']="";
 		obj['EVALUE']=0.001;
 		obj['LIBRARY']=31;
-		obj['BLASTDB']="ACLAME";
-		obj['SEQUENCE']="";
+		obj['BLASTDB']="";
+		obj['SEQUENCE']="HUFHumanFecesSDVir_065_1_687_1";
 		obj['SEQUENCEID']="";
 		obj['READID']="";
 		obj['ORFTYPE']="";
-		obj['VIRCAT']="fxn";
+		obj['VIRCAT']="";
 		obj['INTERM']="";
 		obj['TERM']="";
 		obj['ACCESSION']="";
 		obj['INACC']="";
 		obj['TAXONOMY']="";
 		obj['INTAX']="";
-		obj['TAG']="TAG_2";
-		obj['IDFILE']="ACLAME_IDDOC_31.xml";
+		obj['TAG']="";
+		obj['IDFILE']="";
+		obj['USERNAME']="bjaysheel";
+		obj['USERID'] = 3;
+		obj['ALIAS'] = "bare test";
+		obj['JOBNAME'] = "bare test";
 		
 		file = structnew();
 		file['peptide'] = "false";
@@ -32,11 +36,20 @@
 	<cfset domList = ""/>
 	<cfset objarr = ArrayNew(1)/>
 	
+	<cfscript>
+		fname = "test.txt";		
+	</cfscript>
+	#fname#<br/>
+	#getFileFromPath(fname)#
+		
+	<cfset dna = "ATGC"/>
+	<cfset dna = CreateObject("component",  application.cfc & ".Utility").reverseComplement(dna)/>
+	#dna#
 	<!---<cfset rt_value = CreateObject("component",  application.cfc & ".Exporter").export(file,obj,binarydecode('',"Base64"),'')/>--->
-	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").getSearchRSLT(obj,0,10)/>--->
+	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>--->
 	<!---<cfdump var="#rt_value#">--->
 		
-	<cfscript>
+	<!---<cfscript>
 		sobj = StructNew();
 		sobj['name'] = "test2";
 		sobj['description'] = "test 2";
@@ -50,7 +63,7 @@
 	<cfdump var="#sobj#"/>
 	
 	<cfset value = CreateObject("component", application.cfc & ".Library").add_library(sobj)/>
-	<cfdump var="#value#">
+	<cfdump var="#value#">--->
 	
 	<!-- git test2 -->
 </cfoutput>

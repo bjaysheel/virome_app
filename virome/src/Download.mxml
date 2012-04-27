@@ -99,6 +99,8 @@
 				
 				var fObject:FileSelectorEvent = new FileSelectorEvent();
 				fObject.libRead = reads.selected;
+				fObject.librRNA = reads_rRNA.selected;
+				fObject.libtRNA = reads_tRNA.selected;
 				fObject.libPeptide = orf.selected;
 				fObject.libNucleotide = orf_nuc.selected;
 				
@@ -149,6 +151,24 @@
 			</mx:GridItem>
 			<mx:GridItem>
 				<mx:CheckBox id="reads"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Reads (rRNA)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:CheckBox id="reads_rRNA"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		
+		<mx:GridRow>
+			<mx:GridItem>
+				<mx:Label text="Reads (tRNA)"/>
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:CheckBox id="reads_tRNA"/>
 			</mx:GridItem>
 		</mx:GridRow>
 		

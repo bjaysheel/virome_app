@@ -16,6 +16,8 @@
 			import com.ChartnData;
 			import com.MyUtility;
 			import com.component.MyNumberFormatter;
+			import com.events.FileSelectorEvent;
+			import com.events.SearchDBEvent;
 			import com.events.SetSearchDBFormEvent;
 			import com.events.StatsChangeViewEvent;
 			import com.google.analytics.AnalyticsTracker;
@@ -25,6 +27,9 @@
 			import mx.charts.events.ChartItemEvent;
 			import mx.collections.ArrayCollection;
 			import mx.collections.XMLListCollection;
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
 			import mx.events.ToolTipEvent;
 			import mx.rpc.events.ResultEvent;
 			
@@ -150,15 +155,47 @@
 					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 					doubleClickFlag=true;
 					
-					_sf.environment = environment;
-					_sf.library = libraryId;
-					_sf.vircat = (event.hitData.chartItem.item as XML).@CAT;
+					var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+					var tObject:SearchDBEvent = new SearchDBEvent();
+					var fObject:FileSelectorEvent = new FileSelectorEvent();
 					
-					if (_sf.vircat == 'orfan')
-						_sf.evalue = 0.1;
-					else _sf.evalue = 0.001;
-					
-					_util.simulateSearchClick(_sf);
+					if ((event.hitData.chartItem.item as XML).@CAT == 'tRNA'){
+						tObject = new SearchDBEvent();
+						tObject.environment = environment;
+						tObject.library = libraryId;
+						
+						fObject = new FileSelectorEvent();
+						fObject.libtRNA = true;
+						
+						downloadPanel._fileSelector = fObject.getFileSelectorObject();
+						downloadPanel._searchDBObj = tObject.getStruct();
+						
+						PopUpManager.bringToFront(downloadPanel);
+						PopUpManager.centerPopUp(downloadPanel);
+					} else if ((event.hitData.chartItem.item as XML).@CAT == 'rRNA'){
+						tObject = new SearchDBEvent();
+						tObject.environment = environment;
+						tObject.library = libraryId;
+						
+						fObject = new FileSelectorEvent();
+						fObject.librRNA = true;
+						
+						downloadPanel._fileSelector = fObject.getFileSelectorObject();
+						downloadPanel._searchDBObj = tObject.getStruct();
+						
+						PopUpManager.bringToFront(downloadPanel);
+						PopUpManager.centerPopUp(downloadPanel);						
+					} else {
+						_sf.environment = environment;
+						_sf.library = libraryId;
+						_sf.vircat = (event.hitData.chartItem.item as XML).@CAT;
+						
+						if (_sf.vircat == 'orfan')
+							_sf.evalue = 0.1;
+						else _sf.evalue = 0.001;
+						
+						_util.simulateSearchClick(_sf);	
+					}
 				}	
 			}
 			

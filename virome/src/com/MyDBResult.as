@@ -55,24 +55,24 @@ package com
 		}
 		
 		protected function setColumns():void{
-			
 			var col1:DataGridColumn = new DataGridColumn;
 			col1.dataField = "DATABASE_NAME";
 			col1.headerText = "Blast DB";
 			col1.width = 90;
+			col1.visible = false;
 			
 			var col2:DataGridColumn = new DataGridColumn;
 			col2.dataField = "NAME";
 			col2.headerText = "Sequence Name";
 			col2.itemRenderer = new ClassFactory(search.SequenceNLenRenderer);
 			col2.width = 215;
-			
+
 			var col3:DataGridColumn = new DataGridColumn;
 			col3.dataField = "HIT_NAME";
 			col3.labelFunction = formatHitDef;
 			col3.headerText = "Hit Name/Accession";
 			col3.width=175;
-							
+
 			var col4:DataGridColumn = new DataGridColumn;
 			col4.dataField = "HIT_DESCRIPTION";
 			col4.headerText = "Description";
@@ -89,6 +89,7 @@ package com
 			col6.dataField = "BIT_SCORE";
 			col6.headerText = "Bit Score";
 			col6.width = 90;
+			col6.visible = false;
 			
 			var col7:DataGridColumn = new DataGridColumn;
 			col7.dataField = "QUERY_LENGTH";
@@ -106,7 +107,52 @@ package com
 			col9.headerText = "% Identitiy";
 			col9.width = 90;
 			
-			this.columns = [col1,col2,col3,col4,col5,col6,col7,col8,col9];
+			var col10:DataGridColumn = new DataGridColumn;
+			col10.dataField = "DOMAIN";
+			col10.headerText = "Domain";
+			col10.visible = false;
+			
+			var col11:DataGridColumn = new DataGridColumn;
+			col11.dataField = "KINGDOM";
+			col11.headerText = "Kingdom";
+			col11.visible = false;
+			
+			var col12:DataGridColumn = new DataGridColumn;
+			col12.dataField = "PHYLUM";
+			col12.headerText = "Phylum";
+			col12.visible = false;
+			
+			var col13:DataGridColumn = new DataGridColumn;
+			col13.dataField = "CLASS";
+			col13.headerText = "Class";
+			col13.visible = false;
+			
+			var col14:DataGridColumn = new DataGridColumn;
+			col14.dataField = "ORDER";
+			col14.headerText = "Order";
+			col14.visible = false;
+			
+			var col15:DataGridColumn = new DataGridColumn;
+			col15.dataField = "FAMILY";
+			col15.headerText = "Family";
+			col15.visible = false;
+			
+			var col16:DataGridColumn = new DataGridColumn;
+			col16.dataField = "GENUS";
+			col16.headerText = "Genus";
+			col16.visible = false;
+			
+			var col17:DataGridColumn = new DataGridColumn;
+			col17.dataField = "SPECIES";
+			col17.headerText = "Species";
+			col17.visible = false;
+			
+			var col18:DataGridColumn = new DataGridColumn;
+			col18.dataField = "ORGANISM";
+			col18.headerText = "Organism";
+			col18.visible = true;
+			
+			this.columns = [col1,col2,col3,col4,col5,col6,col7,col8,col9,col10,col11,col12,col13,col14,col15,col16,col17,col18];
 		}
 		
 		protected function sortEvalueFunction(obj1:Object, obj2:Object):int{

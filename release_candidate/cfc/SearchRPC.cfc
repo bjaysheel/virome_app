@@ -42,6 +42,10 @@
 				<cfset values = "("&values&")"/>
 					
 				<cftransaction>
+					<cfquery name="dtmp" datasource="#arguments.server#">
+						DROP TEMPORARY TABLE IF EXISTS #tbl_name# 
+					</cfquery>
+					
 					<cfquery name="ctmp" datasource="#arguments.server#">
 						CREATE TEMPORARY TABLE #tbl_name# (id int(8) UNIQUE)
 					</cfquery>

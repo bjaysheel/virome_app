@@ -616,5 +616,24 @@
 		</cfloop>
 		
 		<cfreturn t>
-	</cffunction>	
+	</cffunction>
+	
+	<cffunction name="reverseComplement" access="public" returntype="string">
+		<cfargument name="dna" type="string" required="true">
+		
+		<cfset arguments.dna = Reverse(arguments.dna)/>
+		<cfset revcom = "">
+		
+		<cfloop index="i" from="1" to="#len(dna)#" step="1">
+			<cfswitch expression="#mid(dna,i,1)#">
+				<cfcase value="A"><cfset revcom &= "T"></cfcase>
+				<cfcase value="T"><cfset revcom &= "A"></cfcase>
+				<cfcase value="G"><cfset revcom &= "C"></cfcase>
+				<cfcase value="C"><cfset revcom &= "G"></cfcase>
+			</cfswitch> 
+		</cfloop>
+		
+		<cfreturn revcom/> 
+	</cffunction>
+	
 </cfcomponent>
