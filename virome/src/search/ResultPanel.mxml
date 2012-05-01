@@ -53,7 +53,7 @@
 			[Bindable] private var _currentGridRowCount:Number = 0;
 			[Bindable] private var _totalGridRowCount:Number = 0;
 			
-			[Bindable] [Embed(source="assets/icons/Check.png")]
+			[Bindable] [Embed(source="/assets/icons/Check.png")]
 			public var Check:Class;
 			
 			private var gridResultSet:ArrayCollection = new ArrayCollection();

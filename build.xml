@@ -54,7 +54,7 @@
             </else>
         </if>
 
-        <echoproperties/>
+        <!--<echoproperties/>-->
 
         <property name="OLD_RELEASES_DIR" value="${COPY_DIR}"/>
     </target>
@@ -221,7 +221,7 @@
             </compiler.library-path>
 
             <compiler.include-libraries dir="virome/libs" append="true">
-                <include name="map_1_17.swc"/>
+                <include name="map_flex_1_20.swc"/>
                 <include name="analytics.swc"/>
             </compiler.include-libraries>
 
