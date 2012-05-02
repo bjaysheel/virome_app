@@ -128,8 +128,8 @@
 			<cflog type="error" file="virome" text="#idx.TEMPLATE#: #idx.RAW_TRACE#"/>
 		</cfloop>
 
-		<cfmail to="bjaysheel@gmail.com" type="html"
-				from="kingquattro@gmail.com"
+		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
+				from="@EMAIL_FROM_ERROR_REPORT@"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -164,8 +164,8 @@
 
 		<cfargument name="msg" default="" type="String" required="true">
 		
-		<cfmail to="bjaysheel@gmail.com" type="html"
-				from="kingquattro@gmail.com"
+		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
+				from="@EMAIL_FROM_ERROR_REPORT@"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -190,8 +190,8 @@
 		<cfargument name="envname" type="String">
 		<cfargument name="seqname" type="String">
 
-		<cfmail to="bjaysheel@gmail.com" type="html"
-				from="kingquattro@gmail.com"
+		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
+				from="@EMAIL_FROM_ERROR_REPORT@"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>

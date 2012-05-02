@@ -251,7 +251,7 @@
     </target>
 
     <target name="copy_cfcs"
-            description="Copies the ColdFusion components to the ${build}/cfc directory">
+            description="Copies the ColdFusion components to the ${build}/cfc directory" depends="make-filters">
 
         <mkdir dir="${build}/cfc"/>
 
@@ -261,6 +261,11 @@
               filtering="true">
             <fileset dir="virome/src/cfc"/>
         </copy>
+    </target>
+
+    <target name="make-filters" description="Set birn.properties filters for file copying">
+        <filter token="EMAIL_TO_ERROR_REPORT" value="${ERROR_REPORT_EMAIL_TO}"/>
+        <filter token="EMAIL_FROM_ERROR_REPORT" value="${ERROR_REPORT_EMAIL_FROM}"/>
     </target>
 
     <target name="copy_assets"
