@@ -99,11 +99,11 @@ package com.component
 						setSearchEvent.orftype = "complete";
 						setSearchEvent.evalue = 0.1;
 						setSearchEvent.blastDB = "";
-					} else if (event.hitData.chartItem.item.type == "lack stop"){
+					} else if ((event.hitData.chartItem.item.type == "lack_stop") || (event.hitData.chartItem.item.type == "lack stop")){
 						setSearchEvent.orftype = "lackstop";
 						setSearchEvent.evalue = 0.1;
 						setSearchEvent.blastDB = "";
-					} else if (event.hitData.chartItem.item.type == "lack start"){
+					} else if ((event.hitData.chartItem.item.type == "lack_start") || (event.hitData.chartItem.item.type == "lack start")){
 						setSearchEvent.orftype = "lackstart";
 						setSearchEvent.evalue = 0.1;
 						setSearchEvent.blastDB = "";

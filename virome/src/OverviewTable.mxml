@@ -66,37 +66,37 @@
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf0.format(obj.LIBCOUNT);
+					txt.text = nf0.format(parseFloat(obj.LIBCOUNT));
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
 					gi.addChild(txt);
 					gr.addChild(gi);
-					tLib += obj.LIBCOUNT;
+					tLib += parseFloat(obj.LIBCOUNT);
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf0.format(obj.READS);
+					txt.text = nf0.format(parseFloat(obj.READS));
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
 					gi.addChild(txt);
 					gr.addChild(gi);
-					tReads += obj.READS;
+					tReads += parseFloat(obj.READS);
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf.format((obj.R_SIZE/1000000)) + " Mbp";
+					txt.text = nf.format((parseFloat(obj.R_SIZE)/1000000)) + " Mbp";
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
 					gi.addChild(txt);
 					gr.addChild(gi);
-					trSize += obj.R_SIZE;
+					trSize += parseFloat(obj.R_SIZE);
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf0.format(obj.R_SIZE/obj.READS);
+					txt.text = nf0.format(parseFloat(obj.R_SIZE)/parseFloat(obj.READS));
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
@@ -105,27 +105,27 @@
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf0.format(obj.ORFS);
+					txt.text = nf0.format(parseFloat(obj.ORFS));
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
 					gi.addChild(txt);
 					gr.addChild(gi);
-					tORF += obj.ORFS;
+					tORF += parseFloat(obj.ORFS);
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf.format(((obj.O_SIZE*3)/1000000)) + " Mbp";
+					txt.text = nf.format(((parseFloat(obj.O_SIZE)*3)/1000000)) + " Mbp";
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;
 					gi.addChild(txt);
 					gr.addChild(gi);
-					toSize += obj.O_SIZE;
+					toSize += parseFloat(obj.O_SIZE);
 					
 					txt = new Text();
 					gi = new MyGridItem();
-					txt.text = nf0.format(obj.O_SIZE/obj.ORFS);
+					txt.text = nf0.format(parseFloat(obj.O_SIZE)/parseFloat(obj.ORFS));
 					txt.setStyle("textAlign","right");
 					txt.percentWidth=100;
 					gi.percentWidth=100;

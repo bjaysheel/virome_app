@@ -6,17 +6,18 @@
 		
 		<cfset ids = ""/>
 		<cftry>
-			<cfquery name="orf2read" datasource="#arguments.server#">
-				SELECT 	seqId
-				FROM	orf
-				WHERE	readId in (#arguments.readId#)
+			<cfquery name="read2orf" datasource="#arguments.server#">
+				SELECT 	sr.objectId
+				FROM	sequence_relationship sr
+				WHERE	sr.subjectId in (#arguments.readId#)
+					and sr.typeId = 3
 			</cfquery>
 			
-			<cfset ids = VALUELIST(orf2read.seqId)/>
+			<cfset ids = VALUELIST(read2orf.seqId)/>
 			
 			<cfcatch>
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETORFSEQIDFROMREAD", 
-									#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -60,7 +61,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_A", 
-									#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -116,11 +117,11 @@
 					
 				<cftransaction>
 					<cfquery name="dtmp" datasource="#arguments.server#">
-						DROP TEMPORARY TABLE IF EXISTS #tbl_name# 
+						DROP TABLE IF EXISTS #tbl_name# 
 					</cfquery>
 					
 					<cfquery name="ctmp" datasource="#arguments.server#">
-						CREATE TEMPORARY TABLE #tbl_name# (id int(8) UNIQUE)
+						CREATE TABLE #tbl_name# (id int(8) UNIQUE)
 					</cfquery>
 					
 					<cfquery name="itmp" datasource="#arguments.server#">
@@ -135,14 +136,14 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_B", 
-									#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
 	<cffunction name="partialSearchQuery" access="public" returntype="String" description="create comman query string used for getSearchCount, and getSearchResult">
 		<cfargument name="obj" type="struct" required="true" >
-		<cfargument name="read" type="boolean" default="false"/>
+		<cfargument name="typeId" type="numeric" default="-1" required="false"/>
 		 
 		<cfset _libraryId = ""/>
 		<cfset database_list = ""/>
@@ -235,15 +236,22 @@
 				
 				queryStr &= " INNER JOIN sequence s on b.sequenceId = s.id";
 				
-				if (arguments.read){
-					queryStr &=	" INNER JOIN orf o on o.seqId = s.id";
-					queryStr &= " INNER JOIN sequence r on r.id = o.readId";
+				// get reads or orf nucleotides from orf amino acid records.
+				if (arguments.typeId eq 3){
+					queryStr &=	" INNER JOIN sequence_relationship sr on sr.objectId = s.id";
+					queryStr &= " INNER JOIN sequence r on sr.subjectId = r.id";
+				}
+				
+				if (arguments.typeId eq 4){
+					queryStr &=	" INNER JOIN sequence_relationship sr on sr.subjectId = s.id";
+					queryStr &= " INNER JOIN sequence r on sr.objectId = r.id";
 				}
 				
 				if (len(seq_tmp_tbl)){
 					queryStr &= " INNER JOIN #seq_tmp_tbl# st on s.id = st.id";
 				}
-				
+								
+				//where conditons				
 				queryStr &= " WHERE	s.deleted = 0";
 				queryStr &= " and b.deleted = 0"; 
 				
@@ -282,6 +290,11 @@
 					queryStr &= " and b.sys_topHit=1";
 				}
 				
+				// get reads or orf nucleotide from orf amino acid records.
+				if (arguments.typeId gt -1){
+					queryStr &= " and sr.typeId = #arguments.typeId#";
+				}
+				
 				queryStr &= " and b.e_value <= #arguments.obj.EVALUE#";
 			</cfscript>
 		
@@ -296,7 +309,7 @@
 			<cfcatch type="any">
 				<cfset queryStr = ""/>
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -427,7 +440,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PREPARERS", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -464,7 +477,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETSEARCHRSLT", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>			
 		</cftry> 
 		

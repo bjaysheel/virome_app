@@ -233,29 +233,19 @@ package com
 			
 			if (obj.DETAIL.READ != undefined && obj.DETAIL.ORFTYPE != undefined){
 			//get mbp
-				rmbp = obj.DETAIL.READ[0]['mbp']/1000000;
+				rmbp = parseFloat(obj.DETAIL.READ[0]['mbp'])/1000000;
 				
+				//loop through each type of orf (complete, incomplete, missing start/stop
 				var _ot:Array = obj.DETAIL.ORFTYPE as Array;
 				for (var i:int=0; i<_ot.length; i++){
-					if (_ot[i]['type'] == "complete"){
-						ombp += (_ot[i]['mbp']*3)/1000000;
-					}
-					else if (_ot[i]['type'] == "lack both ends"){
-						ombp += (_ot[i]['mbp']*3)/1000000;
-					}
-					else if (_ot[i]['type'] == "lack start"){
-						ombp += (_ot[i]['mbp']*3)/1000000;
-					}
-					else if (_ot[i]['type'] == "lack stop"){
-						ombp += (_ot[i]['mbp']*3)/1000000;
-					}
-					orf += _ot[i]['count'];
+					ombp += (parseFloat(_ot[i]['mbp'])*3)/1000000;
+					orf += parseFloat(_ot[i]['count']);
 				}
 				
 				label = new Label();
 				label.text = "Reads:";
 				txt = new Text();
-				txt.text = nf.format(obj.DETAIL.READ[0]['count']) + "   /   " + new MyNumberFormatter().format(rmbp) + "Mbp";
+				txt.text = nf.format(parseFloat(obj.DETAIL.READ[0]['count'])) + "   /   " + new MyNumberFormatter().format(rmbp) + "Mbp";
 				
 				hbox = new HBox();
 				hbox.addChild(label);

@@ -29,7 +29,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - GET", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -58,7 +58,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - ADD", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>			
 		</cftry>
 		

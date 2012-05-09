@@ -183,18 +183,19 @@
 			}
 			
 			private function searchDBRequest(event:SearchDBEvent):void{
+				//set searchDBRequestObject, if recalling or running new sesarch.
+				searchDBRequestObject = event.getStruct();
+				
+				if ((searchDBRequestObject.VIRCAT != null) && ((searchDBRequestObject.VIRCAT == "tRNA") || (searchDBRequestObject.VIRCAT == "rRNA"))){
+					ncRNAFlag = true;
+				} 				
+				searchDBResultGrid.ncRNAFlag = ncRNAFlag;				
+				
 				if (event.recall != null){
 					var evt:CloseEvent = new CloseEvent("Alert.YES",false,false);
 					evt.detail = Alert.YES;
 					getRS(evt,event.recall);
 				} else {
-					searchDBRequestObject = event.getStruct();
-					
-					if ((searchDBRequestObject.VIRCAT != null) && ((searchDBRequestObject.VIRCAT == "tRNA") || (searchDBRequestObject.VIRCAT == "rRNA"))){
-						ncRNAFlag = true;
-					} 
-					
-					searchDBResultGrid.ncRNAFlag = ncRNAFlag;
 					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);	
 				}
 			}
@@ -263,9 +264,6 @@
 					gridResultSet = ac;
 					
 					searchDBResultGrid.dataProvider = gridResultSet;
-					
-					//currentGridRowCount = PAGE_SIZE;
-					//currentGridRowCount = (totalGridRowCount > PAGE_SIZE) ? currentGridRowCount : totalGridRowCount; 
 					
 					//temp hack getting all rows
 					currentGridRowCount = totalGridRowCount;

@@ -74,7 +74,7 @@
             attributes.name = "virome";
             attributes.align = "middle";
             swfobject.embedSWF(
-                "virome.swf", "flashContent", 
+                "virome.swf?ts=" + new Date().getTime(), "flashContent", 
                 "100%", "100%", 
                 swfVersionStr, xiSwfUrlStr, 
                 flashvars, params, attributes);

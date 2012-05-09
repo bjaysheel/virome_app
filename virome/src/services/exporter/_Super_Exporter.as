@@ -32,7 +32,6 @@ internal class _Super_Exporter extends com.adobe.fiber.services.wrapper.RemoteOb
         var operation:mx.rpc.remoting.Operation;
 
         operation = new mx.rpc.remoting.Operation(null, "saveImage");
-         operation.resultType = Object;
         operations["saveImage"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "export");
          operation.resultType = Object;

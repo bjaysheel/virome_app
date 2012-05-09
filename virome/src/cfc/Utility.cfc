@@ -35,7 +35,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("UTILITY.CFC - GETMGOLDESCRIPTION #arguments.hitName#", 
-									#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -79,7 +79,7 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset reporterror("UTILITY.CFC - GETSERVERNAME",#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+				<cfset reporterror("UTILITY.CFC - GETSERVERNAME",cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
@@ -128,8 +128,8 @@
 			<cflog type="error" file="virome" text="#idx.TEMPLATE#: #idx.RAW_TRACE#"/>
 		</cfloop>
 
-		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
-				from="@EMAIL_FROM_ERROR_REPORT@"
+		<cfmail to="#application.reportErrorTo#" type="html"
+				from="#application.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -161,11 +161,10 @@
 	</cffunction>
 	
 	<cffunction name="reportFlexError" access="remote" returntype="void">
-
 		<cfargument name="msg" default="" type="String" required="true">
 		
-		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
-				from="@EMAIL_FROM_ERROR_REPORT@"
+		<cfmail to="#application.reportErrorTo#" type="html"
+				from="#application.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -182,16 +181,15 @@
 				CURRENT TIME: #now()#
 			</cfif>
 			<br/><br/><br/>VIROME APP
-		</cfmail>
-		
+		</cfmail>		
 	</cffunction>
 	
 	<cffunction name="reportServerError" access="public" returntype="void">
 		<cfargument name="envname" type="String">
 		<cfargument name="seqname" type="String">
 
-		<cfmail to="@EMAIL_TO_ERROR_REPORT@" type="html"
-				from="@EMAIL_FROM_ERROR_REPORT@"
+		<cfmail to="#application.reportErrorTo#" type="html"
+				from="#application.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -208,6 +206,38 @@
 			<br/><br/><br/>VIROME APP
 		</cfmail>
 	</cffunction>
+	
+	<cffunction name="reportLibrarySubmission" access="public" returntype="void" >
+		<cfargument name="obj" type="struct" required="true" >
+		<cfargument name="action" type="string" required="true" >
+		
+		<cfmail to="#application.reportLibrarySubmissionTo#" type="html"
+				from="#application.reportFrom#"
+				subject="Library Submission [#arguments.action#]">
+
+			<cfif arguments.action eq "add">
+				New library #application.obj.name# has been added by #application.obj.user#<br/><br/>
+				
+				Library summary:<br/>
+					Name: 			#application.obj.name#<br/>
+					Description: 	#arguments.obj.description#"<br/>
+					Environment:	#arguments.obj.environment#"<br/>
+					Project:		#arguments.obj.project#"<br/>
+			<cfelseif arguments.action eq "edit">
+				Library #arguments.obj.old_name# (#arguments.obj.prefix#) has been edited by #application.obj.user#<br/><br/>
+				
+				Library summary:<br/>
+					Name: 			#application.obj.name#<br/>
+					Description: 	#arguments.obj.description#"<br/>
+					Environment:	#arguments.obj.environment#"<br/>
+					Project:		#arguments.obj.project#"<br/>
+			<cfelseif arguments.action eq "delete">
+				Library #arguments.obj.old_name# (#arguments.obj.prefix#) has been deleted.<br/>
+			</cfif>
+			
+			<br/><br/><br/>VIROME APP
+		</cfmail>
+	</cffunction>
 
 	<cffunction name="PrintLog" access="public" returntype="void">
 
@@ -216,44 +246,6 @@
 		<cflog type="information" file="virome" text="#str#">
 
 	</cffunction>
-
-    <!---<cffunction name="QueryToArray" access="public" returntype="array" output="false" hint="This turns a query into an array of structures.">
-
-	     <!--- Define arguments. --->
-	     <cfargument name="Data" type="query" required="yes" />
-
-         <cfscript>
-    	     // Define the local scope.
-		     var LOCAL = StructNew();
-
-		     // Get the column names as an array.
-		     LOCAL.Columns = ListToArray( ARGUMENTS.Data.ColumnList );
-
-		     // Create an array that will hold the query equivalent.
-		     LOCAL.QueryArray = ArrayNew( 1 );
-
-		     // Loop over the query.
-		     for (LOCAL.RowIndex = 1 ; LOCAL.RowIndex LTE ARGUMENTS.Data.RecordCount ; LOCAL.RowIndex = (LOCAL.RowIndex + 1)){
-			     // Create a row structure.
-			     LOCAL.Row = StructNew();
-
-			     // Loop over the columns in this row.
-			     for (LOCAL.ColumnIndex = 1 ; LOCAL.ColumnIndex LTE ArrayLen( LOCAL.Columns ); LOCAL.ColumnIndex = (LOCAL.ColumnIndex + 1)){
-				     // Get a reference to the query column.
-				     LOCAL.ColumnName = LOCAL.Columns[ LOCAL.ColumnIndex ];
-
-				     // Store the query cell value into the struct by key.
-				     LOCAL.Row[ LOCAL.ColumnName ] = ARGUMENTS.Data[ LOCAL.ColumnName ][ LOCAL.RowIndex ];
-			     }
-				     // Add the structure to the query array.
-			     ArrayAppend( LOCAL.QueryArray, LOCAL.Row );
-		     }
-
-		     // Return the array equivalent.
-		     return( LOCAL.QueryArray );
-	     </cfscript>
-
-     </cffunction>--->
 
 	<cffunction name="QueryToStructure" access="public" returntype="Struct">
 
@@ -456,7 +448,7 @@
 			 <cfreturn "##" & strHEX/>
 			
 			<cfcatch type="any">
-				<cfset reporterror("UTILITY.CFC - ECToHexColor emin: #arguments.emin# emax: #arguments.emax#", #cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+				<cfset reporterror("UTILITY.CFC - ECToHexColor emin: #arguments.emin# emax: #arguments.emax#", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>

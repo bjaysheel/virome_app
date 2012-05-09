@@ -1538,74 +1538,64 @@
 	<cffunction name="getXMLDoc" access="remote" returntype="struct">
 		<cfargument name="obj" type="struct" required="true"/>
 		
-		<cfset xdoc = XMLNew()>
-		<cfset createFlag = 1/>
-		
-		<cfset xmlFName = UCASE(arguments.obj.sType) & "_PUBLIC_XMLDOC.xml"/>
-		<cfset idFName = UCASE(arguments.obj.sType) & "_PUBLIC_IDDOC.xml"/>
-		
-		<cfif arguments.obj.libraryId gt 0>
-			<cfset xmlFName = UCASE(arguments.obj.sType) & "_XMLDOC_" & arguments.obj.libraryId & ".xml"/>
-			<cfset idFName = UCASE(arguments.obj.sType) & "_IDDOC_" & arguments.obj.libraryId & ".xml"/>
-		<cfelseif arguments.obj.userId gt -1>
-			<cfset xmlFName = UCASE(arguments.obj.sType) & "_PRIVATE_XMLDOC_" & arguments.obj.userId & ".xml"/>
-			<cfset idFName = UCASE(arguments.obj.sType) & "_PRIVATE_IDDOC_" & arguments.obj.userId & ".xml"/>
-		</cfif>
-		
-		<cfset xStruct = StructNew()>
-		<cfset xStruct['msg'] = "ERROR: File " &xmlFName& " not found">
-		<cfset xStruct['xdoc'] = XMLNEW()>
-		
 		<cftry>
-			<cfdirectory name="xmlFileList" action="list" directory="#application.xDocsFilePath#" filter="*.xml"/>
-			
-			<cfloop query="xmlFileList">
-				<cfif (xmlFileList.name eq xmlFName)>
-					<cfset createFlag = 0/>
-				</cfif>
-			</cfloop>
-			
-			<cfif createFlag>
-				<cfswitch expression="#arguments.obj.sType#">
-					<cfcase value="overview">
-						<cfset xdoc = ORFOverview(userId=arguments.obj.userId,libraryIdList=arguments.obj.libraryIdList)/>
-					</cfcase>
-				</cfswitch>
+			<cfscript>
+				xdoc = XMLNew();
 				
-				<!---if xml and idlist are seperate--->
-				<cfif isstruct(xdoc)>
-					<cffile action="write" file="#application.xDocsFilePath#/#xmlFName#" output="#xdoc['xroot']#" mode="755"/>
-					<cffile action="write" file="#application.xDocsFilePath#/#idFName#" output="#xdoc['idroot']#" mode="755"/>
-					<cfset xdoc = xdoc['xroot']/>
-				<cfelse>
-					<cfset xStruct['msg'] = "Success">
-					<cfset xStruct['xdoc'] = xdoc>
-					<cffile action="write" file="#application.xDocsFilePath#/#xmlFName#" output="#xdoc#" mode="755"/>	
-				</cfif>
-			
-				<!--- return here --->
-				<cfreturn xStruct/>
-			</cfif>
-			
-			<cfloop query="xmlFileList">
-				<cfif xmlFileList.name eq xmlFName>
-					<cffile action="read" file="#application.xDocsFilePath#/#xmlFName#" variable="xdoc">
-					<cfset xStruct['msg'] = "Success">
-					<cfset xStruct['xdoc'] = xdoc/>
-				</cfif>
-			</cfloop>
-			
-			
-			<!--- return here --->
-			<cfreturn xStruct/>
+				xmlFName = UCASE(arguments.obj.sType) & "_PUBLIC_XMLDOC.xml";
+				idFName = UCASE(arguments.obj.sType) & "_PUBLIC_IDDOC.xml";
+				
+				if (arguments.obj.libraryId gt 0){
+					xmlFName = UCASE(arguments.obj.sType) & "_XMLDOC_" & arguments.obj.libraryId & ".xml";
+					idFName = UCASE(arguments.obj.sType) & "_IDDOC_" & arguments.obj.libraryId & ".xml";
+				} else if (arguments.obj.userId gt -1){
+					xmlFName = UCASE(arguments.obj.sType) & "_PRIVATE_XMLDOC_" & arguments.obj.userId & ".xml";
+					idFName = UCASE(arguments.obj.sType) & "_PRIVATE_IDDOC_" & arguments.obj.userId & ".xml";
+				}
+				
+				xStruct = StructNew();
+				xStruct['msg'] = "ERROR: File " &xmlFName& " not found";
+				xStruct['xdoc'] = XMLNEW();
+				
+				if (not FileExists("#application.xDocsFilePath#/#xmlFName#")){
+					if (arguments.obj.sType eq "overview")
+						xdoc = ORFOverview(userId=arguments.obj.userId,libraryIdList=arguments.obj.libraryIdList);
+				
+					//if xml and idlist are seperate
+					if (isstruct(xdoc)){
+						myfile = FileOpen("#application.xDocsFilePath#/#xmlFName#","write","UTF-8");
+						FileWriteLine(myfile, xdoc['xroot']);
+						FileClose(myfile);
+						
+						myfile = FileOpen("#application.xDocsFilePath#/#idFName#","write","UTF-8");
+						FileWriteLine(myfile, xdoc['idroot']);
+						FileClose(myfile);
+						
+						xdoc = xdoc['xroot'];
+					} else {
+						xStruct['msg'] = "Success";
+						xStruct['xdoc'] = xdoc;
+						
+						myfile = FileOpen("#application.xDocsFilePath#/#xmlFName#","write","UTF-8");
+						FileWriteLine(myfile, xdoc);
+						FileClose(myfile);
+					}
+				} else {				
+					xdoc = fileRead("#application.xDocsFilePath#/#xmlFName#","UTF-8");
+					xStruct['msg'] = "Success";
+					xStruct['xdoc'] = xdoc;
+				}
+			</cfscript>
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn xStruct/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn xStruct/>
 	</cffunction>
 
 </cfcomponent>

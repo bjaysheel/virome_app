@@ -56,7 +56,7 @@
 						INNER JOIN
 						mgol_library m on m.lib_prefix = substring(b.hit_name,1,3)
 					</cfif>
-				WHERE	b.deleted = 0
+				WHERE	b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
 					and b.e_value <= 0.001
 					<cfif arguments.topHit gt -1>
 						and	b.sys_topHit = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.topHit#"/>
@@ -69,7 +69,7 @@
 					<cfelse>
 						and b.database_name not like 'NOHIT'
 					</cfif>
-					and b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
+					and b.deleted = 0
 				ORDER BY b.sequenceId, b.database_name desc, b.e_value
 			</cfquery>
 						
@@ -121,12 +121,13 @@
 										qry.bit_score>
 
 					<cfscript>
-						FileWriteLine(myfile,"#blastImager# #chr(13)##chr(10)#");
-					</cfscript>					
+						//FileWriteLine(myfile, blastImager & application.linefeed);
+						FileWriteLine(myfile, blastImager);
+					</cfscript>
 			    </cfoutput>
 				
 				<cfscript>
-					fileClose(myfile);
+					FileClose(myfile);
 				</cfscript>
 				
 				<cfexecute 	name="#application.blastImgFilePath#/wrapper.sh"
@@ -134,6 +135,10 @@
 			                outputFile="#application.blastImgFilePath#/img/#imgFileName#"
 			                timeout="10">
 				</cfexecute>
+				
+				<cfscript>
+					//FileSetAccessMode("#application.blastImgFilePath#/img/#imgFileName#","764");
+				</cfscript>
 				
 			</cfif>
 			
@@ -143,9 +148,11 @@
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("SEQUENCE.CFC - GETBLASTIMAGE", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn img>
+			</cffinally>
 		</cftry>
-
-		<cfreturn img>
 	</cffunction>
 
 	<cffunction name="splitBlastResult" access="private" returntype="any" 
@@ -506,60 +513,53 @@
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		
-		<cfset struc = StructNew()>
-		<cfset _readId = 0>
-		
 		<cftry>
-			<!--- id passed in will always be sequence Id of an orf, so first
-			get the read information of the given orf --->
+			<!--- id passed in will always be sequence Id of an orf --->
 			<cfquery name="q" datasource="#_server#">
 				SELECT distinct s.id,
 								s.name,
 								s.basepair,
 								s.size,
-								o.strand,
-								o.frame,
-								o.score,
-								o.type,
-								o.start,
-								o.end,
-								o.model
+								s.header
 				FROM	sequence s
 					INNER JOIN
-						orf o on s.id = o.seqId
-				WHERE	s.deleted = 0
-					and o.deleted = 0
-					and o.seqId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
-				ORDER BY o.seqId
+						sequence_relationship sr on s.id = sr.objectId
+				WHERE	sr.objectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
+					and	sr.typeId = 3
+					and s.deleted = 0
+				ORDER BY s.id
 			</cfquery>
 			
-			<!--- if there is an orf value, then there will alway be a read,
-			so no need to check if query returned anything rows. 
-			IF RQ IS EMPTY THEN THERE IS A DISCREPANCY IN THE DATABASE --->
-			<cfoutput query="q" maxrows="1">
-				<cfscript>
-					oStruct = StructNew();
-					StructInsert(oStruct,"ID",q.id);
-					StructInsert(oStruct,"NAME",q.name);
-					StructInsert(oStruct,"BASEPAIR",q.basepair);
-					StructInsert(oStruct,"SIZE",q.size);
-					StructInsert(oStruct,"STRAND",q.strand);
-					StructInsert(oStruct,"FRAME",q.frame);
-					StructInsert(oStruct,"SCORE",q.score);
-					StructInsert(oStruct,"TYPE",q.type);
-					StructInsert(oStruct,"START",q.start);
-					StructInsert(oStruct,"END",q.end);
-					StructInsert(oStruct,"MODEL",q.model);
+			<cfscript>
+				oStruct = StructNew();
+				if (q.recordcount) {
+					StructInsert(oStruct,"ID",q["id"][1]);
+					StructInsert(oStruct,"NAME",q["name"][1]);
+					StructInsert(oStruct,"BASEPAIR",q["basepari"][1]);
+					StructInsert(oStruct,"SIZE",q["size"][1]);
 					StructInsert(oStruct,"TABINDEX",arguments.tabIndex);
-										
-					return oStruct;					
-				</cfscript>
-			</cfoutput>
-
+					
+					//header is formated as 
+					//start=123 stop=354 model=xyz type=abc....
+					for (i=1; i lte listLen(q["header"][1]," "); i++) {
+						data = listToArray(listGetAt(q["header"][1],i," "),"=");
+						StructInsert(oStruct,ucase(data[1]),data[2]);
+					}
+				} else {
+					//throw error for no sequence record for an orf id
+					//something wrong in db records.
+					//this should not happen
+				}
+			</cfscript>
+			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("ORFRPC.CFC - GETSEQUENCEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn oStruct/>
+			</cffinally>
 		</cftry>
 	</cffunction>
 
@@ -574,36 +574,37 @@
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		
-		<cfset local.struct = StructNew()>
-		<cfset local.struct['TABINDEX']=arguments.tabindex/>
-		
 		<cftry>
-			<cfset arr = ArrayNew(1)>
-			<cfset blast=getBlastHit(id=arguments.id,topHit=arguments.topHit,server=_server,database=arguments.database)/>
+			<cfscript>
+				local.struct = StructNew();
+				local.struct['TABINDEX']=arguments.tabindex;
 			
-			<cfif IsQuery(blast) and blast.recordCount>
-				<cfset img = getBlastImage(qry=blast,sname=blast.query_name)/>
-				<cfif (NOT StructKeyExists(local.struct,"IMAGE"))>
-					<cfset StructInsert(local.struct,"IMAGE",img)/>
-				</cfif>
-			
-				<cfloop query="blast">
-					<cfset splt = splitBlastResult(qry=blast,idx=blast.currentRow,server=_server,environment=arguments.environment) />
-					
-					<!--- when adding hsp for the first time or only time for a given database --->
-					<cfset arr = ArrayNew(1)>
-					<cfset ArrayAppend(arr,splt)/>
-					<cfset StructInsert(local.struct,blast.database_name,arr)/>
-				</cfloop>
-			</cfif>
+				arr = ArrayNew(1);
+				blast=getBlastHit(id=arguments.id,topHit=arguments.topHit,server=_server,database=arguments.database);
+				
+				if (IsQuery(blast) and blast.recordCount) {
+					img = getBlastImage(qry=blast,sname=blast.query_name);
+					if (NOT StructKeyExists(local.struct,"IMAGE"))
+						StructInsert(local.struct,"IMAGE",img);
+				
+					//for (i=1; i lte blast.recordcount; i++){
+						spilt = splitBlastResult(qry=blast,idx=blast.currentRow,server=_server,environment=arguments.environment);
+						arr = ArrayNew(1);
+						ArrayAppend(arr,splt);
+						StructInsert(local.struct,blast.database_name,arr);
+					//}
+				}
+			</cfscript>
 
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("ORFRPC.CFC - GETORFINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn local.struct/>
+			</cffinally>
 		</cftry>
-
-		<cfreturn local.struct>
 	</cffunction>
 	
 	<cffunction name="orfBlastDetails" access="remote" returntype="Array">
@@ -643,7 +644,8 @@
 							
 				<cfscript>
 					myfile = FileOpen("#application.blastImgFilePath#/txt/#tabFileName#","write","UTF-8");
-					FileWriteLine(myfile,"#local.str##application.NL#");
+					//FileWriteLine(myfile, local.str & application.linefeed);
+					FileWriteLine(myfile, local.str);
 					FileClose(myfile);
 				</cfscript>
 				
@@ -656,6 +658,10 @@
 			                outputFile="#application.blastImgFilePath#/img/#imgFileName#"
 			                timeout="10">
 				</cfexecute>
+				
+				<cfscript>
+					//FileSetAccessMode("#application.blastImgFilePath#/img/#imgFileName#", "764");
+				</cfscript>
 						
 				<cfset StructInsert(local.arr[idx], "IMAGE", "#application.rootHostPath#/blastImager/img/#imgFileName#")/>
 			</cfloop>
@@ -664,9 +670,11 @@
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("ORFRPC.CFC - ORFBLASTDETAILS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn local.arr/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn local.arr/>
 	</cffunction>
 
 	<cffunction name="heatMap" access="remote" returntype="Struct">

@@ -111,7 +111,7 @@ internal class _Super_Library extends com.adobe.fiber.services.wrapper.RemoteObj
       *
       * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
       */
-    public function getHistogram(libraryId:Number, server:String, type:String) : mx.rpc.AsyncToken
+    public function getHistogram(libraryId:Number, server:String, type:Number) : mx.rpc.AsyncToken
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getHistogram");
 		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(libraryId,server,type) ;

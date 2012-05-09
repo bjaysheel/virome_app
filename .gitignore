@@ -1,4 +1,12 @@
 build/
 libs/ViromeLib.swc
 .DS_Store
-
+virome/src/assets/modules/bookmark.swf
+virome/src/assets/modules/user.swf
+.model
+.settings
+.flexProperties
+.fxpProperties
+.project
+.actionScriptProperties
+*.iml

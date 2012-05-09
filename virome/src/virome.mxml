@@ -6,13 +6,18 @@
 				xmlns:local="*"
 				xmlns:user="services.user.*"
 				xmlns:searchrpc="services.searchrpc.*"
-				width="100%" height="100%" applicationComplete="onApplicationComplete()"
-				creationComplete="onCreationComplete()" historyManagementEnabled="false"
-				layout="vertical" paddingBottom="4" paddingLeft="5" paddingRight="5" paddingTop="10"
-				preinitialize="onPreinitialize()" preloader="preload.Preloader" verticalGap="3"> 
-	
+				width="100%" height="100%"
+				paddingBottom="4" paddingLeft="5" 
+				paddingRight="5" paddingTop="10"
+				layout="vertical" verticalGap="3"
+				preloader="preload.Preloader"
+				applicationComplete="onApplicationComplete()"
+				creationComplete="onCreationComplete()" 
+				historyManagementEnabled="false"
+				preinitialize="onPreinitialize()"> 
+
 	<!--maxHeight="800" maxWidth="1280"-->
-	
+
 	<fx:Script>
 		<![CDATA[
 			import com.IModuleInterface.IBookmarkInterface;
@@ -22,7 +27,7 @@
 			import com.events.SetSearchDBFormEvent;
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
-			
+		
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.LinkButton;
@@ -34,6 +39,8 @@
 			import mx.managers.BrowserManager;
 			import mx.managers.IBrowserManager;
 			import mx.managers.PopUpManager;
+			import mx.events.ModuleEvent;
+			import mx.modules.ModuleManager;
 			import mx.modules.IModuleInfo;
 			import mx.rpc.AbstractInvoker;
 			import mx.utils.ObjectUtil;
@@ -41,7 +48,7 @@
 
 	        [Bindable] public var logoutButton:LinkButton;
 			[Bindable] public var urlParam:String = '';
-			
+
 			private var _cookie:Object = new Object();
 			private var _hostEndPoint:String = '';
 			private var _cfcObjectPath:String = '';			
@@ -49,7 +56,7 @@
 			private var _mapKey:String = '';
 			private var _os:String = '';
 			private var _tracker:AnalyticsTracker;
-			
+
 			[Bindable] private var _util:MyUtility;
 			[Bindable] private var componentLoadedObject:Object = new Object();
 			
@@ -110,6 +117,11 @@
 					// get endpoint and cfc path variables from 
 					// javascript using application.cfm/cfc
 					var obj:Object = ExternalInterface.call("requestGlobalValInfo", null);
+					
+					// a hack to add '/' at the end of endpoint other wise i keep getting
+					// net connection error because where where along the line
+					// jsessionId gets append to flex2gateway causing incorrect url
+					// resulting in 404 error. (only happens when new session is init)
 					hostEndPoint = obj.endPoint;
 					cfcObjectPath = obj.cfc;
 					trackerId = obj.trackerId;
@@ -126,7 +138,11 @@
 				
 				//init browser management
 				browserManager.init("", "VIROME | HOME");
-				browserManager.setFragment("view=home");				
+				browserManager.setFragment("view=home");
+				
+				//create home page.
+				//see if this eliminates race condition where http connection fails.
+				homePage.createComponentsFromDescriptors();
 			}
 			
 			protected function onCreationComplete():void{
@@ -314,15 +330,6 @@
 				}
 			}
 			
-			private function userModuleComplete(event:Event):void{
-				//log in from cookie is available
-				var ichild:* = loginMod.child as IUserInterface;
-				if ((_util.getViromeLSO().data.hasOwnProperty("name")) && (_util.getViromeLSO().data.name != null)){
-					ichild.setCookieObject(_util.getViromeLSO().data.text);
-					FlexGlobals.topLevelApplication.dispatchEvent(new Event("LOGIN_FROM_COOKIE",true,true));
-				}
-			}
-			
 			private function userModuleReady(event:ModuleEvent):void{
 				var ichild:* = loginMod.child as IUserInterface;
 				if (loginMod.child != null){
@@ -330,6 +337,10 @@
 					ichild.setCFCSource(_util.cfcPath);
 					
 					this.addEventListener("USER_LOGIN_EVENT", userEventHandler);
+					
+					if ((_util.getViromeLSO().data.hasOwnProperty("name")) && (_util.getViromeLSO().data.name != null)){
+						ichild.setCookieObject(_util.getViromeLSO().data.text);
+					}
 				}
 			}
 
@@ -428,7 +439,7 @@
         <mx:Spacer width="50%"/>
 		<mx:Button id="privLib" label="Private Browse" styleName="menu" click="simulateMenuClick('Private')" visible="false"/>
 		<mx:ModuleLoader id="bmarkMod" url="assets/modules/bookmark.swf" ready="bookmarkModuleReady(event)"/>
-		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" ready="userModuleReady(event)" creationComplete="userModuleComplete(event)"/>
+		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" ready="userModuleReady(event)"/>
 	</mx:ApplicationControlBar>
 	
 	<mx:ViewStack width="100%" height="100%" id="page" change="updateURL()" verticalGap="3">
@@ -437,7 +448,7 @@
 				creationPolicy="auto"/>
 				  
 		<local:Browse id="browsePage" name="Browse" label="Browse" height="100%" width="100%" 
-			 	showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Browse.png')"
+			 	showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='assets/icons/Browse.png')" 
 				creationPolicy="none"/>
 					  
 		<local:Search id="searchPage" name="Search" label="Search" height="100%" width="100%"

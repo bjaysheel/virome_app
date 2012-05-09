@@ -149,8 +149,9 @@
 					populateCount(libraryInfoObject.DETAIL);
 				}
 				
+				//send request to get read size distribution
 				getHistogram.addEventListener(ResultEvent.RESULT,nhistogramResponse);
-				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"read");
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],1);
 			}
 			
 			protected function addMap():void{
@@ -184,16 +185,20 @@
 			
 			protected function nhistogramResponse(event:ResultEvent):void{
 				nucleotideChart.dataProvider = new XML(new String(event.result)).children();
+				
+				//get request to get orf size distribution
 				getHistogram.removeEventListener(ResultEvent.RESULT,nhistogramResponse);
 				getHistogram.addEventListener(ResultEvent.RESULT,ahistogramResponse);
-				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"orf");
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],3);
 			}
 			
 			protected function ahistogramResponse(event:ResultEvent):void{
 				peptideChart.dataProvider = new XML(new String(event.result )).children();
+				
+				//set request to get read GC distribution
 				getHistogram.removeEventListener(ResultEvent.RESULT,ahistogramResponse);
 				getHistogram.addEventListener(ResultEvent.RESULT,ghistogramResponse);
-				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],"gc");
+				getHistogram.token = Library.getHistogram(libraryInfoObject['LIBID'],libraryInfoObject['SERVER'],0);
 			}
 			
 			protected function ghistogramResponse(event:ResultEvent):void{
@@ -223,11 +228,11 @@
 						imbp = (_ot[i]['mbp']*3)/1000000;
 						_incorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(imbp) + "Mbp";
 					}
-					else if (_ot[i]['type'] == "lack start"){
+					else if ((_ot[i]['type'] == "lack_start") || (_ot[i]['type'] == "lack start")){
 						smbp = (_ot[i]['mbp']*3)/1000000;
 						_strorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(smbp) + "Mbp";
 					}
-					else if (_ot[i]['type'] == "lack stop"){
+					else if ((_ot[i]['type'] == "lack_stop") || (_ot[i]['type'] == "lack stop")){
 						pmbp = (_ot[i]['mbp']*3)/1000000;
 						_stporf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(pmbp) + "Mbp";
 					}
@@ -383,7 +388,7 @@
 			<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">
 				<mx:text>
 					The graph below displays the distribution of the GC percentage for the metagenome sequences. 
-					Each bar represents the number of sequences in that GC percentage range.
+					Each bar represents the number of sequences in respective GC percentage range.
 				</mx:text>
 			</mx:Text>
 			<mx:ColumnChart width="100%" showDataTips="true" id="gcChart"							

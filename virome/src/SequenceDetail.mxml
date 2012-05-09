@@ -360,10 +360,10 @@
 			protected function colorTab(v:String):void{
 				var color:String = "#CCCCCC";
 				
-				if (v.localeCompare("lack stop") == 0){
+				if ((v.localeCompare("lack_stop") == 0) || (v.localeCompare("lack stop") == 0)){
 					color = "#FF6600";
 				}
-				else if (v.localeCompare("lack start") == 0){
+				else if ((v.localeCompare("lack_start") == 0) || (v.localeCompare("lack start") == 0)){
 					color = "#0066FF";
 				}
 				else if (v.localeCompare("incomplete") == 0){

@@ -251,14 +251,13 @@
     </target>
 
     <target name="copy_cfcs"
-            description="Copies the ColdFusion components to the ${build}/cfc directory" depends="make-filters">
+            description="Copies the ColdFusion components to the ${build}/cfc directory">
 
         <mkdir dir="${build}/cfc"/>
 
         <echo message="Copying cfc files to '${build}/cfc'"/>
         <copy todir="${build}/cfc"
-              overwrite="true"
-              filtering="true">
+              overwrite="true">
             <fileset dir="virome/src/cfc"/>
         </copy>
     </target>
@@ -350,11 +349,12 @@
 
     <target name="copy-other-needed-files"
             description="Copies curtain ColdFusion, javascript and xml files that are needed to the build directory."
-            depends="copyRSLs">
+            depends="make-filters,copyRSLs">
 
         <echo message="Copying other file dependencies to '${build}'"/>
         <copy todir="${build}"
-              overwrite="true">
+              overwrite="true"
+                filtering="true">
             <fileset dir="virome/src">
                 <include name="*.cfm"/>
                 <include name="Browserdetection.js"/>

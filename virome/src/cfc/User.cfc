@@ -99,15 +99,20 @@
 				
 				<!--- create list of all private libraries user have access to --->
 				<cfset userStruct["LIBRARYID"] = valuelist(l.id,",")/>
+				
+				<!--- update number of logins --->
+				<cfset updateLogin(q.userId,(q.noOfLogins+1)) />
 			</cfif>
 
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - GETUSER", 
-																		#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+																		cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn userStruct/>
+			</cffinally>
 		</cftry>
-
-		<cfreturn userStruct>
 	</cffunction>
 	
 
@@ -172,7 +177,7 @@
 			<cfcatch type="any">
 				<cfset flag = false>
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - INSERTUSER", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 
@@ -229,7 +234,7 @@
 
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - UPDATEUSER", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 
@@ -251,7 +256,7 @@
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - UPDATELOGIN", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 
@@ -296,8 +301,8 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - UPDATELOGIN", 
-						#cfcatch.Message#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
+				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - RETRIEVEPASSWORD", 
+						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
