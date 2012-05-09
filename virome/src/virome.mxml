@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				xmlns:cfservice="services.*"
+				xmlns:local="*"
+				xmlns:user="services.user.*"
+				xmlns:searchrpc="services.searchrpc.*"
+				width="100%" height="100%" applicationComplete="onApplicationComplete()"
+				creationComplete="onCreationComplete()" historyManagementEnabled="false"
+				layout="vertical" paddingBottom="4" paddingLeft="5" paddingRight="5" paddingTop="10"
+				preinitialize="onPreinitialize()" preloader="preload.Preloader" verticalGap="3"> 
+	
+	<!--maxHeight="800" maxWidth="1280"-->
+	
+	<fx:Script>
+		<![CDATA[
+			import com.IModuleInterface.IBookmarkInterface;
+			import com.IModuleInterface.IUserInterface;
+			import com.MyUtility;
+			import com.events.SearchDBEvent;
+			import com.events.SetSearchDBFormEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.LinkButton;
+			import mx.core.Container;
+			import mx.core.FlexGlobals;
+			import mx.events.BrowserChangeEvent;
+			import mx.events.ItemClickEvent;
+			import mx.events.ModuleEvent;
+			import mx.managers.BrowserManager;
+			import mx.managers.IBrowserManager;
+			import mx.managers.PopUpManager;
+			import mx.modules.IModuleInfo;
+			import mx.rpc.AbstractInvoker;
+			import mx.utils.ObjectUtil;
+			import mx.utils.URLUtil;
+
+	        [Bindable] public var logoutButton:LinkButton;
+			[Bindable] public var urlParam:String = '';
+			
+			private var _cookie:Object = new Object();
+			private var _hostEndPoint:String = '';
+			private var _cfcObjectPath:String = '';			
+			private var _trackerId:String = '';
+			private var _mapKey:String = '';
+			private var _os:String = '';
+			private var _tracker:AnalyticsTracker;
+			
+			[Bindable] private var _util:MyUtility;
+			[Bindable] private var componentLoadedObject:Object = new Object();
+			
+			private static const copyright:String = "\u00A9";
+			
+			private var parsing:Boolean = false;
+			private var browserManager:IBrowserManager;
+			private var loginButton:LinkButton;
+			
+			[Bindable] public function set hostEndPoint(o:String):void{
+				_hostEndPoint = o;
+			}
+			[Bindable] public function set cfcObjectPath(o:String):void{
+				_cfcObjectPath = o;
+			}
+			[Bindable] public function set trackerId(o:String):void{
+				_trackerId = o;
+			}
+			[Bindable] public function set mapKey(o:String):void{
+				_mapKey = o;
+			}
+			[Bindable] public function set os(o:String):void{
+				_os = o;
+			}
+			[Bindable] public function set cookie(o:Object):void{
+				_cookie = ObjectUtil.copy(o);
+				//_cookie = o;
+			}
+			[Bindable] public function set tracker(o:AnalyticsTracker):void{
+				_tracker = o;
+			}
+			
+			public function get hostEndPoint():String{
+				return _hostEndPoint;
+			}
+			public function get cfcObjectPath():String{
+				return _cfcObjectPath;
+			}
+			public function get trackerId():String{
+				return _trackerId;
+			}
+			public function get mapKey():String{
+				return _mapKey;
+			}
+			public function get os():String{
+				return _os;
+			}
+			public function get cookie():Object{
+				return _cookie;
+			}
+			public function get tracker():AnalyticsTracker{
+				return _tracker;
+			}
+			
+			protected function onPreinitialize():void{
+				if (ExternalInterface.available)
+				{
+					// get endpoint and cfc path variables from 
+					// javascript using application.cfm/cfc
+					var obj:Object = ExternalInterface.call("requestGlobalValInfo", null);
+					hostEndPoint = obj.endPoint;
+					cfcObjectPath = obj.cfc;
+					trackerId = obj.trackerId;
+					mapKey = obj.mapKey;
+					os = obj.os;
+				}				
+				_util = new MyUtility();
+			}
+			
+			protected function onApplicationComplete():void{
+				
+				tracker = new GATracker( this, trackerId, "AS3", false );
+				tracker.trackPageview( "/VIROME" ); 
+				
+				//init browser management
+				browserManager.init("", "VIROME | HOME");
+				browserManager.setFragment("view=home");				
+			}
+			
+			protected function onCreationComplete():void{
+				//if browser windows is closed or tab is closed
+				ExternalInterface.addCallback("cancelEvent",cancelEvent);
+			    
+				//initiate browser history
+				browserManager = BrowserManager.getInstance();
+				browserManager.addEventListener(BrowserChangeEvent.BROWSER_URL_CHANGE, parseURL);
+			}
+			
+			protected function footerLink():void{
+				simulateMenuClick('about');
+			}
+			
+			protected function cancelEvent():String{
+				//cancel CF call event on closing app.
+				var ai:AbstractInvoker = new AbstractInvoker();
+				if (ai.cancel() == null){
+					return "did not cancel";
+				}else { return "cancelled"; }
+			}
+
+			//add sleep timer 
+			protected function goToSleep(obj:SearchDBEvent):void{
+				var sleep:Timer = new Timer(1000,3); //3 sec delay
+				sleep.addEventListener(TimerEvent.TIMER_COMPLETE,function (e:TimerEvent):void{
+					timeToWakeUp(obj);
+				});
+				sleep.start();
+			}
+
+			//after sleeping 
+			protected function timeToWakeUp(obj:SearchDBEvent):void{
+				_util.app.dispatchEvent(obj);				
+			}
+			
+			//all public functions
+			
+			public function parseURL(event:Event):void{				
+				parsing = true;
+		
+		        var o:Object = URLUtil.stringToObject(browserManager.fragment);
+		        
+				if (o.view == undefined)
+		            o.view = 'home';
+		        if (o.state == undefined)
+		            o.state = '';
+		        
+				urlParam = '';
+				
+				if ((o.srch != undefined) && (o.srch == true)){					
+					urlParam="srch=true;";
+					var _sf:SearchDBEvent = new SearchDBEvent();
+					if (o.env != undefined){
+						_sf.environment = o.env;
+						urlParam += "env=" + o.env +";";
+					}
+					if (o.lib != undefined){
+						_sf.library = parseInt(o.lib);
+						urlParam += "lib=" + o.lib +";";
+					}
+					if (o.sname != undefined){
+						_sf.sequence = o.sname;
+						urlParam += "sname=" + o.sname +";";
+					}
+					if (o.seqId != undefined){
+						_sf.sequenceId = o.seqId;
+						urlParam += "seqId=" + o.seqId +";";
+					}
+					if (o.bdb != undefined){
+						_sf.blastDB = o.bdb;
+						urlParam += "bdb=" + o.bdb +";";
+					}
+					if (o.vircat != undefined){
+						_sf.vircat = o.vircat;
+						urlParam += "vircat=" + o.vircat +";";
+					}
+					if (o.eval != undefined){
+						_sf.evalue = parseFloat(o.eval);
+						urlParam += "eval=" + o.eval +";";
+					}
+					if (o.ot != undefined){
+						_sf.orftype = o.ot;
+						urlParam += "ot=" + o.ot +";";
+					}
+					if (o.t != undefined){
+						_sf.term = o.t;
+						urlParam += "t=" + o.t +";";
+					}
+					if (o.it != undefined){
+						_sf.inTerm = o.it;
+						urlParam += "it=" + o.it +";";
+					}
+					if (o.tax != undefined){
+						_sf.taxonomy = o.tax;
+						urlParam += "tax=" + o.tax +";";
+					}
+					if (o.intax != undefined){
+						_sf.inTax = o.intax;
+						urlParam += "intax=" + o.intax +";";
+					}
+					if (o.acc != undefined){
+						_sf.accession = o.acc;
+						urlParam += "acc=" + o.acc +";";
+					}
+					if (o.inacc != undefined){
+						_sf.inAcc = o.inacc;
+						urlParam += "inacc=" + o.inacc +";";
+					}
+					
+					//goToSleep(_sf);
+				}
+				
+				//simulate link to take me to a given link
+				simulateMenuClick(o.view);
+				
+				//set current state always an empty string.
+		        currentState = o.state;
+				
+				browserManager.setTitle("VIROME | " + (o.view as String).toUpperCase());				
+		        parsing = false;
+				
+				if ((o.srch != undefined) && (o.srch == true)){	
+					//_util.app.dispatchEvent(_sf);
+				}
+		    }
+			
+		    public function updateURL():void{
+		        if (!parsing)
+		            callLater(actuallyUpdateURL);
+		    }
+		
+		    public function actuallyUpdateURL():void{
+		        var o:Object = {};
+		        var t:String = "";
+				
+				t = page.getChildAt(page.selectedIndex).name;
+				o.view = t;
+		        o.state = currentState;
+				
+		        var s:String = URLUtil.objectToString(o);
+		        browserManager.setFragment(s);
+		        browserManager.setTitle("VIROME | " + (t as String).toUpperCase());
+		    }
+			
+			public function simulateMenuClick(s:String):void{
+				//Simulate link click
+				s = _util.properCase(s);
+				
+				if (s == 'Download'){
+					var downloadPanel:Download = Download(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), Download, true));
+					
+					PopUpManager.bringToFront(downloadPanel);
+					PopUpManager.centerPopUp(downloadPanel);
+					this.nav_buttons.selectedIndex = -1;
+				} else if (s == 'Upload'){
+					_util.submissionLink();
+				} else {
+					//no need to recreate components if they have been so previously.
+					if ((componentLoadedObject[s] == undefined) || (componentLoadedObject[s] == 0)){
+						(this.page.getChildByName(s) as Container).createComponentsFromDescriptors(true);
+						componentLoadedObject[s] = 1;
+					}				
+					
+					this.page.selectedIndex = this.page.getChildIndex(this.page.getChildByName(s));
+					
+					//do not select any button if view is sequence detail
+					var a:ArrayCollection = this.nav_buttons.dataProvider as ArrayCollection;
+					for (var i:int=0; i<a.length; i++){
+						if (nav_buttons.dataProvider[i].name == s){
+							nav_buttons.selectedIndex = i;
+							i = a.length;
+						}
+					}
+				}
+			}
+			
+			public function addBookmarkHandler(obj:Object):void{
+				var ibook:* = bmarkMod.child as IBookmarkInterface;
+				if (bmarkMod.child != null){
+					ibook.addToBookmark(obj);
+					
+					FlexGlobals.topLevelApplication.dispatchEvent(new Event("UPDATE_BOOKMARK_EVENT",true,true));
+				}
+			}
+			
+			private function userModuleComplete(event:Event):void{
+				//log in from cookie is available
+				var ichild:* = loginMod.child as IUserInterface;
+				if ((_util.getViromeLSO().data.hasOwnProperty("name")) && (_util.getViromeLSO().data.name != null)){
+					ichild.setCookieObject(_util.getViromeLSO().data.text);
+					FlexGlobals.topLevelApplication.dispatchEvent(new Event("LOGIN_FROM_COOKIE",true,true));
+				}
+			}
+			
+			private function userModuleReady(event:ModuleEvent):void{
+				var ichild:* = loginMod.child as IUserInterface;
+				if (loginMod.child != null){
+					ichild.setEndPoint(_util.endpoint);
+					ichild.setCFCSource(_util.cfcPath);
+					
+					this.addEventListener("USER_LOGIN_EVENT", userEventHandler);
+				}
+			}
+
+			private function bookmarkModuleReady(event:ModuleEvent):void{
+				var ibook:* = bmarkMod.child as IBookmarkInterface;
+				if (bmarkMod.child != null){
+					ibook.setEndPoint(_util.endpoint);
+					ibook.setCFCSource(_util.cfcPath);
+					
+					this.addEventListener("USER_ID_REQUEST", bookmarkUserIdHandler);
+					this.addEventListener("RECALL_SEARCH", recallSearchEventHandler);
+				}
+			}
+
+			private function userEventHandler(event:Event):void{
+				var ichild:* = loginMod.child as IUserInterface;
+				
+				var obj:Object = ichild.getUserObject();
+				
+				//if user logging in
+				// -- set lso object
+				// -- set cookie
+				// -- check for private library
+				if (obj.LOGIN){
+					cookie = obj;
+			
+					_util.setViromeLSO(obj);
+					
+					if ((cookie.LIBRARYID as String).length > 0)
+						privLib.visible = true;
+				} 
+				//if user logging out
+				// -- clear lso object
+				// -- set cookie to null
+				// -- hit private button
+				else {
+					cookie = null;
+					_util.clearLSO();
+					
+					privLib.visible = false;
+					simulateMenuClick('home');
+				}
+				
+				// -- simulate to home.
+				// -- dispatch user event in app
+				_util.app.dispatchEvent(new Event("userLogInOut",true,true));
+			}
+			
+			private function recallSearchEventHandler(event:Event):void{
+				var ibook:* = bmarkMod.child as IBookmarkInterface;
+				var obj:Object = ibook.getBookmark();
+				
+				var setSearchEvent:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+				setSearchEvent.duplicateEvent(obj.SEARCHPARAM);
+				setSearchEvent.recall = new Object();
+				setSearchEvent.recall['JOBNAME'] = obj.JOBNAME;
+				setSearchEvent.recall['JOBALIAS'] = obj.JOBALIAS;
+				setSearchEvent.recall['DATECREATED'] = obj.DATECREATED;
+				setSearchEvent.recall['USERID'] = obj.USERID;
+				_util.simulateSearchClick(setSearchEvent);
+			}
+			
+			private function bookmarkUserIdHandler(event:Event):void{
+				var ibook:* = bmarkMod.child as IBookmarkInterface;
+				if (bmarkMod.child != null){
+					if (cookie != null && cookie.hasOwnProperty("USERID"))
+						ibook.setUserId(cookie.USERID);
+					else ibook.setUserId(0);
+				}
+				_util.app.dispatchEvent(new Event("USER_ID_SET",true,true));
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Style source="style.css" />
+
+	<fx:Declarations>		
+		<fx:Array id="menuItem">
+			<fx:Object id="home" label="Home" name="Home" icon="@Embed(source='/assets/icons/Home.png')"/>
+			<fx:Object id="browse" label="Public Browse" name="Browse" icon="@Embed(source='/assets/icons/Browse.png')"/>
+			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='/assets/icons/Zoom.png')"/>
+			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='/assets/icons/Statistics.png')"/>
+			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='/assets/icons/Download.png')"/>
+			<fx:Object id="upload" label="Upload" name="Upload" icon="@Embed(source='/assets/icons/Upload.png')"/>
+			<fx:Object id="methods" label="General Info." name="Methods" icon="@Embed(source='/assets/icons/Lamp.png')"/>
+		</fx:Array>
+		
+		<s:Wipe id="wipeUp" direction="up" duration="1500"/>
+		<s:Wipe id="wipeDown" direction="down" duration="1500"/>
+	</fx:Declarations>
+	
+	<mx:ApplicationControlBar id="menu" paddingBottom="0" dock="true" width="100%">
+        <mx:Image source="assets/logos/virome-beta.png" id="logo"/>
+        <mx:Spacer width="2%"/>
+        <mx:ToggleButtonBar id="nav_buttons" styleName="menu" dataProvider="{menuItem}" itemClick="simulateMenuClick(event.item.name)" />
+        <mx:Spacer width="50%"/>
+		<mx:Button id="privLib" label="Private Browse" styleName="menu" click="simulateMenuClick('Private')" visible="false"/>
+		<mx:ModuleLoader id="bmarkMod" url="assets/modules/bookmark.swf" ready="bookmarkModuleReady(event)"/>
+		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" ready="userModuleReady(event)" creationComplete="userModuleComplete(event)"/>
+	</mx:ApplicationControlBar>
+	
+	<mx:ViewStack width="100%" height="100%" id="page" change="updateURL()" verticalGap="3">
+		<local:Home id="homePage" name="Home" label="Home" height="100%" width="100%"
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Home.png')"
+				creationPolicy="auto"/>
+				  
+		<local:Browse id="browsePage" name="Browse" label="Browse" height="100%" width="100%" 
+			 	showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Browse.png')"
+				creationPolicy="none"/>
+					  
+		<local:Search id="searchPage" name="Search" label="Search" height="100%" width="100%"
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Zoom.png')"
+				creationPolicy="none"/>
+		
+		<local:Statistics id="statsPage" name="Statistics" label="Statistics" width="100%" height="100%" 
+				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
+				creationPolicy="none"/>
+		
+		<local:Method id="methodsPage" name="Methods" label="Methods" width="100%" height="100%" 
+					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
+					  creationPolicy="none"/>
+
+		<local:SequenceDetail id="seqDetail" name="Sequenced" label="Sequence Detail" height="100%" width="100%"
+						 showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
+						 creationPolicy="auto" visible="false"/>
+		
+		<local:PrivateLib id="privateLib" name="Private" label="Private Library(s)" height="100%" width="100%"
+					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
+					   creationPolicy="none" visible="false"/>
+	</mx:ViewStack>
+	
+	<mx:HBox styleName="mid" width="100%" horizontalAlign="center">
+		<mx:LinkButton label="{copyright} VIROME a product of WommackLab" click="footerLink()" color="#993333"/>	
+	</mx:HBox>
+	
+</mx:Application>
