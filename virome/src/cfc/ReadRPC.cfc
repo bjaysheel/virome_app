@@ -12,19 +12,13 @@
 								s.name,
 								s.basepair,
 								s.size,
-								o.strand,
-								o.frame,
-								o.score,
-								o.type,
-								o.start,
-								o.end,
-								o.model
+								s.header
 				FROM	sequence s
 					INNER JOIN
-						orf o on s.id = o.seqId
-				WHERE	s.deleted = 0
-					and o.deleted = 0
-					and o.readId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+						sequence_relationship sr on sr.objectId=s.id
+				WHERE	sr.subjectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+					and sr.typeId = 3
+					and s.deleted = 0
 				ORDER BY s.id
 			</cfquery>
 
@@ -210,7 +204,11 @@
 			<!--- set file names --->
 			<cfset tabFileName = sname & "_orf.txt">
 			<cfset imgFileName = sname & "_orf.gif">
-
+			
+			<cfscript>
+				myfile = FileOpen("#application.blastImgFilePath#/txt/#tabFileName#","write");
+			</cfscript>
+				
 			<!--- Get true size of the read. --->
 			<cfquery name="rsize" datasource="#arguments.server#">
 				SELECT	s.size
@@ -227,12 +225,13 @@
 							#chr(9)# & "0" & #chr(9)# & "1" & #chr(9)# & rsize.size & 
 							#chr(9)# & "0" & #chr(9)# & "0" & #chr(9)# & "0" & #chr(9)# & "0">
 				
-				<cffile action="write" mode="755" file="#application.blastImgFilePath#/txt/#tabFileName#" output="#str#" addnewline="true">
+				<cfscript>
+					//FileWriteLine(myfile, str & application.linefeed);
+					FileWriteLine(myfile, str);
+				</cfscript>
 			</cfloop>
 
-			<cfdirectory action="list" filter="#imgFileName#" directory="#application.blastImgFilePath#/img" name="imgList">
-
-			<cfif imgList.recordCount eq 0>
+			<cfif not FileExists("#application.blastImgFilePath#/img")>
 				<cfset count = 1>
 
 				<!--- get orf info in the blast imager. --->
@@ -245,27 +244,34 @@
 					<cfset blastImager = blastImager & "ORF_" & (count) & #chr(9)#>
 
 					<cfset orftype = 0>
+					<cfset orf_info_struct = structNew()/>
+					<cfloop list="qry.header" index="item" delimiters=" " >
+						<cfset data = listToArray(item,"=")/>
+						<cfset orf_info_struct[data[1]] = data[2]/>
+					</cfloop>
 					
-					<cfif Find("incomplete",qry.type,0)>
+					<cfif Find("incomplete",orf_info_strct['type'],0)>
 						<cfset orftype = "3">
-					<cfelseif Find("complete",qry.type,0)>
+					<cfelseif Find("complete",orf_info_strct['type'],0)>
 						<cfset orftype = "0">
-					<cfelseif Find("lack stop",qry.type,0)>
+					<cfelseif Find("lack_stop",orf_info_strct['type'],0)>
 						<cfset orftype = "1">
-					<cfelseif Find("lack start",qry.type,0)>
+					<cfelseif Find("lack_start",orf_info_strct['type'],0)>
 						<cfset orftype = "2">
 					</cfif>
 
 					<cfset blastImager = blastImager & orftype & #chr(9)# &
-										 qry.end-qry.start & #chr(9)# &
-										 qry.strand &""& (abs(qry.start-qry.frame-1)%3) & 
+										 orf_info_strct['end']-orf_info_strct['start'] & #chr(9)# &
+										 orf_info_strct['strand'] & (abs(orf_info_strct['start']-orf_info_strct['frame']-1)%3) & 
 										 #chr(9)# & 0 & #chr(9)# &
-										 qry.start & #chr(9)# &
-										 qry.end & #chr(9)# &
+										 orf_info_strct['start'] & #chr(9)# &
+										 orf_info_strct['end'] & #chr(9)# &
 										 0 & #chr(9)# & 0 & #chr(9)# &
-										 NumberFormat(Round(qry.score), "__") & #chr(9)# & 0>
+										 NumberFormat(Round(orf_info_strct['score']), "__") & #chr(9)# & 0>
 					
-					<cffile action="append" mode="755" file="#application.blastImgFilePath#/txt/#tabFileName#" output="#blastImager#" addnewline="true">					
+					<cfscript>
+						FileWriteLine(myfile, blastImager);
+					</cfscript>					
 					<cfset count = count + 1>
 				</cfoutput>
 				
@@ -286,16 +292,21 @@
 											0 & #chr(9)# & 
 											0 & #chr(9)# &
 											0 & #chr(9)# & 0/>
-						<cffile action="append" mode="755" file="#application.blastImgFilePath#/txt/#tabFileName#" output="#trna_line#" addnewline="true">
+						<cfscript>
+							FileWriteLine(myfile, trna_line);
+						</cfscript>	
 					</cfoutput>					 
 				</cfif>
+				
+				<cfscript>
+					FileClose(myfile);
+				</cfscript>
 				
 				<cfexecute 	name="#application.blastImgFilePath#/wrapper.sh"
 			                arguments="#application.blastImgFilePath#/txt/#tabFileName#"
 			                outputFile="#application.blastImgFilePath#/img/#imgFileName#"
 			                timeout="10">
-				</cfexecute>
-				
+				</cfexecute>				
 			</cfif>
 				
 			<cfset img= "#application.rootHostPath#/blastImager/img/#imgFileName#">
@@ -304,9 +315,11 @@
 				<cfset CreateObject("component",  application.cfc & ".Utility").
 					reporterror("READRPC.CFC - GETBLASTIMAGE", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn img>
+			</cffinally>
 		</cftry>
-
-		<cfreturn img>
 	</cffunction>
 
 	<cffunction name="getACLAMEInfo" access="private" returntype="struct">

@@ -152,9 +152,9 @@ package detail
 				_colorType = "completeSeq";
 			else if (_type.localeCompare("lack both ends") == 0)
 				_colorType = "incompleteSeq";
-			else if (_type.localeCompare("lack stop") == 0)
+			else if ((_type.localeCompare("lack_stop") == 0) || (_type.localeCompare("lack start") == 0))
 				_colorType = "prime3Seq";
-			else if (_type.localeCompare("lack start") == 0)
+			else if ((_type.localeCompare("lack_start") == 0) || (_type.localeCompare("lack start") == 0))
 				_colorType = "prime5Seq";
 		}
 

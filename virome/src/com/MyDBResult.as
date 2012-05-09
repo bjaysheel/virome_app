@@ -194,12 +194,13 @@ package com
 		}
 		
 		protected function sequenceDetailRequest(event:ListEvent):void{
-			var DP:Object = _util.app.page.getChildByName("Sequenced");
-			DP.sequenceId = event.currentTarget.selectedItem.SEQUENCEID;
-			DP.environment = event.currentTarget.selectedItem.ENVIRONMENT;
-			DP.seqname = event.currentTarget.selectedItem.NAME;
-			DP.ncRNAFlag = ncRNAFlag;
-			_util.app.simulateMenuClick('sequenced');
+			Alert.show("This feature is disabled temporarily");
+			//var DP:Object = _util.app.page.getChildByName("Sequenced");
+			//DP.sequenceId = event.currentTarget.selectedItem.SEQUENCEID;
+			//DP.environment = event.currentTarget.selectedItem.ENVIRONMENT;
+			//DP.seqname = event.currentTarget.selectedItem.NAME;
+			//DP.ncRNAFlag = ncRNAFlag;
+			//_util.app.simulateMenuClick('sequenced');
 		}
 	}
 }

@@ -24,6 +24,8 @@
 			[Bindable] private var userEvent:UserEvent = new UserEvent();
 			[Bindable] private var login:Boolean = false;
 			
+			private var loginFromCookie:Boolean = false;
+			
 			public function setEndPoint(s:String):void{
 				serviceEndPoint = s;
 			}
@@ -32,16 +34,19 @@
 			}
 			public function setCookieObject(o:Object):void{
 				cookie = o;
+				loginFromCookie = true;
 			}
 			public function getUserObject():Object{
 				return userEvent.UserObj;
 			}
 			
 			private function onCreationComplete():void{
-				parentApplication.addEventListener("LOGIN_FROM_COOKIE", loginFromCookieHandler);
+				if (loginFromCookie)
+					loginFromCookieHandler();
 			}
 			
-			private function loginFromCookieHandler(event:Event):void{
+			private function loginFromCookieHandler():void{
+				
 				var now:Date = new Date();
 				var expire:Date = now;
 				userEvent = new UserEvent();

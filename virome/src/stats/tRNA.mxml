@@ -15,10 +15,13 @@
 	<fx:Script>
 		<![CDATA[
 			import com.ChartnData;
+			import com.DataGridUtils;
 			import com.MyUtility;
 			import com.component.MyGridItem;
 			import com.component.MyGridRow;
 			import com.component.MyNumberFormatter;
+			import com.events.FileSelectorEvent;
+			import com.events.SearchDBEvent;
 			import com.events.SetSearchDBFormEvent;
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
@@ -26,10 +29,13 @@
 			import mx.charts.HitData;
 			import mx.charts.events.ChartItemEvent;
 			import mx.collections.ArrayCollection;
+			import mx.controls.DataGrid;
 			import mx.controls.Label;
 			import mx.controls.LinkButton;
 			import mx.controls.Text;
+			import mx.core.FlexGlobals;
 			import mx.events.ToolTipEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			
 			[Bindable] private var _util:MyUtility = new MyUtility();
@@ -40,7 +46,7 @@
 			private var _libraryId:Number = 0;
 			private var _environment:String = "";
 			private var _libraryInfoObject:Object;
-			private var _flag:Boolean = true;			
+			private var _flag:Boolean = true;
 			
 			[Bindable] public function set libraryId(v:Number):void{
 				_libraryId = v;
@@ -68,12 +74,12 @@
 				return _flag;
 			}
 			
-			protected function onAddtoStage():void{
+			private function onAddtoStage():void{
 				//track
 				tracker = new GATracker( this, _util.trackerId, "AS3", false );			
 			}
 			
-			protected function onShow():void{
+			private function onShow():void{
 				//set google tracker
 				tracker.trackPageview( "/STATISTICS/tRNA" );
 				
@@ -86,7 +92,7 @@
 				tRNAChart.addEventListener(ToolTipEvent.TOOL_TIP_SHOW, _util.chartNdataTip);
 			}
 			
-			protected function tRNAResponse(event:ResultEvent):void{
+			private function tRNAResponse(event:ResultEvent):void{
 				demo.libraryInfoObject = libraryInfoObject;
 				demo.showValues();
 				
@@ -106,16 +112,18 @@
 				demo.validateNow();
 			}
 			
-			protected function tRNASeqResponse(event:ResultEvent):void{
-				var ac:ArrayCollection = event.result as ArrayCollection;				
-				var gr:MyGridRow = new MyGridRow();
-				var gi:MyGridItem = new MyGridItem();
-				var lb:Label = new Label();
-				var t:Text = new Text();
+			private function tRNASeqResponse(event:ResultEvent):void{
+				var ac:ArrayCollection = event.result as ArrayCollection;
+				tRNA_grid.dataProvider = ac;
 				
-				dg.removeAllChildren();
+				//var gr:MyGridRow = new MyGridRow();
+				//var gi:MyGridItem = new MyGridItem();
+				//var lb:Label = new Label();
+				//var t:Text = new Text();
 				
-				lb.text = "Sequence Name";
+				//tRNA_grid.removeAllChildren();
+				
+				/*lb.text = "Sequence Name";
 				lb.styleName = "strong";
 				gi.addChild(lb);
 				gr.addChild(gi);
@@ -143,14 +151,14 @@
 				
 				lb = new Label();
 				gi = new MyGridItem();
-				lb.text = "Codon";
+				lb.text = "Amino Acid";
 				lb.styleName = "strong";
 				gi.addChild(lb);
 				gr.addChild(gi);
 				
 				lb = new Label();
 				gi = new MyGridItem();
-				lb.text = "Intron";
+				lb.text = "Anticodon";
 				lb.styleName = "strong";
 				gi.addChild(lb);
 				gr.addChild(gi);
@@ -163,7 +171,7 @@
 				gr.addChild(gi);
 				gr.header();
 				
-				dg.addChild(gr);
+				tRNA_grid.addChild(gr);
 				
 				for (var i:int=0; i<ac.length; i++){
 					gr = new MyGridRow();
@@ -216,19 +224,19 @@
 					gi.addChild(t);
 					gr.addChild(gi);
 					
-					dg.addChild(gr);
-				}
+					tRNA_grid.addChild(gr);
+				}*/
 			}
 			
-			protected function dataTipFunc(hd:HitData):String {
+			private function dataTipFunc(hd:HitData):String {
 				return ("Codon: " + hd.item.@LABEL + "\n" + "Count: " + hd.item.@VALUE);
 			}
 			
-			protected function chartClick(event:MouseEvent,str:String):void{
+			private function chartClick(event:MouseEvent,str:String):void{
 				new ChartnData(event,libraryInfoObject['LIBNAME'],str);
 			}
 			
-			protected function seqClickEvent(e:MouseEvent):void{
+			private function seqClickEvent(e:MouseEvent):void{
 				var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 				_sf.environment = environment;
 				_sf.library = libraryId;
@@ -239,7 +247,7 @@
 				_util.simulateSearchClick(_sf);
 			}
 			
-			protected function tRNAClickHandler(event:ChartItemEvent):void{
+			private function tRNAClickHandler(event:ChartItemEvent):void{
 				//check if double click or single click
 				var timer:Timer = new Timer(500,1);
 				var xml:XML = (event.hitData.chartItem.item as XML);
@@ -251,15 +259,37 @@
 				} else {
 					timer.stop();
 					doubleClickFlag = true;
-					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
-					_sf.environment = environment;
-					_sf.library = libraryId;
-					_sf.readId = xml.@IDLIST;
-					_sf.vircat = "tRNA";
-					_sf.evalue = 0.1;
 					
-					_util.simulateSearchClick(_sf);
+					//disable tRNA doubl click to search.
+					
+					//var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
+					//_sf.environment = environment;
+					//_sf.library = libraryId;
+					//_sf.readId = xml.@IDLIST;
+					//_sf.vircat = "tRNA";
+					//_sf.evalue = 0.1;
+					
+					//_util.simulateSearchClick(_sf);
 				}	
+			}
+			
+			private function downloadtRNAGrid():void{
+				var gridContent:String = DataGridUtils.loadDataGridInExcel(tRNA_grid);
+				var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+				
+				var fileselector:FileSelectorEvent = new FileSelectorEvent();
+				fileselector.csv = true;
+				
+				var generalObject:SearchDBEvent = new SearchDBEvent();
+				generalObject.environment = environment;
+				generalObject.library = libraryId;
+				
+				downloadPanel._fileSelector = fileselector;
+				downloadPanel._searchDBObj = generalObject;
+				downloadPanel._content = gridContent;
+				
+				PopUpManager.bringToFront(downloadPanel);
+				PopUpManager.centerPopUp(downloadPanel);
 			}
 		]]>
 	</fx:Script>
@@ -285,9 +315,10 @@
 					</mx:text>
 				</mx:Text>
 				
+				<!--itemClick="tRNAClickHandler(event);"--> 
 				<mx:BarChart id="tRNAChart" width="100%" height="100%"
 							 showDataTips="true" dataTipFunction="dataTipFunc"  
-							 itemClick="tRNAClickHandler(event);" 
+							 
 							 click="chartClick(event,'tRNA');"
 							 toolTip="tip"
 							 paddingBottom="0" paddingLeft="0" 
@@ -308,7 +339,21 @@
 					</mx:series>
 				</mx:BarChart>
 				
-				<mx:Grid width="100%" id="dg" paddingTop="35" verticalGap="0" />
+				<mx:Button label="Download Grid" id="dl_tRNA_grid" click="downloadtRNAGrid()"/>
+				<!--<mx:Grid width="100%" id="tRNA_grid" paddingTop="35" verticalGap="0" />-->
+				
+				<mx:DataGrid width="100%" id="tRNA_grid">
+					<mx:columns>
+						<mx:DataGridColumn dataField="NAME" headerText="Sequence Name"/>
+						<mx:DataGridColumn dataField="NUM" headerText="tRNA No."/>
+						<mx:DataGridColumn dataField="TRNA_START" headerText="Start"/>
+						<mx:DataGridColumn dataField="TRNA_END" headerText="End"/>
+						<mx:DataGridColumn dataField="ANTI" headerText="Amino Acid"/>
+						<mx:DataGridColumn dataField="INTRON" headerText="Anitcodon"/>
+						<mx:DataGridColumn dataField="SCORE" headerText="Score"/>
+					</mx:columns>
+				</mx:DataGrid>
+				
 			</mx:VBox>
 		</mx:VBox>
 	</mx:Canvas>

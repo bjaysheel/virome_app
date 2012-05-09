@@ -1,60 +1,62 @@
 <cfapplication name="VIROME" applicationtimeout="#createtimespan(0,2,0,0)#" 
 	sessiontimeout="#createtimespan(0,2,0,0)#" sessionmanagement="true" />
 
-<!--- DSN variables. --->
-<cfset application.mainDSN = "virome">
-<cfset application.lookupDSN = "uniref_lookup">
+<cfscript>
+	//DSN variables.
+	application.mainDSN = "virome";
+	application.lookupDSN = "uniref_lookup";
 
-<cfset application.seed = "SEED">
-<cfset application.kegg = "KEGG">
-<cfset application.cog = "COG">
-<cfset application.aclame = "ACLAME">
-<cfset application.uniref = "UNIREF100P">
-<cfset application.metagenome = "METAGENOMES">
+	application.seed = "SEED";
+	application.kegg = "KEGG";
+	application.cog = "COG";
+	application.aclame = "ACLAME";
+	application.uniref = "UNIREF100P";
+	application.metagenome = "METAGENOMES";
+	
+	//email to/from adr
+	reportFrom = "kingquattro@gmail.com";
+	reportErrorTo = "bjaysheel@gmail.com";
+	reportLibrarySubmissionTo = "virome@dbi.udel.edu";
 
-<cfset application.SessionId = Session.SessionId/>
+	//path variables
+	rawPath = ExpandPath('./');
+	if (FindNoCase('htdocs', rawPath) gt 0){
+		baseIndex1 = FindNoCase('htdocs',rawPath);
+		baseIndex2 = FindNoCase('/',rawPath,baseIndex1);
+		rawPath = Left(rawPath,baseIndex2-1);
+	} else if(FindNoCase('Library', rawPath) gt 0){
+		baseIndex1 = FindNoCase('virome',rawPath);
+		baseIndex2 = FindNoCase('/',rawPath,baseIndex1);
+		rawPath = Left(rawPath,baseIndex2-1);
+	}
 
-<!--- path variables --->
-<cfset rawPath = #ExpandPath('./')#>
-<cfif FindNoCase('htdocs', rawPath) gt 0>
-	<cfset baseIndex1 = FindNoCase('htdocs', rawPath)>
-	<cfset baseIndex2 = FindNoCase('/', rawPath, baseIndex1)>
-	<cfset rawPath = Left(rawPath, baseIndex2-1)>
-<cfelseif FindNoCase('Library', rawPath) gt 0>
-	<cfset baseIndex1 = FindNoCase('virome', rawPath)>
-	<cfset baseIndex2 = FindNoCase('/', rawPath, baseIndex1)>
-	<cfset rawPath = Left(rawPath, baseIndex2-1)>
-</cfif>
+	//production env (igs)
+	application.rootHostPath = "http://#CGI.HTTP_HOST#";
+	application.cfc = "cfc";
+	application.tracker_id = "UA-17366023-3";
+	application.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBSbYlangC20ZDSoh64UTIAj25byVxR5sDFWZVaM--7wrItXxIschFS8zQ";
+	
+	//development env (virome.udel)
+	if ((FindNoCase('.udel.edu',CGI.HTTP_HOST) gt 0) or (FindNoCase('localhost',CGI.HTTP_HOST) gt 0)){
+		application.rootHostPath = "http://#CGI.HTTP_HOST#/VIROME";
+		application.cfc = "VIROME.cfc";
+		application.tracker_id = "UA-17366023-1";
+		application.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBQdVYN3EdDtLl4NNMD6gXWS-vWfShSIOaNRaBtOSCFyLDNZFjJvdmzQig";
+	}
 
-<!--- production env (igs) --->
-<cfset application.rootHostPath = "http://#CGI.HTTP_HOST#">
-<cfset application.cfc = "cfc"/>
-<cfset application.tracker_id = "UA-17366023-3"/>
-<cfset application.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBSbYlangC20ZDSoh64UTIAj25byVxR5sDFWZVaM--7wrItXxIschFS8zQ"/>
+	application.hostEndPoint = "http://#CGI.HTTP_HOST#/flex2gateway/";
+	application.webCFCPath = "#application.rootHostPath#/#application.cfc#";
 
-<!--- development env (virome.udel) --->
-<cfif (FindNoCase('.udel.edu',CGI.HTTP_HOST) gt 0) or (FindNoCase('localhost',CGI.HTTP_HOST) gt 0)>
-	<cfset application.rootHostPath = "http://#CGI.HTTP_HOST#/VIROME">
-	<cfset application.cfc = "VIROME.cfc"/>
-	<cfset application.tracker_id = "UA-17366023-1"/>
-	<cfset application.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBQdVYN3EdDtLl4NNMD6gXWS-vWfShSIOaNRaBtOSCFyLDNZFjJvdmzQig"/>
-</cfif>
-
-<cfset application.hostEndPoint = "http://#CGI.HTTP_HOST#/flex2gateway">
-<cfset application.webCFCPath = "#application.rootHostPath#/#application.cfc#">
-
-<cfset application.rootFilePath = "#rawPath#">
-<cfset application.chartFilePath = "#application.rootFilePath#/charts">
-<cfset application.blastImgFilePath = "#application.rootFilePath#/blastImager">
-<cfset application.idFilePath = "#application.rootFilePath#/idFiles">
-<cfset application.xDocsFilePath = "#application.rootFilePath#/xDocs">
-<cfset application.tmpFilePath = "#application.rootFilePath#/tmp">
-<cfset application.searchFilePath = "#application.rootFilePath#/search">
-
-<cfif CGI.HTTP_USER_AGENT contains "Mac">
-	<cfset application.NL = "#chr(13)#">
-<cfelseif CGI.HTTP_USER_AGENT contains "Linux">
-	<cfset application.NL = "#chr(13)#">
-<cfelse>
-	<cfset application.NL = "#chr(13)##chr(10)#">
-</cfif>
+	application.rootFilePath = "#rawPath#";
+	application.chartFilePath = "#application.rootFilePath#/charts";
+	application.blastImgFilePath = "#application.rootFilePath#/blastImager";
+	application.idFilePath = "#application.rootFilePath#/idFiles";
+	application.xDocsFilePath = "#application.rootFilePath#/xDocs";
+	application.tmpFilePath = "#application.rootFilePath#/tmp";
+	application.searchFilePath = "#application.rootFilePath#/search";
+	
+	if (FindNoCase("Mac", CGI.HTTP_USER_AGENT) or FindNoCase("Linux", CGI.HTTP_USER_AGENT))
+		application.linefeed = #chr(10)#;
+	else
+		application.linefeed = #chr(13)#&#chr(10)#;
+</cfscript>

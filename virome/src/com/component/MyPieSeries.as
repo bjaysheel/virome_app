@@ -45,9 +45,13 @@ package com.component
 					return (new SolidColor(0xDC2321,1));
 				case "lack both ends":
 					return (new SolidColor(0xA3AFBF,1));
+				case "lack_start":
+					return (new SolidColor(0x06BDDC,1));
 				case "lack start":
 					return (new SolidColor(0x06BDDC,1));
 				case "lack stop":
+					return (new SolidColor(0xDEAB52,1));
+				case "lack_stop":
 					return (new SolidColor(0xDEAB52,1));
 				case "Bacteria":
 					return (new SolidColor(0xE3722B,1));

@@ -43,11 +43,11 @@
       <parameter name="hitName" type="string"/>
     </function>
   </service>
-  <service name="ReadRPC">
+  <service name="SearchRPC">
     <annotation name="ActionScriptGeneration">
-      <item name="Source">cfc.ReadRPC</item>
+      <item name="Source">cfc.SearchRPC</item>
       <item name="ServiceType">RemoteObject</item>
-      <item name="Package">services.readrpc</item>
+      <item name="Package">services.searchrpc</item>
       <item name="Destination">ColdFusion</item>
     </annotation>
     <annotation name="ServiceTypeGroup">
@@ -56,48 +56,77 @@
     <annotation name="ServiceConfig">
       <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
       <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
-      <item name="LINKED_FILE">ReadRPC.cfc</item>
+      <item name="LINKED_FILE">SearchRPC.cfc</item>
       <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
-      <item name="CFC_CLASS_NAME">ReadRPC</item>
-      <item name="CFC_RELATIVE_LOCATION">cfc/ReadRPC.cfc</item>
+      <item name="CFC_CLASS_NAME">SearchRPC</item>
+      <item name="CFC_RELATIVE_LOCATION">cfc/SearchRPC.cfc</item>
       <item name="ABSOLUTE_ENDPOINT"></item>
-      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/ReadRPC.cfc</item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/SearchRPC.cfc</item>
     </annotation>
-    <function name="getTaxonomicInfo" return-type="opaque">
+    <function name="getSearchRSLT" return-type="opaque[]">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">float,string</item>
+        <item name="inputParams">opaque</item>
         <item name="returnType">opaque</item>
       </annotation>
-      <parameter name="id" type="float"/>
-      <parameter name="environment" type="string"/>
+      <parameter name="obj" type="opaque"/>
     </function>
-    <function name="getSequenceInfo" return-type="opaque">
+    <function name="retrieveSequenceId_B" return-type="opaque">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">float,string,string</item>
+        <item name="inputParams">string,string,string</item>
         <item name="returnType">opaque</item>
       </annotation>
-      <parameter name="id" type="float"/>
-      <parameter name="name" type="string"/>
-      <parameter name="environment" type="string"/>
+      <parameter name="str" type="string"/>
+      <parameter name="server" type="string"/>
+      <parameter name="library" type="string"/>
     </function>
-    <function name="getORFSummary" return-type="opaque">
+    <function name="retrieveSequenceId_A" return-type="string">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">string,string,string</item>
+        <item name="returnType">string</item>
+      </annotation>
+      <parameter name="tag" type="string"/>
+      <parameter name="file" type="string"/>
+      <parameter name="server" type="string"/>
+    </function>
+    <function name="getBlastSearch" return-type="string">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque</item>
+        <item name="returnType">string</item>
+      </annotation>
+      <parameter name="obj" type="opaque"/>
+    </function>
+    <function name="getORFSeqIdFromRead" return-type="string">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">string,string</item>
+        <item name="returnType">string</item>
+      </annotation>
+      <parameter name="readId" type="string"/>
+      <parameter name="server" type="string"/>
+    </function>
+    <function name="prepareRS" return-type="opaque">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">float,string,string,float</item>
+        <item name="inputParams">opaque</item>
         <item name="returnType">opaque</item>
       </annotation>
-      <parameter name="id" type="float"/>
-      <parameter name="environment" type="string"/>
-      <parameter name="database" type="string"/>
-      <parameter name="topHit" type="float"/>
+      <parameter name="obj" type="opaque"/>
     </function>
   </service>
   <service name="OrfRPC">
@@ -186,6 +215,63 @@
       <parameter name="database" type="string"/>
     </function>
   </service>
+  <service name="ReadRPC">
+    <annotation name="ActionScriptGeneration">
+      <item name="Source">cfc.ReadRPC</item>
+      <item name="ServiceType">RemoteObject</item>
+      <item name="Package">services.readrpc</item>
+      <item name="Destination">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceTypeGroup">
+      <item name="ServiceBackendType">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceConfig">
+      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
+      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
+      <item name="LINKED_FILE">ReadRPC.cfc</item>
+      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
+      <item name="CFC_CLASS_NAME">ReadRPC</item>
+      <item name="CFC_RELATIVE_LOCATION">cfc/ReadRPC.cfc</item>
+      <item name="ABSOLUTE_ENDPOINT"></item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/ReadRPC.cfc</item>
+    </annotation>
+    <function name="getTaxonomicInfo" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float,string</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="id" type="float"/>
+      <parameter name="environment" type="string"/>
+    </function>
+    <function name="getSequenceInfo" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float,string,string</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="id" type="float"/>
+      <parameter name="name" type="string"/>
+      <parameter name="environment" type="string"/>
+    </function>
+    <function name="getORFSummary" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float,string,string,float</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="id" type="float"/>
+      <parameter name="environment" type="string"/>
+      <parameter name="database" type="string"/>
+      <parameter name="topHit" type="float"/>
+    </function>
+  </service>
   <service name="Application">
     <annotation name="ActionScriptGeneration">
       <item name="Source">cfc.Application</item>
@@ -207,11 +293,11 @@
       <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Application.cfc</item>
     </annotation>
   </service>
-  <service name="SearchRPC">
+  <service name="Exporter">
     <annotation name="ActionScriptGeneration">
-      <item name="Source">cfc.SearchRPC</item>
+      <item name="Source">cfc.Exporter</item>
       <item name="ServiceType">RemoteObject</item>
-      <item name="Package">services.searchrpc</item>
+      <item name="Package">services.exporter</item>
       <item name="Destination">ColdFusion</item>
     </annotation>
     <annotation name="ServiceTypeGroup">
@@ -220,14 +306,70 @@
     <annotation name="ServiceConfig">
       <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
       <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
-      <item name="LINKED_FILE">SearchRPC.cfc</item>
+      <item name="LINKED_FILE">Exporter.cfc</item>
       <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
-      <item name="CFC_CLASS_NAME">SearchRPC</item>
-      <item name="CFC_RELATIVE_LOCATION">cfc/SearchRPC.cfc</item>
+      <item name="CFC_CLASS_NAME">Exporter</item>
+      <item name="CFC_RELATIVE_LOCATION">cfc/Exporter.cfc</item>
       <item name="ABSOLUTE_ENDPOINT"></item>
-      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/SearchRPC.cfc</item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Exporter.cfc</item>
     </annotation>
-    <function name="getSearchRSLT" return-type="opaque[]">
+    <function name="saveImage" return-type="void">
+      <annotation name="analyze group">
+        <item name="analyzed">true</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">string,blob</item>
+        <item name="returnType">void</item>
+      </annotation>
+      <parameter name="filename" type="string"/>
+      <parameter name="data" type="blob"/>
+    </function>
+    <function name="export" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">opaque,opaque,blob,string</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="fileObject" type="opaque"/>
+      <parameter name="genInfoObject" type="opaque"/>
+      <parameter name="bin" type="blob"/>
+      <parameter name="content" type="string"/>
+    </function>
+    <function name="savePDF" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">string,blob</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="filename" type="string"/>
+      <parameter name="data" type="blob"/>
+    </function>
+  </service>
+  <service name="Statistics">
+    <annotation name="ActionScriptGeneration">
+      <item name="Source">cfc.Statistics</item>
+      <item name="ServiceType">RemoteObject</item>
+      <item name="Package">services.statistics</item>
+      <item name="Destination">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceTypeGroup">
+      <item name="ServiceBackendType">ColdFusion</item>
+    </annotation>
+    <annotation name="ServiceConfig">
+      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
+      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
+      <item name="LINKED_FILE">Statistics.cfc</item>
+      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
+      <item name="CFC_CLASS_NAME">Statistics</item>
+      <item name="CFC_RELATIVE_LOCATION">cfc/Statistics.cfc</item>
+      <item name="ABSOLUTE_ENDPOINT"></item>
+      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Statistics.cfc</item>
+    </annotation>
+    <function name="getXMLDoc" return-type="opaque">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
@@ -237,60 +379,38 @@
       </annotation>
       <parameter name="obj" type="opaque"/>
     </function>
-    <function name="retrieveSequenceId_B" return-type="opaque">
+    <function name="gettRNASeq" return-type="opaque[]">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">string,string,string</item>
+        <item name="inputParams">float,string</item>
         <item name="returnType">opaque</item>
       </annotation>
-      <parameter name="str" type="string"/>
-      <parameter name="server" type="string"/>
-      <parameter name="library" type="string"/>
+      <parameter name="libId" type="float"/>
+      <parameter name="environment" type="string"/>
     </function>
-    <function name="retrieveSequenceId_A" return-type="string">
-      <annotation name="analyze group">
-        <item name="analyzed">true</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">string,string,string</item>
-        <item name="returnType">string</item>
-      </annotation>
-      <parameter name="tag" type="string"/>
-      <parameter name="file" type="string"/>
-      <parameter name="server" type="string"/>
-    </function>
-    <function name="getBlastSearch" return-type="string">
-      <annotation name="analyze group">
-        <item name="analyzed">true</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">opaque</item>
-        <item name="returnType">string</item>
-      </annotation>
-      <parameter name="obj" type="opaque"/>
-    </function>
-    <function name="getORFSeqIdFromRead" return-type="string">
-      <annotation name="analyze group">
-        <item name="analyzed">true</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">string,string</item>
-        <item name="returnType">string</item>
-      </annotation>
-      <parameter name="readId" type="string"/>
-      <parameter name="server" type="string"/>
-    </function>
-    <function name="prepareRS" return-type="opaque">
+    <function name="getVIROMEClass" return-type="opaque">
       <annotation name="analyze group">
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">opaque</item>
+        <item name="inputParams">float,string</item>
         <item name="returnType">opaque</item>
       </annotation>
-      <parameter name="obj" type="opaque"/>
+      <parameter name="libId" type="float"/>
+      <parameter name="environment" type="string"/>
+    </function>
+    <function name="gettRNAStats" return-type="opaque">
+      <annotation name="analyze group">
+        <item name="analyzed">false</item>
+      </annotation>
+      <annotation name="original signature">
+        <item name="inputParams">float,string</item>
+        <item name="returnType">opaque</item>
+      </annotation>
+      <parameter name="libId" type="float"/>
+      <parameter name="environment" type="string"/>
     </function>
   </service>
   <service name="Library">
@@ -331,12 +451,12 @@
         <item name="analyzed">false</item>
       </annotation>
       <annotation name="original signature">
-        <item name="inputParams">float,string,string</item>
+        <item name="inputParams">float,string,float</item>
         <item name="returnType">opaque</item>
       </annotation>
       <parameter name="libraryId" type="float"/>
       <parameter name="server" type="string"/>
-      <parameter name="type" type="string"/>
+      <parameter name="type" type="float"/>
     </function>
     <function name="getLibraryObject" return-type="opaque[]">
       <annotation name="analyze group">
@@ -430,126 +550,6 @@
         <item name="returnType">opaque</item>
       </annotation>
       <parameter name="obj" type="opaque"/>
-    </function>
-  </service>
-  <service name="Exporter">
-    <annotation name="ActionScriptGeneration">
-      <item name="Source">cfc.Exporter</item>
-      <item name="ServiceType">RemoteObject</item>
-      <item name="Package">services.exporter</item>
-      <item name="Destination">ColdFusion</item>
-    </annotation>
-    <annotation name="ServiceTypeGroup">
-      <item name="ServiceBackendType">ColdFusion</item>
-    </annotation>
-    <annotation name="ServiceConfig">
-      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
-      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
-      <item name="LINKED_FILE">Exporter.cfc</item>
-      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
-      <item name="CFC_CLASS_NAME">Exporter</item>
-      <item name="CFC_RELATIVE_LOCATION">cfc/Exporter.cfc</item>
-      <item name="ABSOLUTE_ENDPOINT"></item>
-      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Exporter.cfc</item>
-    </annotation>
-    <function name="saveImage" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">string,blob</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="filename" type="string"/>
-      <parameter name="data" type="blob"/>
-    </function>
-    <function name="export" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">opaque,opaque,blob,string</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="fileObject" type="opaque"/>
-      <parameter name="genInfoObject" type="opaque"/>
-      <parameter name="bin" type="blob"/>
-      <parameter name="content" type="string"/>
-    </function>
-    <function name="savePDF" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">string,blob</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="filename" type="string"/>
-      <parameter name="data" type="blob"/>
-    </function>
-  </service>
-  <service name="Statistics">
-    <annotation name="ActionScriptGeneration">
-      <item name="Source">cfc.Statistics</item>
-      <item name="ServiceType">RemoteObject</item>
-      <item name="Package">services.statistics</item>
-      <item name="Destination">ColdFusion</item>
-    </annotation>
-    <annotation name="ServiceTypeGroup">
-      <item name="ServiceBackendType">ColdFusion</item>
-    </annotation>
-    <annotation name="ServiceConfig">
-      <item name="DEFAULT_ENTITY_PACKAGE">valueObjects</item>
-      <item name="COLDFUSION_SERVER_ROOT_URL">http://localhost/</item>
-      <item name="LINKED_FILE">Statistics.cfc</item>
-      <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
-      <item name="CFC_CLASS_NAME">Statistics</item>
-      <item name="CFC_RELATIVE_LOCATION">cfc/Statistics.cfc</item>
-      <item name="ABSOLUTE_ENDPOINT"></item>
-      <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Statistics.cfc</item>
-    </annotation>
-    <function name="getXMLDoc" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">opaque</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="obj" type="opaque"/>
-    </function>
-    <function name="gettRNASeq" return-type="opaque[]">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">float,string</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="libId" type="float"/>
-      <parameter name="environment" type="string"/>
-    </function>
-    <function name="getVIROMEClass" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">float,string</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="libId" type="float"/>
-      <parameter name="environment" type="string"/>
-    </function>
-    <function name="gettRNAStats" return-type="opaque">
-      <annotation name="analyze group">
-        <item name="analyzed">false</item>
-      </annotation>
-      <annotation name="original signature">
-        <item name="inputParams">float,string</item>
-        <item name="returnType">opaque</item>
-      </annotation>
-      <parameter name="libId" type="float"/>
-      <parameter name="environment" type="string"/>
     </function>
   </service>
 </model>
