@@ -136,7 +136,7 @@
 
         <echo message="Archiving the old virome html dir ..."/>
         <exec executable="ssh" failonerror="true">
-            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zcvf ${OLD_RELEASES_DIR}/${VIROME_BACKUP_FILE} ${COLD_FUSION_HTML_DIR} --exclude 'xDocs' --exclude 'idFiles''"/>
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zcvf ${OLD_RELEASES_DIR}/${VIROME_BACKUP_FILE} --exclude 'xDocs' --exclude 'idFiles' ${COLD_FUSION_HTML_DIR}'"/>
         </exec>
 
         <echo message="Moving the data directories to a temporary place while deploying..."/>
