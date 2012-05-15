@@ -27,6 +27,16 @@
 			<location>/Users/jbhavsar/Documents/workspace/virome-rc/assets/modules</location>
 		</link>
 		<link>
+			<name>bin-release1</name>
+			<type>2</type>
+			<location>/Library/WebServer/Documents/VIROME/assets/modules</location>
+		</link>
+		<link>
+			<name>bin-release2</name>
+			<type>2</type>
+			<location>/Users/jbhavsar/Documents/workspace2/Virome/virome/src/assets/modules</location>
+		</link>
+		<link>
 			<name>services/User.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/cfc/User.cfc</location>
