@@ -6,7 +6,7 @@
         the build file will use those properties.
 
         Another Note:  This build system requires FLEX SDK.  Please see wiki
-                       for this source tree on github 
+                       for this source tree on github
                        (https://github.com/CAMERA/Virome/wiki)
     </description>
 
@@ -82,6 +82,19 @@
         <antcall target="install"/>
     </target>
 
+    <target name="deploy-cfcs" depends="init">
+        <tstamp>
+            <format property="build.time" pattern="MM-dd-yy_HH:mm:ss"/>
+        </tstamp>
+
+        <echo file="${build}/lastbuilt.txt" message="${build.time}" append="false"/>
+
+        <antcall target="copy_cfcs"/>
+        <antcall target="copy_cfm"/>
+        <antcall target="package-cfcs"/>
+        <antcall target="install-cfcs"/>
+    </target>
+
     <target name="install-local"
             description="Copies the contents of the build directory to the installation directory.">
 
@@ -89,6 +102,63 @@
         <copy todir="${COLD_FUSION_HTML_DIR}" overwrite="true">
             <fileset dir="${build}"/>
         </copy>
+    </target>
+
+    <target name="package-cfcs" depends="init">
+        <loadfile property="latest.build"
+                  srcFile="${build}/lastbuilt.txt"
+                  failonerror="true"/>
+        <property name="VIROME_DEPLOYMENT_FILE" value="virome_cfcs_${latest.build}.tar.gz"/>
+
+        <echo message="Creating and compressing tar file of build directory contents"/>
+        <tar basedir="${build}/cfc" destfile="${basedir}/${VIROME_DEPLOYMENT_FILE}" compression="gzip"/>
+
+        <move file="${basedir}/${VIROME_DEPLOYMENT_FILE}" tofile="${build}/${VIROME_DEPLOYMENT_FILE}" failonerror="true" overwrite="true"/>
+
+        <echo message="Completed packaging for a archive file or the virome cfc ...  ${build}/${VIROME_DEPLOYMENT_FILE}"/>
+    </target>
+
+    <target name="install-cfcs"
+            description="SCPs a gzipped tar file from the build directory to $SERVER_HOST:$COPY_DIR and unpacks it to $COLD_FUSION_HTML_DIR">
+
+        <loadfile property="latest.build"
+                  srcFile="${build}/lastbuilt.txt"
+                  failonerror="true"/>
+
+        <property name="VIROME_DEPLOYMENT_FILE" value="virome_cfcs_${latest.build}.tar.gz"/>
+
+        <echo message="Installing Remotely to '${SERVER_HOST}:${COLD_FUSION_HTML_DIR}'..."/>
+
+        <echo message="Copying the release tar zip to the ${SERVER_HOST}:${OLD_RELEASES_DIR}"/>
+        <echo message="scp ${SERVER_PRIV_KEY} -f ${build}/${VIROME_DEPLOYMENT_FILE} ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
+        <exec executable="scp" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} -r ${build}/${VIROME_DEPLOYMENT_FILE} ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
+        </exec>
+
+        <tstamp>
+            <format property="backup.time" pattern="MM-dd-yy_HH:mm:ss"/>
+        </tstamp>
+        <property name="VIROME_BACKUP_FILE" value="backup_cfc_dir.${backup.time}.tar.gz"/>
+
+        <echo message="Archiving the old virome cfc dir ..."/>
+        <exec executable="ssh" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zcvf ${OLD_RELEASES_DIR}/${VIROME_BACKUP_FILE} ${COLD_FUSION_HTML_DIR}/cfc ${COLD_FUSION_HTML_DIR}/Application.cfm'"/>
+        </exec>
+
+        <echo message="Cleaning virome html dir"/>
+        <exec executable="ssh" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'rm -fr ${COLD_FUSION_HTML_DIR}/cfc/*.cfc'"/>
+        </exec>
+
+        <echo message="Unpacking new Virome build to the html dir"/>
+        <exec executable="ssh" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zxvf ${OLD_RELEASES_DIR}/${VIROME_DEPLOYMENT_FILE} -C ${COLD_FUSION_HTML_DIR}/cfc'"/>
+        </exec>
+
+        <echo message="Moving cfm back to html dir"/>
+        <exec executable="ssh" failonerror="true">
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'mv ${COLD_FUSION_HTML_DIR}/cfc/Application.cfm ${COLD_FUSION_HTML_DIR}/Application.cfm'"/>
+        </exec>
     </target>
 
     <target name="package" depends="init">
@@ -114,7 +184,6 @@
 
         <property name="VIROME_DEPLOYMENT_FILE" value="virome_flash_app_${latest.build}.tar.gz"/>
 
-
         <echo message="Installing Remotely to '${SERVER_HOST}:${COLD_FUSION_HTML_DIR}'..."/>
 
         <echo message="Creating and compressing tar file of build directory contents"/>
@@ -126,7 +195,6 @@
         <echo message="scp ${SERVER_PRIV_KEY} -f ${build}/${VIROME_DEPLOYMENT_FILE} ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
         <exec executable="scp" failonerror="true">
             <arg line="${SERVER_PRIV_KEY} -r ${build}/${VIROME_DEPLOYMENT_FILE} ${SERVER_HOST}:${OLD_RELEASES_DIR}/"/>
-            <!--<arg line="${SERVER_PRIV_KEY} -r ${build}/ ${SERVER_HOST}:${COLD_FUSION_HTML_DIR}/"/>-->
         </exec>
 
         <tstamp>
@@ -136,22 +204,22 @@
 
         <echo message="Archiving the old virome html dir ..."/>
         <exec executable="ssh" failonerror="true">
-            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zcvf ${OLD_RELEASES_DIR}/${VIROME_BACKUP_FILE} --exclude 'xDocs' --exclude 'idFiles' ${COLD_FUSION_HTML_DIR}'"/>
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'tar -zcvf ${OLD_RELEASES_DIR}/${VIROME_BACKUP_FILE} --exclude 'xDocs' --exclude 'idFiles' --exclude 'search' --exclude 'tmp' ${COLD_FUSION_HTML_DIR}'"/>
         </exec>
 
         <echo message="Moving the data directories to a temporary place while deploying..."/>
         <exec executable="ssh" failonerror="true">
-            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'mv ${COLD_FUSION_HTML_DIR}/idFiles ${OLD_RELEASES_DIR}/idFiles; mv ${COLD_FUSION_HTML_DIR}/xDocs ${OLD_RELEASES_DIR}/xDocs'"/>
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'mv ${COLD_FUSION_HTML_DIR}/idFiles ${OLD_RELEASES_DIR}/idFiles; mv ${COLD_FUSION_HTML_DIR}/xDocs ${OLD_RELEASES_DIR}/xDocs; mv ${COLD_FUSION_HTML_DIR}/search ${OLD_RELEASES_DIR}/search; mv ${COLD_FUSION_HTML_DIR}/tmp ${OLD_RELEASES_DIR}/tmp'"/>
         </exec>
 
         <echo message="Cleaning virome html dir"/>
         <exec executable="ssh" failonerror="true">
-            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'rm -fr ${COLD_FUSION_HTML_DIR}/*'"/>
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'rm -rf ${COLD_FUSION_HTML_DIR}/*'"/>
         </exec>
 
         <echo message="Moving data directories back to html dir"/>
         <exec executable="ssh" failonerror="true">
-            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'mv ${OLD_RELEASES_DIR}/idFiles ${COLD_FUSION_HTML_DIR}/idFiles; mv ${OLD_RELEASES_DIR}/xDocs ${COLD_FUSION_HTML_DIR}/xDocs'"/>
+            <arg line="${SERVER_PRIV_KEY} ${SERVER_HOST} 'mv ${OLD_RELEASES_DIR}/idFiles ${COLD_FUSION_HTML_DIR}/idFiles; mv ${OLD_RELEASES_DIR}/xDocs ${COLD_FUSION_HTML_DIR}/xDocs; mv ${OLD_RELEASES_DIR}/search ${COLD_FUSION_HTML_DIR}/search; mv ${OLD_RELEASES_DIR}/tmp ${COLD_FUSION_HTML_DIR}/tmp'"/>
         </exec>
 
         <echo message="Unpacking new Virome build to the html dir"/>
@@ -223,6 +291,7 @@
             <compiler.include-libraries dir="virome/libs" append="true">
                 <include name="map_flex_1_20.swc"/>
                 <include name="analytics.swc"/>
+				<include name="PreloaderDisplay.swc"/>
             </compiler.include-libraries>
 
             <compiler.include-libraries dir="libs" append="true">
@@ -244,7 +313,7 @@
               <exclude name="**/*.swf"/>
               <exclude name="advancedgrid*"/>
               <exclude name="spark_dmv*"/>
-              <exclude name="osmf*"/> 
+              <exclude name="osmf*"/>
               <include name="**/*.swz"/>
            </fileset>
         </copy>
@@ -259,6 +328,18 @@
         <copy todir="${build}/cfc"
               overwrite="true">
             <fileset dir="virome/src/cfc"/>
+        </copy>
+    </target>
+
+    <target name="copy_cfm"
+            description="Copies the ColdFusion application.cfm to the ${build}/cfc directory">
+
+        <mkdir dir="${build}/cfc"/>
+
+        <echo message="Copying cfm files to '${build}/cfc'"/>
+        <copy todir="${build}/cfc"
+              overwrite="true">
+            <fileset file="virome/src/Application.cfm"/>
         </copy>
     </target>
 

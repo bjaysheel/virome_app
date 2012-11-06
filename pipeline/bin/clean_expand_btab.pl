@@ -453,7 +453,7 @@ sub expand {
 			$aFxn=1;
 		  } else { $aclame_row .= "\t0\n"; }
 
-		  push(@seedarray, $aclame_row);
+		  push(@aclamearray, $aclame_row);
 	  }
 
     }##END OF ITERATING THROUGH ALL UNIREF RECORDS FOR A ACCESSION

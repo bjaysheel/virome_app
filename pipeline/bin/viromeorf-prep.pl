@@ -128,6 +128,17 @@ while(my $seq = $fsa->next_seq) {
 	# revert back type to lack start and lack stop instead of lack_start and lack_stop
 	$info{type} =~ s/_/ /;
 
+	#make sure start < end.
+	$info{start} = $utils->trim($info{start});
+	$info{end} = $utils->trim($info{end});
+
+	if ($info{start} > $info{end}){
+	  my $tmp = $info{start};
+	  $info{start} = $info{end};
+	  $info{end} = $tmp;
+	  $info{strand} = "-";
+	}
+
 	print OUT join("\t",$readId, $seqId, $utils->trim($seq->id), $utils->trim($info{geneNum}), 0, 0
 					$utils->trim($info{start}), $utils->trim($info{end}), $utils->trim($info{strand}),
 					$utils->trim($info{frames}), $utils->trim($info{type}), $utils->trim($info{score}),

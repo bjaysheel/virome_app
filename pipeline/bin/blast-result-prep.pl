@@ -105,7 +105,7 @@ BEGIN {
 my %options = ();
 my $results = GetOptions (\%options,
                           'input|i=s',
-			  'outdir|od=s',
+						  'outdir|od=s',
                           'liblist|ll=s',
                           'lookupDir|ld=s',
                           'log|l=s',

@@ -278,27 +278,16 @@ foreach my $libId (@libArray) {
    my $unclassified_list = "";
    my $null_str = "NULL";
 
-   foreach my $sequenceId(@uniref_arr) {
-      ## SEARCH IN KEGG DATABASE FIRST
-      #my $found = 0;
-      #my $seqadded = 0;
-
-      # get all blast hits for a sequence ($sequenceId)
-      # where database is uniref.
-      #($functional_count,$functional_list,$found,$seqadded) = getFunctionalList("UNIREF100P",$sequenceId,$functional_count,$functional_list,$found,$seqadded);
-      #($functional_count,$functional_list,$found,$seqadded) = getFunctionalList("ACLAME",$sequenceId,$functional_count,$functional_list,$found,$seqadded);
-      #($functional_count,$functional_list,$found,$seqadded) = getFunctionalList("KEGG",$sequenceId,$functional_count,$functional_list,$found,$seqadded);
-      #($functional_count,$functional_list,$found,$seqadded) = getFunctionalList("SEED",$sequenceId,$functional_count,$functional_list,$found,$seqadded);
-      #($functional_count,$functional_list,$found,$seqadded) = getFunctionalList("COG",$sequenceId,$functional_count,$functional_list,$found,$seqadded);
-
-	  if (hasFunctionalHit($sequenceId)){
-		 $functional_count++;
-		 $functional_list .= $sequenceId . ",";
-	  } else {
-		 $unclassified_count++;
-		 $unclassified_list .= $sequenceId . ",";
-	  }
-   }
+	foreach my $sequenceId(@uniref_arr) {
+		#divide all hits in fxn and unclassified.
+		if (hasFunctionalHit($sequenceId)){
+			$functional_count++;
+			$functional_list .= $sequenceId . ",";
+		} else {
+			$unclassified_count++;
+			$unclassified_list .= $sequenceId . ",";
+		}
+	}
 
    #remove last comma
    $functional_list =~ s/,$//;
@@ -377,91 +366,95 @@ foreach my $libId (@libArray) {
       }
    }
 
-   #################################################
-   # CALCULATE TAXONOMY LINEAGE AT DOMAIN LEVEL
-   # AT EVALUE CUTOFF AT 0.001
-   #################################################
-   ## get domain taxonomy count.
-   my ($type,$count,$lineage);
-   $tax->execute(($libId));
-   $tax->bind_col(1,\$type);
-   $tax->bind_col(2,\$count);
-   $lineage = "";
+	#################################################
+	# CALCULATE TAXONOMY LINEAGE AT DOMAIN LEVEL
+	# AT EVALUE CUTOFF AT 0.001
+	#################################################
+	## get domain taxonomy count.
+	my ($type,$count,$lineage);
+	$tax->execute(($libId));
+	$tax->bind_col(1,\$type);
+	$tax->bind_col(2,\$count);
+	$lineage = "";
 
-   while($tax->fetch) {
-      if (!length($type)) {
-		 $type = "Unclassified";
-      }
-      if (length($lineage)) {
-	     $lineage = $lineage.";".$type.":".$count;
-      }
-      else { $lineage = $type.":".$count; }
-   }
+	while($tax->fetch) {
+		if (!length($type)) {
+			$type = "Unclassified";
+		}
+		if (length($lineage)) {
+			$lineage = $lineage.";".$type.":".$count;
+		}
+		else { $lineage = $type.":".$count; }
+	}
 
-   ##################################################
-   # CALCULATE ORF CATEGORIES and TYPES
-   # FOR EACH LIBRARY AT EVALUE CUTOFF OF 0.001
-   ##################################################
-   my %orf=();
-   $orf{'comp_cnt'}=0;
-   $orf{'comp_lst'}="";
-   $orf{'comp_mb'}=0;
-   $orf{'incomp_cnt'}=0;
-   $orf{'incomp_lst'}="";
-   $orf{'incomp_mb'}=0;
-   $orf{'start_cnt'}=0;
-   $orf{'start_lst'}="";
-   $orf{'start_mb'}=0;
-   $orf{'stop_cnt'}=0;
-   $orf{'stop_lst'}="";
-   $orf{'stop_mb'}=0;
-   $orf{'bacteria_cnt'}=0;
-   $orf{'bacteria_lst'}="";
-   $orf{'bacteria_mb'}=0;
-   $orf{'archaea_cnt'}=0;
-   $orf{'archaea_lst'}="";
-   $orf{'archaea_mb'}=0;
-   $orf{'phage_cnt'}=0;
-   $orf{'phage_lst'}="";
-   $orf{'phage_mb'}=0;
+	##################################################
+	# CALCULATE ORF CATEGORIES and TYPES
+	# FOR EACH LIBRARY AT EVALUE CUTOFF OF 0.001
+	##################################################
+	my %orf=();
+	$orf{'comp_cnt'}=0;
+	$orf{'comp_lst'}="";
+	$orf{'comp_mb'}=0;
+	$orf{'incomp_cnt'}=0;
+	$orf{'incomp_lst'}="";
+	$orf{'incomp_mb'}=0;
+	$orf{'start_cnt'}=0;
+	$orf{'start_lst'}="";
+	$orf{'start_mb'}=0;
+	$orf{'stop_cnt'}=0;
+	$orf{'stop_lst'}="";
+	$orf{'stop_mb'}=0;
+	$orf{'bacteria_cnt'}=0;
+	$orf{'bacteria_lst'}="";
+	$orf{'bacteria_mb'}=0;
+	$orf{'archaea_cnt'}=0;
+	$orf{'archaea_lst'}="";
+	$orf{'archaea_mb'}=0;
+	$orf{'phage_cnt'}=0;
+	$orf{'phage_lst'}="";
+	$orf{'phage_mb'}=0;
 
-   $all_seq->execute(($libId));
-   while (my @rslt = $all_seq->fetchrow_array()) {
-	  my $model="";
-	  my $orf_type="";
-	  if ($rslt[1] =~ /.*model=(.*) ends=(\d+) .*/) {
-		 $model = $1;
+	$all_seq->execute(($libId));
+	while (my $row = $all_seq->fetchrow_hashref) {
 
-		 switch ($2) {
-			case "10" { $orf_type= "stop" }
-			case "01" { $orf_type= "start" }
-			case "00" { $orf_type= "incomp" }
-			case "11" { $orf_type= "comp" }
-		 }
+		map { $opts{$1} = $2 if( /([^=]+)\s*=\s*([^=]+)/ ) } split(/\s+/, $$row{header});
 
-		 # set model stats.
-		 $orf{$model.'_cnt'}++;
-		 if ($rslt[3] =~ /\*$/) {
-			$orf{$model.'_mb'}+=($rslt[2]-1);
-		 }else {
-			$orf{$model.'_mb'}+=$rslt[2];
-		 }
+		if ($opts{type} =~ /lack[_|\s]stop/i){
+			$opts{type} = "stop";
+		} elsif ($opts{type} =~ /lack[_|\s]start/i){
+			$opts{type} = "start";
+		} elsif ($opts{type} =~ /incomplete/i){
+			$opts{type} = "incomp";
+		} elsif ($opts{type} =~ /complete/i){
+			$opts{type} = "comp";
+		}
 
-		 if (length($orf{$model.'_lst'})) {
-			$orf{$model.'_lst'} = $orf{$model.'_lst'} . "," . $rslt[0];
-		 } else { $orf{$model.'_lst'}=$rslt[0]; }
+		# set model stats.
+		$orf{$opts{model}.'_cnt'}++;
 
-		 # set type stats.
-		 $orf{$orf_type.'_cnt'}++;
-		 if ($rslt[3] =~ /\*$/) {
-			$orf{$orf_type.'_mb'}+=($rslt[2]-1);
-		 } else { $orf{$orf_type.'_mb'}+=$rslt[2]; }
+		#if * at the end of bases, don't count it
+		if ($$row{basepair} =~ /\*$/) {
+			$orf{$opts{model}.'_mb'} += ($$row{size}-1);
+		}else {
+			$orf{$opts{model}.'_mb'} += $$row{size};
+		}
 
-		 if (length($orf{$orf_type.'_lst'})) {
-			$orf{$orf_type.'_lst'} = $orf{$orf_type.'_lst'} . "," . $rslt[0];
-		 } else { $orf{$orf_type.'_lst'}=$rslt[0]; }
-	  }
-   }
+		if (length($orf{$opts{model}.'_lst'})) {
+			$orf{$opts{model}.'_lst'} = $orf{$opts{model}.'_lst'} . "," . $$row{id};
+		} else { $orf{$opts{model}.'_lst'} = $$row{id}; }
+
+		# set type stats.
+		$orf{$opts{type}.'_cnt'}++;
+
+		#do not count * in bases
+		if ($$row{basepair} =~ /\*$/) {
+			$orf{$opts{type}.'_mb'} += ($$row{size} - 1);
+		} else { $orf{$opts{type}.'_mb'} += $$row{size}; }
+
+		if (length($orf{$opts{type}.'_lst'})) {
+			$orf{$opts{type}.'_lst'} = $orf{$opts{type}.'_lst'} . "," . $$row{id};
+		} else { $orf{$opts{type}.'_lst'} = $$row{id}; }
+	}
 
    ##################################################
    # GET ORFAN COUNT AT EVALUE CUTOFF OF 0.001
@@ -583,28 +576,28 @@ foreach my $libId (@libArray) {
       close OUT;
    }
 
-   $inst_fxn->execute(($libId,$functional_count,$output_dir."/idFiles/fxnIdList_$libId.txt",
-			$unclassified_count,$output_dir."/idFiles/unClassIdList_$libId.txt"));
+   $inst_fxn->execute(($libId,$functional_count,"fxnIdList_$libId.txt",
+			$unclassified_count,"unClassIdList_$libId.txt"));
 
-   $upd_env->execute(($env{'viral'},$output_dir."/idFiles/viralList_$libId.txt",
-		       $env{'top_viral'},$output_dir."/idFiles/topViralList_$libId.txt",
-		       $env{'micro'},$output_dir."idFiles/microList_$libId.txt",
-		       $env{'top_micro'},$output_dir."/idFiles/topMicroList_$libId.txt",$libId));
+   $upd_env->execute(($env{'viral'},"viralList_$libId.txt",
+		       $env{'top_viral'},"topViralList_$libId.txt",
+		       $env{'micro'},"idFiles/microList_$libId.txt",
+		       $env{'top_micro'},"topMicroList_$libId.txt",$libId));
 
-   $upd_orf_mod->execute(($orf{'comp_cnt'},$orf{'comp_mb'},$output_dir."/idFiles/compORFList_$libId.txt",
-			   $orf{'incomp_cnt'},$orf{'incomp_mb'},$output_dir."/idFiles/incompORFList_$libId.txt",
-			   $orf{'start_cnt'},$orf{'start_mb'},$output_dir."/idFiles/startORFList_$libId.txt",
-			   $orf{'stop_cnt'},$orf{'stop_mb'},$output_dir."/idFiles/stopORFList_$libId.txt",$libId));
+   $upd_orf_mod->execute(($orf{'comp_cnt'},$orf{'comp_mb'},"compORFList_$libId.txt",
+			   $orf{'incomp_cnt'},$orf{'incomp_mb'},"incompORFList_$libId.txt",
+			   $orf{'start_cnt'},$orf{'start_mb'},"startORFList_$libId.txt",
+			   $orf{'stop_cnt'},$orf{'stop_mb'},"stopORFList_$libId.txt",$libId));
 
-   $upd_orf_type->execute(($orf{'archaea_cnt'},$orf{'archaea_mb'},$output_dir."/idFiles/arcORFList_$libId.txt",
-			    $orf{'bacteria_cnt'},$orf{'bacteria_mb'},$output_dir."/idFiles/bacORFList_$libId.txt",
-			    $orf{'phage_cnt'},$orf{'phage_mb'},$output_dir."/idFiles/phgORFList_$libId.txt",$libId));
+   $upd_orf_type->execute(($orf{'archaea_cnt'},$orf{'archaea_mb'},"arcORFList_$libId.txt",
+			    $orf{'bacteria_cnt'},$orf{'bacteria_mb'},"bacORFList_$libId.txt",
+			    $orf{'phage_cnt'},$orf{'phage_mb'},"phgORFList_$libId.txt",$libId));
 
-   $upd_orfan->execute(($orfan{'count'},$output_dir."/idFiles/orfanList_$libId.txt",$libId));
+   $upd_orfan->execute(($orfan{'count'},"orfanList_$libId.txt",$libId));
 
    $upd_rest->execute(($read_s{'count'},$read_s{'mb'},
-			$tRNA_s{'count'},$output_dir."/idFiles/tRNAList_$libId.txt",
-			$rRNA_s{'count'},$output_dir."/idFiles/rRNAList_$libId.txt",
+			$tRNA_s{'count'},"tRNAList_$libId.txt",
+			$rRNA_s{'count'},"rRNAList_$libId.txt",
 			$lineage,$libId));
 }
 

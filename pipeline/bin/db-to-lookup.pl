@@ -6,18 +6,17 @@ BEGIN{foreach (@INC) {s/\/usr\/local\/packages/\/local\/platform/}};
 
 =head1 NAME
 
-db-to-lookup.pl: Create a MLDBM lookup file 
+db-to-lookup.pl: Create a MLDBM lookup file
 
 =head1 SYNOPSIS
 
 USAGE: db-to-lookup.pl
             --input=/library/info/file
-	    --table=/tablename
-	    --env=/env/where/executing
+			--table=/tablename
+			--env=/env/where/executing
             --outdir=/output/dir
-          [ --log=/path/to/logfile
-            --debug=N
-          ]
+			[ --log=/path/to/logfile
+            --debug=N]
 
 =head1 OPTIONS
 
@@ -72,9 +71,9 @@ BEGIN {
 my %options = ();
 my $results = GetOptions (\%options,
                           'input|i=s',
-			  'outdir|o=s',
-			  'table|t=s',
-			  'env|e=s',
+						  'outdir|o=s',
+						  'table|t=s',
+						  'env|e=s',
                           'log|l=s',
                           'debug|d=s',
                           'help|h') || pod2usage();
@@ -109,30 +108,30 @@ if (length($sel_qry)){  #table info is passed and expected
         my $dbh = DBI->connect("DBI:mysql:database=".$utils->db_name.";host=".$utils->db_host,
                   $utils->db_user, $utils->db_pass,{PrintError=>1, RaiseError =>1, AutoCommit =>1});
 
-	my $filename = $options{outdir}."/".$options{table}."_".$libraryId.".ldb";
-	
-	#remove file if it already exists;
-	if (-s $filename > 0){
-	  system("rm $filename");
-	}
-	
-        ## create the tied hash
-	tie(my %info, 'MLDBM', $filename);
+		my $filename = $options{outdir}."/".$options{table}."_".$libraryId.".ldb";
 
-	my $seq_sth = $dbh->prepare($sel_qry);
-	$seq_sth->execute($libraryId);
+		#remove file if it already exists;
+		if (-s $filename > 0){
+		  system("rm $filename");
+		}
 
-	my %sel_data;
-	while (my $row = $seq_sth->fetchrow_hashref){
-	  $info{$$row{name}} = {id => $$row{id},
-				libraryId => $$row{libraryId},
-				header => $$row{header}};
+		## create the tied hash
+		tie(my %info, 'MLDBM', $filename);
+
+		my $seq_sth = $dbh->prepare($sel_qry);
+		$seq_sth->execute($libraryId);
+
+		my %sel_data;
+		while (my $row = $seq_sth->fetchrow_hashref){
+			$info{$$row{name}} = {id => $$row{id},
+					libraryId => $$row{libraryId},
+					header => $$row{header}};
+		}
+
+		$seq_sth->finish();
+		untie(%info);
+		$dbh->disconnect();
 	}
-	
-	$seq_sth->finish();
-	untie(%info);
-	$dbh->disconnect();
-  }
 }
 
 exit(0);

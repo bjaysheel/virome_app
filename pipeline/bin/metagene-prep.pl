@@ -28,7 +28,7 @@ B<--liblist, -ll>
 
 B<--lookupDir, -ld>
     Dir where all lookup files are stored.
-    
+
 B<--debug,-d>
     Debug level.  Use a large number to turn on verbose debugging.
 
@@ -128,7 +128,7 @@ open (OUT, ">>", $filename) || die $logger->logdie("Could not open file $filenam
 while (<DAT>){
     chomp $_;
     undef @info;
-    
+
     if (/^#/){
       $gene_num = 0;
 
@@ -147,7 +147,7 @@ while (<DAT>){
       if ($headLine == 0){
 	@info = split(/ /, $_);
 	$name = $info[1];
-    
+
         ## get sequenceId.
 	$readId = $utils->get_sequenceId($name);
       }
@@ -165,7 +165,7 @@ while (<DAT>){
       if ($headLine == 2){
 	#skipping self: - line
       }
-      
+
       $headLine += 1;
     }
     elsif (length($_)) {
@@ -173,28 +173,39 @@ while (<DAT>){
       $headLine = 0;
       $gene_num += 1;
       my $n = "";
-      
+
       ## read and prase gene
       @info = split(/\t/, $_);
-            
+
       ## store gene info.
       my $type = getORFType($utils->trim($info[5]));
       my $model = getModel($utils->trim($info[7]));
-      
+
       $info[8] = ($info[8] eq "-") ? 0 : $info[8];
       $info[9] = ($info[9] eq "-") ? 0 : $info[9];
       $info[10] = ($info[10] eq "-") ? 0.00 : $info[10];
-      
+
       #set name as $name_$start_$stop_$gene_num;
       if ($utils->trim($info[3]) eq '-'){
-	$n = $name ."_".$info[2]."_".$info[1]."_".$gene_num;
+		$n = $name ."_".$info[2]."_".$info[1]."_".$gene_num;
       } else {
-	$n = $name ."_".$info[1]."_".$info[2]."_".$gene_num;
+		$n = $name ."_".$info[1]."_".$info[2]."_".$gene_num;
       }
-      
+
       #get sequenceId
       $seqId = $utils->get_sequenceId($n);
-      
+
+		#make sure start < end.
+		$info[1] = $utils->trim($info[1]);
+		$info[2] = $utils->trim($info[2]);
+
+		if ($info[1] > $info[2]){
+		  my $tmp = $info[1];
+		  $info[1] = $info[2];
+		  $info[2] = $tmp;
+		  $info[3] = "-";
+		}
+
       print OUT join("\t",$readId, $seqId, $utils->trim($n), $utils->trim($gene_num), $utils->trim($gc),
 		     $utils->trim($rbs), $utils->trim($info[1]), $utils->trim($info[2]), $utils->trim($info[3]),
 		     $utils->trim($info[4]), $utils->trim($type), $utils->trim($info[6]), $utils->trim($model),
@@ -209,7 +220,7 @@ while (<DAT>){
       $seqId=0;
       undef @info;
     }
-    
+
 }
 
 #close file handlers
@@ -228,13 +239,13 @@ sub check_parameters {
       $logger->logdie("No input defined, plesae read perldoc $0\n\n");
       exit(1);
   }
-  
+
 }
 
 ##############################################################################
 sub getORFType{
   my $type = $_[0];
-  
+
   if ($type == 11){
     return "complete";
   }
@@ -253,7 +264,7 @@ sub getORFType{
 ##############################################################################
 sub getModel{
   my $model = $_[0];
-  
+
   if ($model =~ m/s/i){
     return "self";
   }

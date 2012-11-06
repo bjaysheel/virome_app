@@ -11,31 +11,18 @@ sequence-prep.pl - prepare sequence info for upload to db
 =head1 SYNOPSIS
 
 USAGE: sequence-prep.pl
-            --input=/path/to/fasta
-			--outdir=/output/dir
-			--libListFile=/library/list/file
-			--type=sequence type
+			--input=/library/list/file
             --outdir=/output/dir
           [ --log=/path/to/logfile
             --debug=N ]
 
 =head1 OPTIONS
 
-B<--input, -i>
-    The full path to fasta sequence file.
-    # start a comment.
-    # File format
-    >ABC125234 ....
-    # where ABC is three letter library prefix.
-
 B<--outdir, -od>
     Output dir where sequence prep file is uploaded
 
-B<--libListFile, -ll>
-    Library list file eg. from db-load-library.
-
-B<--type, -t>
-    sequence type read=1, rRNA=2, orf (aa)=3, orf (dna)=4
+B<--input, -i>
+    tab delimited library info file.
 
 B<--debug,-d>
     Debug level.  Use a large number to turn on verbose debugging.
@@ -52,9 +39,7 @@ This script is used to prepare sequence for mysql upload.
 
 =head1  INPUT
 
-The input to this is defined using the --input.  This should point
-to the fasta file containing sequence(s).  Input must be a muilt fasta
-file, each file containg sequences for one library.
+Create a sequence relationship mysql batch file for a given library.
 
 =head1  CONTACT
 
@@ -77,10 +62,9 @@ BEGIN {
 ##############################################################################
 my %options = ();
 my $results = GetOptions (\%options,
+						  'output|o=s',
                           'input|i=s',
-						  'outdir|od=s',
-                          'libListFile|ll=s',
-						  'typeId|t=s',
+						  'env|e=s',
                           'log|l=s',
                           'debug|d=s',
                           'help|h') || pod2usage();
@@ -99,62 +83,77 @@ if( $options{'help'} ){
 ## make sure everything passed was peachy
 &check_parameters(\%options);
 
-unless(-s $options{input} > 0){
-	print STDERR "This file $options{input} seem to be empty nothing therefore nothing to do.";
-	$logger->debug("This file $options{input} seem to be empty nothing therefore nothing to do.");
-	exit(0);
-}
-
 ##############################################################################
 
+#utility moduel
 my $utils = new UTILS_V;
-my $filename = $options{outdir}."/sequence.txt";
+my $libraryId = $utils->get_libraryId_from_file($options{input});
 
-## check if corresponding library exists.
-my $libraryId = $utils->get_libraryId_from_list_file($options{input},$options{libListFile},"fasta");
+$utils->set_db_params($options{env});
 
-#use Bio::SeqIO to parse and handle fasta file.
-my $fsa = Bio::SeqIO->new( -file   => $options{input},
-						   -format => 'fasta' );
+#set output file
+open (OUT, ">", $optios{output}) || die $logger->logdie("Could not open file $options{output}");
 
-open (OUT, ">>", $filename) || die $logger->logdie("Could not open file $filename");
+#init db connection
+my $dbh = DBI->connect("DBI:mysql:database=".$utils->db_name.";host=".$utils->db_host,
+	    $utils->db_user, $utils->db_pass,{PrintError=>1, RaiseError =>1, AutoCommit =>1});
 
-while (my $seq = $fsa->next_seq){
-	my $gc = &calculate_gc($seq->seq());
+$sel_qry = qq|SELECT id,name FROM sequence WHERE deleted=0 and libraryId=? and typeId=?|
 
-	print OUT join("\t", $libraryId, $seq->id, $seq->desc, $gc, $seq->seq(), $seq->length(), $options{typeId})."\n";
+#setup hashes
+my %read_hash=();
+my %orf_hash=();
+
+#get all reads.
+my $seq_sth = $dbh->prepare($sel_qry);
+$seq_sth->execute($libraryId,1);
+
+while (my $row = $seq_sth->fetchrow_hashref){
+	print OUT ($$row{id}."\t".$$row{id}."\t".1."\n");
+	$read_hash{$$row{name}} = $$row{id};
 }
 
-close OUT;
+#get all rRNAs.
+my $seq_sth = $dbh->prepare($sel_qry);
+$seq_sth->execute($libraryId,2);
+
+while (my $row = $seq_sth->fetchrow_hashref){
+	print OUT ($$row{id}."\t".$$row{id}."\t".2."\n");
+	$read_hash{$$row{name}} = $$row{id};
+}
+
+#get all orfs (aa).
+my $seq_sth = $dbh->prepare($sel_qry);
+$seq_sth->execute($libraryId,3);
+
+while (my $row = $seq_sth->fetchrow_hashref){
+	$read_name = $$row{name};
+	$read_name =~ s/(_\d+_\d+_\d+)$//;
+
+	print OUT ($read_hash{read_name}."\t".$$row{id}."\t".3."\n");
+	$orf_hash{$$row{name}} = $$row{id};
+}
+
+#remove read hash (help with memory requirement)
+my %read_hash=();
+
+#get all orfs (dna).
+my $seq_sth = $dbh->prepare($sel_qry);
+$seq_sth->execute($libraryId,4);
+
+while (my $row = $seq_sth->fetchrow_hashref){
+	print OUT ($orf_hash{$$row{name}}."\t".$$row{id}."\t".4."\n");
+}
+
+close(OUT);
 exit(0);
 
 ###############################################################################
 sub check_parameters {
 	## at least one input type is required
-	unless ( $options{input} && $options{outdir} && $options{libListFile} && $options{typeId}) {
+	unless ($options{output} && $options{input} && $options{env}) {
 		pod2usage({-exitval => 2, -message => "error message", -verbose => 1, -output => \*STDERR});
 		$logger->logdie("No input defined, plesae read perldoc $0\n\n");
 		exit(1);
 	}
-
-	if (($options{type} <= 0) || ($options{type} > 4)){
-		pod2usage({-exitval => 2, -message => "error message", -verbose => 1, -output => \*STDERR});
-		$logger->logdie("Sequence type $options{type} not recognized valid values: 1,2,3,4\n");
-		exit(1);
-	}
-}
-
-###############################################################################
-sub calculate_gc{
-	my $bases = shift;
-
-	my $c = $bases;
-	my $g = $bases;
-
-	$c =~ s/[ATG]//ig;
-	$g =~ s/[ATC]//ig;
-
-	my $gc_percent = ((length($c)+length($g))/length($bases)) * 100;
-
-	return $gc_percent;
 }

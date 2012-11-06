@@ -7,7 +7,7 @@ use Data::Dumper;
 sub new {
     my ($class) = @_;
     my $self = {};
-    
+
     $self->{db_user} = undef;
     $self->{db_pass} = undef;
     $self->{db_name} = undef;
@@ -22,7 +22,7 @@ sub new {
     $self->{kegg_lookup} = undef;
     $self->{cog_lookup} = undef;
     $self->{mgol_lookup} = undef;
-    
+
     bless($self,$class);
     return $self;
 }
@@ -36,7 +36,7 @@ sub set_sequence_lookup{
 #set lookup dbs to class obj
 sub uniref_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{uniref_lookup} = $_[0];
     } else {
@@ -46,7 +46,7 @@ sub uniref_lookup{
 
 sub aclame_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{aclame_lookup} = $_[0];
     } else {
@@ -56,7 +56,7 @@ sub aclame_lookup{
 
 sub seed_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{seed_lookup} = $_[0];
     } else {
@@ -66,7 +66,7 @@ sub seed_lookup{
 
 sub kegg_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{kegg_lookup} = $_[0];
     } else {
@@ -76,7 +76,7 @@ sub kegg_lookup{
 
 sub cog_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{cog_lookup} = $_[0];
     } else {
@@ -86,7 +86,7 @@ sub cog_lookup{
 
 sub mgol_lookup{
     my $self = shift;
-    
+
    if (@_ > 0){
         $self->{mgol_lookup} = $_[0];
     } else {
@@ -98,7 +98,7 @@ sub mgol_lookup{
 sub get_sequenceId{
     my $self = shift;
     my $seq_name = $_[0];
-    
+
     my $hash = $self->{seq_lookup};
     return $hash->{$seq_name}->{id};
 }
@@ -106,9 +106,9 @@ sub get_sequenceId{
 sub get_sequence{
     my $self = shift;
     my $seq_name = $_[0];
-    
+
     my $hash = $self->{seq_lookup};
-    
+
     return $hash->{$seq_name};
 }
 
@@ -116,7 +116,7 @@ sub get_acc_from_lookup{
     my $self = shift;
     my $table = $_[0];
     my $acc = $_[1];
-    
+
     my $hash = $self->{$table."_lookup"};
     return $hash->{$acc};
 }
@@ -127,10 +127,10 @@ sub get_libraryId_from_list_file{
     my $input = $_[0];
     my $libListFile = $_[1];
     my $type = $_[2];
-    
+
     my $libraryId = 0;
     my $prefix = '';
-    
+
     # input in multifasta file
     if ($type =~ /fasta/i){
        $prefix = `grep -m 1 '^>' $input`;
@@ -144,50 +144,50 @@ sub get_libraryId_from_list_file{
         my $line = `grep -m 1 "\$1" $input`;
         $prefix = $self->trim(substr($line,2,3));
     }
-  
+
     if (!length($prefix)){
         die ("No sequences in input file $input.\n");
     }
-  
+
     # open library list file
     open (LFILE, "<", $libListFile) or die("Cannot open file $libListFile\n");
-    
+
     while(<LFILE>){
         chomp $_;
-        
+
         # get the first line in the library info output file.
         # check if prefix's match.
         my $line = `head -1 $_`;
         chomp $line;
-        
+
         my @info = split(/\t/,$line);
         if ($info[2] =~ /$prefix/i){
             $libraryId = $info[0];
-	    last;
+			last;
         }
     }
-    
+
     close LFILE;
     return $libraryId;
 }
 
 sub get_libraryId_from_file{
     my $self = shift;
-    my $input = $_[0];    
+    my $input = $_[0];
     my $ids = 0;
-    
+
     # open library list file
     open (LFILE, "<", $input) or die("Cannot open file $input\n");
-    
+
     while(<LFILE>){
         chomp $_;
-        
+
         my @info = split(/\t/,$_);
-	if (length($info[0]) && $info[0]  > 0){
-	  $ids = $info[0];
-	}
+		if (length($info[0]) && $info[0]  > 0){
+			$ids = $info[0];
+		}
     }
-    
+
     close LFILE;
     return $ids;
 }
@@ -197,7 +197,7 @@ sub set_db_params{
     my $self=shift;
     my $env = $_[0];
     my $server = (defined $_[1]) ? $_[1] : '';
-    
+
     if ($env =~ /dbi/i){
         $self->{db_user} = q|bhavsar|;
         $self->{db_pass} = q|P3^seus|;
@@ -299,10 +299,10 @@ sub v_host{
 sub trim {
   my $self = shift;
   my $string = $_[0];
-  
+
   $string =~ s/^\s+//;
   $string =~ s/\s+$//;
-  
+
   return $string;
 }
 

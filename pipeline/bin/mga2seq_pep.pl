@@ -25,8 +25,8 @@ B<--input, -i>
     The full path to fasta sequence file.
 
 B<--input, mga>
-    Metagene output file    
-    
+    Metagene output file
+
 B<--debug,-d>
     Debug level.  Use a large number to turn on verbose debugging.
 
@@ -60,15 +60,15 @@ use BeginPerlBioinfo;
 use Getopt::Long qw(:config no_ignore_case no_auto_abbrev pass_through);
 use Pod::Usage;
 BEGIN {
-  use Ergatis::Logger;
+	use Ergatis::Logger;
 }
 
 my %options = ();
 my $results = GetOptions (\%options,
                           'input|i=s',
-			  'mga|m=s',
-			  'prefix|p=s',
-			  'outdir|o=s',
+						  'mga|m=s',
+						  'prefix|p=s',
+						  'outdir|o=s',
                           'log|l=s',
                           'debug|d=s',
                           'help|h') || pod2usage();
@@ -120,55 +120,68 @@ open(META, $file);
 my @metagene = <META>;
 close(META);
 
-foreach $line (@metagene)
-{
-  if ($line =~ /^\#\s(\S+)/ && $line !~ /^\#\sself\:/ && $line !~ /^\#\sgc\s\=/)
-  {
-    $read = $1;
-    $metagene[$i+1] =~ /^\#\sgc\s=\s(0\.\d+)\,\srbs\s=\s(\S+)$/;
-    #print $metagene[$i+1]."\n";
-    $gc=$1;
-    $rbs=$2;
-    ($domain) = ($metagene[$i+2] =~ /^\# self\: (\S+)/);
-  
-    if($domain eq "a")
-    { $domain = "archaea"; }
-    elsif($domain eq "p")
-    { $domain ="phage"; }
-    elsif($domain eq "b")
-    { $domain = "bacteria"; }
-    elsif($domain eq "s")
-    { $domain = "self"; }
-  
-    if ($metagene[$i+3] && $metagene[$i+3] =~ /^gene/)
-    { $h_info{$read} = "readGC=$gc readRBSpct=$rbs readModel=$domain"; }
-    else
-    { print NOPREDICT "$read\n"; }
-  }
-  elsif ($line =~ /^gene/) 
-  {
-    chomp $line;
-    @tp = split(/\s+/, $line);
-	if($tp[7] eq "a"){
-	  $model = "archaea";
+foreach $line (@metagene) {
+	if ($line =~ /^\#\s(\S+)/ && $line !~ /^\#\sself\:/ && $line !~ /^\#\sgc\s\=/) {
+		$read = $1;
+		$metagene[$i+1] =~ /^\#\sgc\s=\s(0\.\d+)\,\srbs\s=\s(\S+)$/;
+		#print $metagene[$i+1]."\n";
+		$gc=$1;
+		$rbs=$2;
+		($domain) = ($metagene[$i+2] =~ /^\# self\: (\S+)/);
+
+		if($domain eq "a") {
+			$domain = "archaea";
+		} elsif($domain eq "p") {
+			$domain ="phage";
+		} elsif($domain eq "b") {
+			$domain = "bacteria";
+		} elsif($domain eq "s") {
+			$domain = "self";
+		}
+
+		if ($metagene[$i+3] && $metagene[$i+3] =~ /^gene/) {
+			$h_info{$read} = "gc=$gc";
+			#$h_info{$read} = "readGC=$gc readRBSpct=$rbs readModel=$domain";
+		} else {
+			print NOPREDICT "$read\n";
+		}
+	} elsif ($line =~ /^gene/) {
+		chomp $line;
+		@tp = split(/\s+/, $line);
+
+		if($tp[7] eq "a"){
+		  $model = "archaea";
+		} elsif($tp[7] eq "p"){
+		  $model ="phage";
+		} elsif($tp[7] eq "b"){
+		  $model = "bacteria";
+		} elsif($tp[7] eq "s"){
+		  $model = "self";
+		}
+
+		my $type = "";
+		if ($tp[5] =~ /00/) {
+			$type="incomplete";
+		} elsif ($tp[5] =~ /10/) {
+			$type = "lack_stop";
+		} elsif ($tp[5] =~ /01/){
+			$type = "lack_start";
+		} elsif ($tp[5] =~ /11/){
+			$type = "complete";
+		}
+
+		# edited: May 18th 2012
+		# update sequence description
+		# Jaysheel D. Bhavsar
+		if($tp[3] eq "+"){
+			push (@{$h_prot{$read}}, "start=$tp[1]\tstop=$tp[2]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tscore=$tp[6]\ttype=$type\tcaller=MetaGENE\n");
+			#push (@{$h_prot{$read}}, "start=$tp[1]\tstop=$tp[2]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tends=$tp[5]\tORFscore=$tp[6]\tRBSstart=$tp[8]\tRBSstop=$tp[9]\tRBSscore=$tp[10]\n");
+		} elsif($tp[3] eq "-"){
+			push (@{$h_prot{$read}}, "start=$tp[2]\tstop=$tp[1]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tscore=$tp[6]\ttype=$type\tcaller=MetaGENE\n");
+			#push (@{$h_prot{$read}}, "start=$tp[2]\tstop=$tp[1]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tends=$tp[5]\tORFscore=$tp[6]\tRBSstart=$tp[8]\tRBSstop=$tp[9]\tRBSscore=$tp[10]\n");
+		}
 	}
-	elsif($tp[7] eq "p"){
-	  $model ="phage";
-	}
-	elsif($tp[7] eq "b"){
-	  $model = "bacteria";
-	}
-	elsif($tp[7] eq "s"){
-	  $model = "self";
-	}
-	if($tp[3] eq "+"){
-	  push (@{$h_prot{$read}}, "start=$tp[1]\tstop=$tp[2]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tends=$tp[5]\tORFscore=$tp[6]\tRBSstart=$tp[8]\tRBSstop=$tp[9]\tRBSscore=$tp[10]\n");
-	}
-	elsif($tp[3] eq "-"){
-	  push (@{$h_prot{$read}}, "start=$tp[2]\tstop=$tp[1]\tstrand=$tp[3]\tframe=$tp[4]\tmodel=$model\tends=$tp[5]\tORFscore=$tp[6]\tRBSstart=$tp[8]\tRBSstop=$tp[9]\tRBSscore=$tp[10]\n");
-	}
-  }
-  $i++;
+	$i++;
 }
 
 my $tf = new TIGR::Foundation;
@@ -185,19 +198,19 @@ system($cmd);
 my $fr = new TIGR::FASTAiterator($tf, \@errors, "$options{input}");
 
 if (!defined $fr){
-  $logger->logdie("Bad reader\n");
+	$logger->logdie("Bad reader\n");
 }
 
 my $none;
 my $success;
 while ($fr->hasNext){
     my $rec = $fr->next();
-    
+
     # eliminate empty line error.
     #if (defined $rec){
 	my $id = $rec->getIdentifier();
 	my $body = $rec->getData();
-	
+
 	my $z = 1;
 	if (!defined $h_prot{$id}){
 	    #print "$id: NO ORFS FOUND\n";
@@ -205,49 +218,47 @@ while ($fr->hasNext){
 	    #next;
 	} else {
 
-	  foreach my $line (@{$h_prot{$id}}){
-	    chomp $line;
-      
-	    my @att = split ("\t", $line);
-	    my $h;
-	    for($h=0; $h<6; $h++)
-	    {	($att[$h])=($att[$h]=~/^\S+\=(\S+)$/);
-	    }
-	    $line =~ s/\t/ /g;
-	    #$line =~ s/\'/\-prime/g;
-	    
-	    if ($att[2] eq "+") 
-	    {	$sub_seq = quickcut ($body, ($att[0]+$att[3]), $att[1]);
-	    }
-	    elsif ($att[2] eq "-") 
-	    {	$sub_seq = quickcut ($body, $att[1], ($att[0]-$att[3]));
-	    }
-	    
-	    $ln = length($sub_seq);
-	    $tag = $id . "_$att[0]_$att[1]_$z" . " ($ln bp) " . $h_info{$id}. " " . $line;
-	    
-	    
-	    $success++;
-	    if ($att[2] eq "+"){
-		printFastaSequence(\*SEQ, $tag, $sub_seq);
-		$sub_prot = dna2peptide2($sub_seq);
-		$ln2 = length($sub_prot);
-		$tag2 = $id . "_$att[0]_$att[1]_$z" . " ($ln2 aa) " . $h_info{$id}. " ". $line;
-		printFastaSequence(\*PROT, $tag2, $sub_prot);
-	    }
-	    elsif ($att[2] eq "-"){
-		printFastaSequence(\*SEQ, $tag, revcom($sub_seq));
-		$sub_prot = dna2peptide2(revcom($sub_seq));
-		if ($att[5] =~ /^1/){
-		  $sub_prot =~ s/^./M/
+		foreach my $line (@{$h_prot{$id}}) {
+			chomp $line;
+
+			my @att = split ("\t", $line);
+			my $h;
+			for($h=0; $h<6; $h++) {
+				($att[$h])=($att[$h]=~/^\S+\=(\S+)$/);
+			}
+			$line =~ s/\t/ /g;
+			#$line =~ s/\'/\-prime/g;
+
+			if ($att[2] eq "+") {
+				$sub_seq = quickcut ($body, ($att[0]+$att[3]), $att[1]);
+			} elsif ($att[2] eq "-") {
+				$sub_seq = quickcut ($body, $att[1], ($att[0]-$att[3]));
+			}
+
+			$ln = length($sub_seq);
+			$tag = $id . "_$att[0]_$att[1]_$z" . " size=$ln " . $h_info{$id}. " " . $line;
+
+			$success++;
+			if ($att[2] eq "+") {
+				printFastaSequence(\*SEQ, $tag, $sub_seq);
+				$sub_prot = dna2peptide2($sub_seq);
+				$ln2 = length($sub_prot);
+				$tag2 = $id . "_$att[0]_$att[1]_$z" . " size=$ln2 " . $h_info{$id}. " ". $line;
+				printFastaSequence(\*PROT, $tag2, $sub_prot);
+			} elsif ($att[2] eq "-") {
+				printFastaSequence(\*SEQ, $tag, revcom($sub_seq));
+				$sub_prot = dna2peptide2(revcom($sub_seq));
+
+				if ($att[5] =~ /^1/){
+					$sub_prot =~ s/^./M/
+				}
+
+				$ln2 = length($sub_prot);
+				$tag2 = $id . "_$att[0]_$att[1]_$z" . " size=$ln2 " . $h_info{$id}. " ". $line;
+				printFastaSequence(\*PROT, $tag2, $sub_prot);
+			}
+			$z++;
 		}
-		
-		$ln2 = length($sub_prot);
-		$tag2 = $id . "_$att[0]_$att[1]_$z" . " ($ln2 aa) " . $h_info{$id}. " ". $line;
-		printFastaSequence(\*PROT, $tag2, $sub_prot);
-	    }
-	    $z++;
-	  }
 	}
     #}
 }
@@ -261,27 +272,27 @@ sub printFastaSequence
     my($seqs) = $_[2];
     print $file ">$header\n";
     printSEQ($file, $seqs);
-    
+
 } # printFastaSequence
 
 sub printSEQ
 {
-  my $file = shift;
-  my $seqs = shift;
+	my $file = shift;
+	my $seqs = shift;
 
-  for (my $j = 0; $j < length($seqs); $j += 60){
-    print $file substr($seqs, $j, 60), "\n";
-  }
+	for (my $j = 0; $j < length($seqs); $j += 80) {
+		print $file substr($seqs, $j, 80), "\n";
+	}
 } # printSEQ
 
 sub check_parameters {
     ## at least one input type is required
     unless ( $options{input} && $options{mga} && $options{prefix} && $options{outdir}) {
-      $logger->logdie("Missing input, plesae read perldoc $0\n\n");
-      exit(1);
+		$logger->logdie("Missing input, plesae read perldoc $0\n\n");
+		exit(1);
     }
 
-  if(0){
-      pod2usage({-exitval => 2,  -message => "error message", -verbose => 1, -output => \*STDERR});
-  }
+	if(0){
+		pod2usage({-exitval => 2,  -message => "error message", -verbose => 1, -output => \*STDERR});
+	}
 }

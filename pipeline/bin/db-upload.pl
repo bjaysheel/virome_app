@@ -12,12 +12,11 @@ db-upload.pl: Uplaod file into mysql db
 
 USAGE: db-upload.pl
             --input=/file/preped/for/mysqlimport
-	    --table=/tablename
-	    --env=/env/where/executing
-	    --outdir=/output/dir/loc
-          [ --log=/path/to/logfile
-            --debug=N
-          ]
+			--table=/tablename
+			--env=/env/where/executing
+			--outdir=/output/dir/loc
+			[ --log=/path/to/logfile
+			--debug=N]
 
 =head1 OPTIONS
 
@@ -107,41 +106,43 @@ $utils->set_db_params($options{env});
 $options{table} = lc $options{table};
 
 if ($options{table} =~ /sequence/i){
-  $column_list =  "sequence.libraryId,sequence.name,sequence.header,";
-  $column_list .= "sequence.gc,sequence.basepair,sequence.size,sequence.rRNA,";
-  $column_list .= "sequence.orf";
+	$column_list =  "sequence.libraryId,sequence.name,sequence.header,";
+	$column_list .= "sequence.gc,sequence.basepair,sequence.size,sequence.type";
 
 } elsif ($options{table} =~ /orf/i){
-  $column_list =  "orf.readId,orf.seqId,orf.seq_name,orf.gene_num,";
-  $column_list .= "orf.gc_percent,orf.rbs_percent,orf.start,orf.end,";
-  $column_list .= "orf.strand,orf.frame,orf.type,orf.score,orf.model,";
-  $column_list .= "orf.rbs_start,orf.rbs_end,orf.rbs_score,";
-  $column_list .= "orf.caller";
+	$column_list =  "orf.readId,orf.seqId,orf.seq_name,orf.gene_num,";
+	$column_list .= "orf.gc_percent,orf.rbs_percent,orf.start,orf.end,";
+	$column_list .= "orf.strand,orf.frame,orf.type,orf.score,orf.model,";
+	$column_list .= "orf.rbs_start,orf.rbs_end,orf.rbs_score,";
+	$column_list .= "orf.caller";
 
 } elsif ($options{table} =~ /blast(x|n|p)/i){
-  $column_list =  "$options{table}.query_name,$options{table}.query_length,";
-  $column_list .= "$options{table}.algorithm,$options{table}.database_name,";
-  $column_list .= "$options{table}.hit_name,$options{table}.qry_start,";
-  $column_list .= "$options{table}.qry_end,$options{table}.hit_start,";
-  $column_list .= "$options{table}.hit_end,$options{table}.percent_identity,";
-  $column_list .= "$options{table}.percent_similarity,$options{table}.raw_score,";
-  $column_list .= "$options{table}.bit_score,$options{table}.hit_description,";
-  $column_list .= "$options{table}.blast_frame,$options{table}.qry_strand,";
-  $column_list .= "$options{table}.subject_length,$options{table}.e_value,";
-  $column_list .= "$options{table}.domain,$options{table}.kingdom,";
-  $column_list .= "$options{table}.phylum,$options{table}.class,";
-  $column_list .= "$options{table}.order,$options{table}.family,";
-  $column_list .= "$options{table}.genus,$options{table}.species,";
-  $column_list .= "$options{table}.organism,$options{table}.sequenceId,";
-  $column_list .= "$options{table}.sys_topHit,$options{table}.db_ranking_code,";
-  $column_list .= "$options{table}.fxn_topHit";
+	$column_list =  "$options{table}.query_name,$options{table}.query_length,";
+	$column_list .= "$options{table}.algorithm,$options{table}.database_name,";
+	$column_list .= "$options{table}.hit_name,$options{table}.qry_start,";
+	$column_list .= "$options{table}.qry_end,$options{table}.hit_start,";
+	$column_list .= "$options{table}.hit_end,$options{table}.percent_identity,";
+	$column_list .= "$options{table}.percent_similarity,$options{table}.raw_score,";
+	$column_list .= "$options{table}.bit_score,$options{table}.hit_description,";
+	$column_list .= "$options{table}.blast_frame,$options{table}.qry_strand,";
+	$column_list .= "$options{table}.subject_length,$options{table}.e_value,";
+	$column_list .= "$options{table}.domain,$options{table}.kingdom,";
+	$column_list .= "$options{table}.phylum,$options{table}.class,";
+	$column_list .= "$options{table}.order,$options{table}.family,";
+	$column_list .= "$options{table}.genus,$options{table}.species,";
+	$column_list .= "$options{table}.organism,$options{table}.sequenceId,";
+	$column_list .= "$options{table}.sys_topHit,$options{table}.db_ranking_code,";
+	$column_list .= "$options{table}.fxn_topHit";
 
 } elsif ($options{table} =~ /tRNA/i){
-  $column_list =  "tRNA.sequenceId,tRNA.num,tRNA.tRNA_start,";
-  $column_list .= "tRNA.tRNA_end,tRNA.anti,tRNA.intron,tRNA.cove_start,";
-  $column_list .= "tRNA.cove_end,tRNA.score";
+	$column_list =  "tRNA.sequenceId,tRNA.num,tRNA.tRNA_start,";
+	$column_list .= "tRNA.tRNA_end,tRNA.anti,tRNA.intron,tRNA.cove_start,";
+	$column_list .= "tRNA.cove_end,tRNA.score";
 
-  $options{table} = "tRNA";
+	$options{table} = "tRNA";
+
+} elsif ($options{table} =~ /sequence_relationship/i){
+	$column_list = "sequence_relationship.subjectId,sequence_relationship.objectId,sequence_relationship.typeId";
 }
 
 my $filename = $options{outdir}."/".$options{table}.".txt";
@@ -159,9 +160,9 @@ $cmd .= " --password=". $utils->db_pass ." ". $utils->db_name ." -L $filename";
 system($cmd);
 
 if (( $? >> 8 ) != 0 ){
-  print STDERR "command failed: $!\n";
-  print STDERR $cmd."\n";
-  exit($?>>8);
+	print STDERR "command failed: $!\n";
+	print STDERR $cmd."\n";
+	exit($?>>8);
 }
 
 #remove link file, prevent error if there is more than one file in the group.
@@ -173,9 +174,9 @@ exit(0);
 ###############################################################################
 sub check_parameters {
   ## at least one input type is required
-  unless ( $options{input} && $options{table} && $options{env} && $options{outdir}) {
-      pod2usage({-exitval => 2,  -message => "error message", -verbose => 1, -output => \*STDERR});
-      $logger->logdie("No input defined, plesae read perldoc $0\n\n");
-      exit(1);
-  }
+	unless ( $options{input} && $options{table} && $options{env} && $options{outdir}) {
+		pod2usage({-exitval => 2,  -message => "error message", -verbose => 1, -output => \*STDERR});
+		$logger->logdie("No input defined, plesae read perldoc $0\n\n");
+		exit(1);
+	}
 }
