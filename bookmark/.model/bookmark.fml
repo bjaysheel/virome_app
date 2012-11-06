@@ -20,7 +20,7 @@
       <item name="COLDFUSION_SERVER_CONTEXT_ROOT"></item>
       <item name="CFC_CLASS_NAME">Bookmark</item>
       <item name="CFC_RELATIVE_LOCATION">VIROME/cfc/Bookmark.cfc</item>
-      <item name="ABSOLUTE_ENDPOINT">http://localhost/flex2gateway/</item>
+      <item name="ABSOLUTE_ENDPOINT"></item>
       <item name="CFC_LOCATION">/Library/WebServer/Documents/VIROME/cfc/Bookmark.cfc</item>
     </annotation>
     <function name="get_method" return-type="opaque[]">

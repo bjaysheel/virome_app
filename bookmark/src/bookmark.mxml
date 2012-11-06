@@ -45,7 +45,10 @@
 						
 			private function onCreationComplete():void{
 				parentApplication.addEventListener("userLogInOut", getUserId);
-				parentApplication.addEventListener("USER_ID_SET",getBookmarks);
+				parentApplication.addEventListener("USER_ID_SET", getBookmarks);
+				
+				// check to see if user is logged in.
+				parentApplication.dispatchEvent(new Event("USER_ID_REQUEST", true, true));
 			}
 			
 			private function getBookmarks(event:Event):void{
