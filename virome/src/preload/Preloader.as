@@ -79,7 +79,7 @@ package preload
 		 * You can use the values from this event to update your preloader.
 		 * @param event
 		 * 
-		 */		
+		 */
 		private function onSWFDownloadProgress( event:ProgressEvent ):void
 		{
 			var t:Number = event.bytesTotal;
@@ -95,7 +95,7 @@ package preload
 		 * This is called before the initializing is done.
 		 * @param event
 		 * 
-		 */        
+		 */
 		private function onSWFDownloadComplete( event:Event ):void
 		{
 			clip.anime.gotoAndStop(100);

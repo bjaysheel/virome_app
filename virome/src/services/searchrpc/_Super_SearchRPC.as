@@ -30,24 +30,24 @@ internal class _Super_SearchRPC extends com.adobe.fiber.services.wrapper.RemoteO
         var operations:Object = new Object();
         var operation:mx.rpc.remoting.Operation;
 
+        operation = new mx.rpc.remoting.Operation(null, "prepareRS");
+         operation.resultType = Object;
+        operations["prepareRS"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "getBlastSearch");
+         operation.resultType = String;
+        operations["getBlastSearch"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "getSearchRSLT");
          operation.resultElementType = Object;
         operations["getSearchRSLT"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "getORFSeqIdFromRead");
+         operation.resultType = String;
+        operations["getORFSeqIdFromRead"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "retrieveSequenceId_B");
          operation.resultType = Object;
         operations["retrieveSequenceId_B"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "retrieveSequenceId_A");
          operation.resultType = String;
         operations["retrieveSequenceId_A"] = operation;
-        operation = new mx.rpc.remoting.Operation(null, "getBlastSearch");
-         operation.resultType = String;
-        operations["getBlastSearch"] = operation;
-        operation = new mx.rpc.remoting.Operation(null, "getORFSeqIdFromRead");
-         operation.resultType = String;
-        operations["getORFSeqIdFromRead"] = operation;
-        operation = new mx.rpc.remoting.Operation(null, "prepareRS");
-         operation.resultType = Object;
-        operations["prepareRS"] = operation;
 
         _serviceControl.operations = operations;
         _serviceControl.convertResultHandler = com.adobe.serializers.utility.TypeUtility.convertResultHandler;
@@ -68,6 +68,42 @@ internal class _Super_SearchRPC extends com.adobe.fiber.services.wrapper.RemoteO
     
 
     /**
+      * This method is a generated wrapper used to call the 'prepareRS' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function prepareRS(obj:Object) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("prepareRS");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'getBlastSearch' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function getBlastSearch(obj:Object) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getBlastSearch");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
+        return _internal_token;
+    }
+     
+    /**
       * This method is a generated wrapper used to call the 'getSearchRSLT' operation. It returns an mx.rpc.AsyncToken whose 
       * result property will be populated with the result of the operation when the server response is received. 
       * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
@@ -82,6 +118,24 @@ internal class _Super_SearchRPC extends com.adobe.fiber.services.wrapper.RemoteO
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getSearchRSLT");
 		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'getORFSeqIdFromRead' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function getORFSeqIdFromRead(readId:String, server:String) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getORFSeqIdFromRead");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(readId,server) ;
         return _internal_token;
     }
      
@@ -118,60 +172,6 @@ internal class _Super_SearchRPC extends com.adobe.fiber.services.wrapper.RemoteO
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("retrieveSequenceId_A");
 		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(tag,file,server) ;
-        return _internal_token;
-    }
-     
-    /**
-      * This method is a generated wrapper used to call the 'getBlastSearch' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function getBlastSearch(obj:Object) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getBlastSearch");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
-        return _internal_token;
-    }
-     
-    /**
-      * This method is a generated wrapper used to call the 'getORFSeqIdFromRead' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function getORFSeqIdFromRead(readId:String, server:String) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getORFSeqIdFromRead");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(readId,server) ;
-        return _internal_token;
-    }
-     
-    /**
-      * This method is a generated wrapper used to call the 'prepareRS' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function prepareRS(obj:Object) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("prepareRS");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(obj) ;
         return _internal_token;
     }
      

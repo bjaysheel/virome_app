@@ -135,9 +135,9 @@
 			}
 			
 			private function onAddtoStage():void{
-				_util.app.addEventListener(SearchDBEvent.SEARCH_DB_EVENT,searchDBRequest);
-				_util.app.addEventListener(SearchBlastEvent.SEARCH_BLAST_EVENT,searchBlastResultHandler);
-				_util.app.addEventListener(FileSelectorEvent.FILE_SELECTOR_EVENT,prepareFileToDownload);
+				_util.app.addEventListener(SearchDBEvent.SEARCH_DB_EVENT, searchDBRequest);
+				_util.app.addEventListener(SearchBlastEvent.SEARCH_BLAST_EVENT, searchBlastResultHandler);
+				_util.app.addEventListener(FileSelectorEvent.FILE_SELECTOR_EVENT, prepareFileToDownload);
 			}
 			
 			private function initSearchResultPanel():void{
@@ -209,7 +209,7 @@
 			}
 			
 			private function prepareFileToDownload(event:FileSelectorEvent):void{
-				var gridContent:String = '';
+				var gridContent:String = "";
 				if (event.csv) {
 					gridContent = DataGridUtils.loadDataGridInExcel(this.searchDBResultGrid);
 				}

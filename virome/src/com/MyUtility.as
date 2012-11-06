@@ -296,6 +296,24 @@ package com
 			
 			ToolTipManager.currentToolTip.text = str;
 		}
+		
+		public function seqHeaderToStruct(str:String):Object{
+			// covert string of format
+			// start=### stop=### frame=###
+			// into an object of o[start]=###, o[stop]=### ....
+			
+			var o:Object = new Object();
+			
+			var data:Array = str.split(/\s+/);
+			
+			for (var i:int=0; i<data.length; i++){
+				var bit:Array = data[i].toString().split(/=/);
+				
+				o[bit[0]] = bit[1];
+			}
+			
+			return o;
+		}
 	}
 	
 }

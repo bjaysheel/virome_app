@@ -33,11 +33,8 @@ internal class _Super_OrfRPC extends com.adobe.fiber.services.wrapper.RemoteObje
         operation = new mx.rpc.remoting.Operation(null, "orfBlastHit");
          operation.resultType = Object;
         operations["orfBlastHit"] = operation;
-        operation = new mx.rpc.remoting.Operation(null, "heatMap");
-         operation.resultType = Object;
-        operations["heatMap"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "getSequenceInfo");
-         operation.resultType = Object;
+         operation.resultElementType = Object;
         operations["getSequenceInfo"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "getBlastHit");
          operation.resultType = Object;
@@ -83,24 +80,6 @@ internal class _Super_OrfRPC extends com.adobe.fiber.services.wrapper.RemoteObje
     }
      
     /**
-      * This method is a generated wrapper used to call the 'heatMap' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function heatMap(id:Number, environment:String, tabindex:Number) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("heatMap");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(id,environment,tabindex) ;
-        return _internal_token;
-    }
-     
-    /**
       * This method is a generated wrapper used to call the 'getSequenceInfo' operation. It returns an mx.rpc.AsyncToken whose 
       * result property will be populated with the result of the operation when the server response is received. 
       * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
@@ -111,10 +90,10 @@ internal class _Super_OrfRPC extends com.adobe.fiber.services.wrapper.RemoteObje
       *
       * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
       */
-    public function getSequenceInfo(id:Number, name:String, environment:String, tabIndex:Number) : mx.rpc.AsyncToken
+    public function getSequenceInfo(orfId:Number, environment:String) : mx.rpc.AsyncToken
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getSequenceInfo");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(id,name,environment,tabIndex) ;
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(orfId,environment) ;
         return _internal_token;
     }
      

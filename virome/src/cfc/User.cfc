@@ -13,7 +13,7 @@
 		<cfset local.key = "krypton"/>
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	userId,
 						groupId,
 						username,
@@ -74,9 +74,9 @@
 			<cfif q.recordcount gt 0>
 				<!--- return a struct --->
 				<cfset userStruct["MSG"] = "success"/>
-				<cfset structappend(userStruct,CreateObject("component",  application.cfc & ".Utility").QueryToStruct(q,1))>
+				<cfset structappend(userStruct,CreateObject("component",  request.cfc & ".Utility").QueryToStruct(q,1))>
 			
-				<cfquery name="g" datasource="#application.mainDSN#">
+				<cfquery name="g" datasource="#request.mainDSN#">
 					SELECT	id,userList
 					FROM	groups
 					WHERE 	deleted=0
@@ -89,7 +89,7 @@
 				</cfloop>
 				
 				<!--- check if there are any private librarys for this user --->
-				<cfquery name="l" datasource="#application.mainDSN#">
+				<cfquery name="l" datasource="#request.mainDSN#">
 					SELECT	id
 					FROM	library
 					WHERE	deleted=0 
@@ -105,7 +105,7 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - GETUSER", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("USER.CFC - GETUSER", 
 																		cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -123,7 +123,7 @@
 		<cfset local.key = "krypton"/>
 		
 		<cftry>
-			<cfquery name="checkUser" datasource="#application.mainDSN#">
+			<cfquery name="checkUser" datasource="#request.mainDSN#">
 				SELECT 	userId
 				FROM	user
 				WHERE	username = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">
@@ -131,7 +131,7 @@
 
 			<cfif checkUser.recordcount eq 0>
 				<cftransaction>
-					<cfquery name="adduser" datasource="#application.mainDSN#" result="newUser">
+					<cfquery name="adduser" datasource="#request.mainDSN#" result="newUser">
 						INSERT INTO user(username,
 										password,
 										institute,
@@ -144,7 +144,7 @@
 										groupId)
 								VALUE (
 									<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">,
-								  	<cfqueryparam cfsqltype="cf_sql_varchar" value="#encrypt(arguments.obj.PASSWORD,local.key,"CFMX_COMPAT")#" null="false">,
+								  	<cfqueryparam cfsqltype="cf_sql_varchar" value="#encrypt(arguments.obj.PASSWORD, local.key, "CFMX_COMPAT")#" null="false">,
 								  	<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.INSTITUTE#" null="false">,
 								  	<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.EMAIL#" null="false">,
 									<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.FIRSTNAME#" null="false">,
@@ -157,7 +157,7 @@
 					</cfquery>
 					
 					<!--- insert a new group first --->
-					<cfquery name="grpadd" datasource="#application.mainDSN#" result="newGrp">
+					<cfquery name="grpadd" datasource="#request.mainDSN#" result="newGrp">
 						INSERT INTO groups(name,userList,dateCreated) 
 							   VALUE(<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">,
 									 #newUser.GENERATED_KEY#,
@@ -165,7 +165,7 @@
 									 )
 					</cfquery>
 				
-					<cfquery name="updUserGrp" datasource="#application.mainDSN#">
+					<cfquery name="updUserGrp" datasource="#request.mainDSN#">
 						UPDATE user SET groupId=#newGrp.GENERATED_KEY# WHERE username = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">
 					</cfquery>
 				</cftransaction>
@@ -176,7 +176,7 @@
 
 			<cfcatch type="any">
 				<cfset flag = false>
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - INSERTUSER", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("USER.CFC - INSERTUSER", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -191,7 +191,7 @@
 		<cfset local.key = "krypton"/>
 		
 		<cftry>
-			<cfquery name="u" datasource="#application.mainDSN#">
+			<cfquery name="u" datasource="#request.mainDSN#">
 				UPDATE user set
 						dateModified = #CreateODBCDateTime(now())#
 						<cfif len(arguments.obj.USERNAME)>
@@ -233,7 +233,7 @@
 			<cfset userStruct = GetUser(obj=arguments.obj)>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - UPDATEUSER", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("USER.CFC - UPDATEUSER", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -247,7 +247,7 @@
 		<cfargument name="num" type="numeric" required="true">
 
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				UPDATE 	user
 				SET		noOfLogins = <cfqueryparam cfsqltype="cf_sql_integer" value="#num#" null="false">,
 						lastLogin = #CreateODBCDateTime(now())#
@@ -255,7 +255,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - UPDATELOGIN", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("USER.CFC - UPDATELOGIN", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -268,7 +268,7 @@
 		<cfset local.key = "krypton"/>
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT 	username, firstname, lastname, password, email
 				FROM	user
 				WHERE	username = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">
@@ -301,7 +301,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("USER.CFC - RETRIEVEPASSWORD", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("USER.CFC - RETRIEVEPASSWORD", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>

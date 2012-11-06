@@ -70,7 +70,7 @@
 				
 				this.titleBar.addChild(tbox);
 				
-				fileexport.token = Exporter.export(_fileSelector,_searchDBObj,_bin,_content);
+				fileexport.token = Exporter.export(_fileSelector, _searchDBObj, _bin, _content);
 				
 				tick = new Timer(1000);
 				tick.addEventListener(TimerEvent.TIMER,updateTick);

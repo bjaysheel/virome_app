@@ -7,7 +7,7 @@
 		
 		<cftry>
 			<!--- get metagenoems data --->
-			<cfquery name="mgoldesc" datasource="#application.mainDSN#">
+			<cfquery name="mgoldesc" datasource="#request.mainDSN#">
 				SELECT	ls.seq_type,
 						ls.lib_type,
 						ls.na_type,
@@ -34,7 +34,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("UTILITY.CFC - GETMGOLDESCRIPTION #arguments.hitName#", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("UTILITY.CFC - GETMGOLDESCRIPTION #arguments.hitName#", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -54,7 +54,7 @@
 		<cfset obj['library'] = 0>
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT 	server, environment, id
 				FROM	library
 				WHERE	deleted = 0
@@ -93,7 +93,7 @@
 		<cfset libList = "">
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT 	id
 				FROM	library
 				WHERE	deleted = 0
@@ -128,8 +128,8 @@
 			<cflog type="error" file="virome" text="#idx.TEMPLATE#: #idx.RAW_TRACE#"/>
 		</cfloop>
 
-		<cfmail to="#application.reportErrorTo#" type="html"
-				from="#application.reportFrom#"
+		<cfmail to="#request.reportErrorTo#" type="html"
+				from="#request.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -163,8 +163,8 @@
 	<cffunction name="reportFlexError" access="remote" returntype="void">
 		<cfargument name="msg" default="" type="String" required="true">
 		
-		<cfmail to="#application.reportErrorTo#" type="html"
-				from="#application.reportFrom#"
+		<cfmail to="#request.reportErrorTo#" type="html"
+				from="#request.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -188,8 +188,8 @@
 		<cfargument name="envname" type="String">
 		<cfargument name="seqname" type="String">
 
-		<cfmail to="#application.reportErrorTo#" type="html"
-				from="#application.reportFrom#"
+		<cfmail to="#request.reportErrorTo#" type="html"
+				from="#request.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
 
 			This is an automatic email generated from VIROME.<br/>
@@ -211,25 +211,22 @@
 		<cfargument name="obj" type="struct" required="true" >
 		<cfargument name="action" type="string" required="true" >
 		
-		<cfmail to="#application.reportLibrarySubmissionTo#" type="html"
-				from="#application.reportFrom#"
-				subject="Library Submission [#arguments.action#]">
-
+		<cfmail type="html" to="#request.reportLibrarySubmissionTo#" from="#request.reportLibrarySubmissionTo#" subject="Library Submission [#arguments.action#]">
 			<cfif arguments.action eq "add">
-				New library #application.obj.name# has been added by #application.obj.user#<br/><br/>
+				New library #arguments.obj.name# has been added by #arguments.obj.user#<br/><br/>
 				
 				Library summary:<br/>
-					Name: 			#application.obj.name#<br/>
-					Description: 	#arguments.obj.description#"<br/>
-					Environment:	#arguments.obj.environment#"<br/>
+					Name: 			#arguments.obj.name#<br/>
+					Description: 	#arguments.obj.description#<br/>
+					Environment:	#arguments.obj.environment#<br/>
 					Project:		#arguments.obj.project#"<br/>
 			<cfelseif arguments.action eq "edit">
-				Library #arguments.obj.old_name# (#arguments.obj.prefix#) has been edited by #application.obj.user#<br/><br/>
+				Library #arguments.obj.old_name# (#arguments.obj.prefix#) has been edited by #arguments.obj.user#<br/><br/>
 				
 				Library summary:<br/>
-					Name: 			#application.obj.name#<br/>
-					Description: 	#arguments.obj.description#"<br/>
-					Environment:	#arguments.obj.environment#"<br/>
+					Name: 			#arguments.obj.name#<br/>
+					Description: 	#arguments.obj.description#<br/>
+					Environment:	#arguments.obj.environment#<br/>
 					Project:		#arguments.obj.project#"<br/>
 			<cfelseif arguments.action eq "delete">
 				Library #arguments.obj.old_name# (#arguments.obj.prefix#) has been deleted.<br/>
@@ -401,6 +398,10 @@
 				<cfset arguments.emin = 1e-300>
 			</cfif>
 			
+			<cfif arguments.evalue eq 0>
+				<cfset arguments.evalue = 1e-300>
+			</cfif>
+			
 			<cfset red = abs(log10(arguments.evalue)-log10(arguments.emax))>
 
 			<cfif (log10(arguments.emin) eq log10(arguments.emax))>
@@ -448,7 +449,7 @@
 			 <cfreturn "##" & strHEX/>
 			
 			<cfcatch type="any">
-				<cfset reporterror("UTILITY.CFC - ECToHexColor emin: #arguments.emin# emax: #arguments.emax#", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset reporterror("UTILITY.CFC - ECToHexColor emin: #arguments.emin# emax: #arguments.emax# eval: #arguments.evalue#", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
@@ -627,5 +628,39 @@
 		
 		<cfreturn revcom/> 
 	</cffunction>
+	
+	<cffunction name="SeqHeaderToStruct" access="public" returntype="Struct">
+		<cfargument name="header" required="true" type="string" />
+		
+		<cfscript>
+			object = structNew();
+			
+			arr1 = listToArray(arguments.header, " ");
+			for (i=1; i<= arrayLen(arr1); i++) {
+				arr2 = listToArray(arr1[i], "=");
+				
+				structInsert(object, ucase(arr2[1]), arr2[2]);
+			}
+			
+			return object;
+		</cfscript>
+	</cffunction>
+	
+	<cffunction name="dereplicateList" access="public" returntype="String">
+		<cfargument name="lst" required="true" type="String" />
+		
+		<cfscript>
+			temp_struct = structNew();
+			
+			for(i=1; i lte listlen(arguments.lst); i++){
+				key = listGetAt(arguments.lst, i);
+				if (not structKeyExists(temp_struct, key)) {
+					structInsert(temp_struct, key, 1);
+				}
+			}
+			
+			return structKeyList(object);
+		</cfscript>
+	</cffunction>  
 	
 </cfcomponent>

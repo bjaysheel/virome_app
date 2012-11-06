@@ -6,7 +6,7 @@
 		<cfargument name="libraryIdList" type="string" required="false" default=""/>
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT 	l.id,
 						l.name,
 						l.prefix,
@@ -27,7 +27,7 @@
 			
 			<cfreturn q>
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETLIBRARY", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -55,7 +55,7 @@
 			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETACCLIST", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -69,9 +69,9 @@
 		
 		<cfset q="">
 		
-		<cfset createobject("component", application.cfc & ".Utility").PrintLog(acc)/>
+		<cfset createobject("component", request.cfc & ".Utility").PrintLog(acc)/>
 		<cftry>
-			<cfquery name="q" datasource="#application.lookupDSN#">
+			<cfquery name="q" datasource="#request.lookupDSN#">
 				SELECT 	distinct db.realacc,
 						if(length(db.fxn1),db.fxn1,'UNKNOWN') as fxn1,
 						if(length(db.fxn2),db.fxn2,'UNKNOWN') as fxn2,
@@ -101,7 +101,7 @@
 			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETFXNALDBQUERY", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -141,7 +141,7 @@
 			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETBLASTHITS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -179,7 +179,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETTRNAHELPER", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -219,7 +219,7 @@
 			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETTAXONOMYHELPER", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -283,7 +283,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETSTATISTICS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -412,7 +412,7 @@
 			</cfoutput> <!--- end environment --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - ORFOVERVIEW", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -444,7 +444,7 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETACLAMEBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -495,7 +495,7 @@
 			</cfscript>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETACLAMEBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -556,7 +556,7 @@
 			</cfif>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - RECURSIVEXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -605,7 +605,7 @@
 			</cfif>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - RECURSIVEIDXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -621,7 +621,7 @@
 		<cfset root = xroot.xmlRoot>
 		
 		<cftry>
-			<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			
 			<!--- get seed counts --->
 			<cfset aclame_qry = getBlastHits(server=serverObj.server,library=arguments.library,database="ACLAME",fxnHit=1)/>
@@ -677,7 +677,7 @@
 			<cfreturn xroot/>
 		
 		 	<cfcatch type="any">
-		 		<cfset CreateObject("component",  application.cfc & ".Utility").
+		 		<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETALLFXNALDBBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 		 	</cfcatch>			
 		</cftry>
@@ -704,13 +704,13 @@
 		
 		<cftry>
 			<!--- get server name --->
-			<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			
 			<!--- get all sequenceIds and hit_names where database is aclame, and is top fxnl hit --->
 			<cfset accQuery = getAccList(libraryId=arguments.libraryId,server=serverObj.server,database=UCASE(arguments.database))/>
 			
 			<!--- convert query to struct --->
-			<cfset accStruct = CreateObject("component", application.cfc & ".Utility").QueryToStructure(accQuery,'sequenceId')/>
+			<cfset accStruct = CreateObject("component", request.cfc & ".Utility").QueryToStructure(accQuery,'sequenceId')/>
 			
 			<!--- get list of hit names --->
 			<cfset aList = valuelist(accQuery.hit_name)/>
@@ -852,7 +852,7 @@
 			</cfif> <!--- end check if library have db hits --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETFXNALDBBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -875,7 +875,7 @@
 		<cfset idRoot = idXRoot.xmlRoot>
 		
 		<cftry>
-			<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			<cfset tq = getTaxonomyHelper(libraryId=arguments.libraryId,server=serverObj.server)/>
 			
 			<cfset dprev="null"/>
@@ -1250,7 +1250,7 @@
 			</cfoutput><!--- end output loop for domain --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETTAXONOMYBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -1270,12 +1270,12 @@
 		
 		<cftry>
 			<cfset filename = UCASE(type) & "_XMLDOC_" & arguments.libraryId & ".xml"/>
-			<cffile action="read" file="#application.xDocsFilePath#/#filename#" variable="stats"/>
+			<cffile action="read" file="#request.xDocsFilePath#/#filename#" variable="stats"/>
 			
 			<cfset xdoc = XMLPARSE(stats)/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETENVIRONMENT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -1296,17 +1296,17 @@
 		<cfset dbfilename = "DBBreakdown_XMLDOC_"&arguments.libId&".xml"/>
 
 		 <cftry>
-			 <cfdirectory action="list" name="fList" directory="#application.xDocsFilePath#" filter="#vfilename#"/>
+			 <cfdirectory action="list" name="fList" directory="#request.xDocsFilePath#" filter="#vfilename#"/>
 	
 			<cfif fList.recordcount eq 0>
 			
-			 	<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			 	<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			 	<cfset qry=getStatistics(server=serverObj.server,library=libId)/>
 				
 				<!--- update query ids --->
-				<cffile action="read" file="#application.idFilePath#/fxnIdList_#arguments.libId#.txt" variable="qry.fxn_id"/>
-				<cffile action="read" file="#application.idFilePath#/unClassIdList_#arguments.libId#.txt" variable="qry.unassignfxn_id"/>
-				<cffile action="read" file="#application.idFilePath#/orfanList_#arguments.libId#.txt" variable="qry.orfan_id"/>
+				<cffile action="read" file="#request.idFilePath#/fxnIdList_#arguments.libId#.txt" variable="qry.fxn_id"/>
+				<cffile action="read" file="#request.idFilePath#/unClassIdList_#arguments.libId#.txt" variable="qry.unassignfxn_id"/>
+				<cffile action="read" file="#request.idFilePath#/orfanList_#arguments.libId#.txt" variable="qry.orfan_id"/>
 				
 				<cfoutput query="qry">
 					<cfset uniref_id = ValueList(qry.fxn_id)/>
@@ -1396,7 +1396,7 @@
 						node.XmlAttributes.value = ceiling((qry.orfan_cnt/total)*100);
 						//node.XmlAttributes.idList = #iif(len(qry.orfan_id), "qry.orfan_id", """NULL""")#;
 					</cfscript>
-					<cffile action="write" file="#application.xDocsFilePath#/#vfilename#" output="#xroot#" addnewline="true" />
+					<cffile action="write" file="#request.xDocsFilePath#/#vfilename#" output="#xroot#" addnewline="true" />
 					<cfset StructInsert(globalStruct,"VCLASS",xroot)/>
 					 
 					<cfset xroot = XMLNew()>
@@ -1442,21 +1442,21 @@
 
 						StructInsert(globalStruct,"ACLASS",xroot);
 					</cfscript>
-					<cffile action="append" file="#application.xDocsFilePath#/#dbfilename#" output="#xroot#" addnewline="true" />
+					<cffile action="append" file="#request.xDocsFilePath#/#dbfilename#" output="#xroot#" addnewline="true" />
 				</cfoutput>
 			<cfelse>
 				<!--- read from file --->
-				<cffile action="read" file="#application.xDocsFilePath#/#vfilename#" variable="vroot"/>
+				<cffile action="read" file="#request.xDocsFilePath#/#vfilename#" variable="vroot"/>
 				<cfset xmlDoc = XMLParse(trim(vroot))>
 				<cfset StructInsert(globalStruct,"VCLASS",xmlDoc)/>
 				
-				<cffile action="read" file="#application.xDocsFilePath#/#dbfilename#" variable="aroot"/>
+				<cffile action="read" file="#request.xDocsFilePath#/#dbfilename#" variable="aroot"/>
 				<cfset xmlDoc = XMLParse(trim(aroot))>
 				<cfset StructInsert(globalStruct,"ACLASS",xmldoc)/>
 			</cfif>
 			
 		 	<cfcatch type="any">
-		 		<cfset CreateObject("component",  application.cfc & ".Utility").
+		 		<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETVIROMECLASS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 		 	</cfcatch>
 		 </cftry>
@@ -1472,13 +1472,13 @@
 		<cfset local.arr = ArrayNew(1)/>
 
 		<cftry>
-				<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+				<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 				<cfset qry=gettRNAHelper(libraryId=arguments.libId,server=serverObj.server,sortby="id")/>
 				
-				<cfset local.arr = CreateObject("component", application.cfc & ".Utility").QueryToStruct(qry)/>
+				<cfset local.arr = CreateObject("component", request.cfc & ".Utility").QueryToStruct(qry)/>
 						
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETTRNASEQ", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -1497,10 +1497,10 @@
 		<cfset filename = "TRNA_FREQ_"&#libId#&".xml"/>
 
 		<cftry>
-			<cfdirectory name="xmlFileList" action="list" directory="#application.xDocsFilePath#" filter="#filename#"/>
+			<cfdirectory name="xmlFileList" action="list" directory="#request.xDocsFilePath#" filter="#filename#"/>
 	
-			<cfif xmlFileList.recordcount eq 0>			
-				<cfset serverObj=CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfif xmlFileList.recordcount eq 0>
+				<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 				<cfset qry=gettRNAHelper(libraryId=arguments.libId,server=serverObj.server)/>
 				
 				<cfoutput query="qry" group="anti">
@@ -1521,13 +1521,13 @@
 						trna.XmlAttributes.idList = idl;
 					</cfscript>
 				</cfoutput>
-				<cffile action="write" file="#application.xDocsFilePath#/#filename#" output="#xroot#" mode="755"/>
+				<cffile action="write" file="#request.xDocsFilePath#/#filename#" output="#xroot#" mode="755"/>
 			<cfelse>
-				<cffile action="read" file="#application.xDocsFilePath#/#filename#" variable="xroot">				
+				<cffile action="read" file="#request.xDocsFilePath#/#filename#" variable="xroot">				
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETTRNASTATS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -1557,17 +1557,17 @@
 				xStruct['msg'] = "ERROR: File " &xmlFName& " not found";
 				xStruct['xdoc'] = XMLNEW();
 				
-				if (not FileExists("#application.xDocsFilePath#/#xmlFName#")){
+				if (not FileExists("#request.xDocsFilePath#/#xmlFName#")){
 					if (arguments.obj.sType eq "overview")
 						xdoc = ORFOverview(userId=arguments.obj.userId,libraryIdList=arguments.obj.libraryIdList);
 				
 					//if xml and idlist are seperate
 					if (isstruct(xdoc)){
-						myfile = FileOpen("#application.xDocsFilePath#/#xmlFName#","write","UTF-8");
+						myfile = FileOpen("#request.xDocsFilePath#/#xmlFName#","write","UTF-8");
 						FileWriteLine(myfile, xdoc['xroot']);
 						FileClose(myfile);
 						
-						myfile = FileOpen("#application.xDocsFilePath#/#idFName#","write","UTF-8");
+						myfile = FileOpen("#request.xDocsFilePath#/#idFName#","write","UTF-8");
 						FileWriteLine(myfile, xdoc['idroot']);
 						FileClose(myfile);
 						
@@ -1576,19 +1576,19 @@
 						xStruct['msg'] = "Success";
 						xStruct['xdoc'] = xdoc;
 						
-						myfile = FileOpen("#application.xDocsFilePath#/#xmlFName#","write","UTF-8");
+						myfile = FileOpen("#request.xDocsFilePath#/#xmlFName#","write","UTF-8");
 						FileWriteLine(myfile, xdoc);
 						FileClose(myfile);
 					}
 				} else {				
-					xdoc = fileRead("#application.xDocsFilePath#/#xmlFName#","UTF-8");
+					xdoc = fileRead("#request.xDocsFilePath#/#xmlFName#","UTF-8");
 					xStruct['msg'] = "Success";
 					xStruct['xdoc'] = xdoc;
 				}
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("STATISTICS.CFC - GETXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			

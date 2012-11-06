@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  height="100%"
+		  maxWidth="1280"
+		  xmlns:cfservice="services.*" 
+		  showCloseButton="true" close="removeMe()" horizontalScrollPolicy="off"
+		  creationComplete="onCreationComplete()" xmlns:readrpc="services.readrpc.*" xmlns:orfrpc="services.orfrpc.*">
+
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.UpdateORFViewEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Canvas;
+			import mx.containers.VBox;
+			import mx.containers.ViewStack;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			private var _orfId:Number = 0;
+			private var	_readId:Number = 0;
+			private var _environment:String = "undefined";
+			private var _seqname:String="undefined";
+			private var _ncRNAFlag:Boolean = false;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			
+			[Bindable] public function set orfId(v:Number):void {
+				_orfId = v;
+			}
+			[Bindable] public function set readId(v:Number):void {
+				_readId = v;
+			}
+			[Bindable] public function set environment(v:String):void {
+				_environment = v;
+			}
+			[Bindable] public function set seqname(v:String):void {
+				_seqname = v;
+			}
+			
+			public function get orfId():Number {
+				return _orfId;
+			}
+			public function get readId():Number {
+				return _readId;
+			}
+			public function get environment():String {
+				return _environment;
+			}
+			public function get seqname():String {
+				return _seqname;
+			}
+			
+			private function onCreationComplete():void {
+				this.width = _util.app.width;
+				this.height = _util.app.height;
+				this.addEventListener(UpdateORFViewEvent.UPDATE_ORF_VIEW_EVENT, switchTab);
+				this.title = "Detail sequence information";
+				
+				getReadRequest.token = ReadRPC.getSequenceInfo(orfId, readId, environment);
+			}
+
+			private function removeMe():void {
+				PopUpManager.removePopUp(this);
+			}
+		
+			private function getReadResponse(event:ResultEvent):void {
+				var vbox:VBox = new MyReadTab(event.result as Object);
+				
+				_detailTab.addChild(vbox);
+				
+				if (orfId) {
+					var ac:ArrayCollection = new ArrayCollection(event.result.ORF as Array);
+					displayOrfTab(ac, environment);
+				}
+			}
+			
+			private function displayOrfTab(ac:ArrayCollection, str:String):void {
+				var box:VBox = new MyOrfTab(ac, str, seqname);
+				//var box:Canvas = new MyOrfTab(ac, str, seqname);
+				box.percentHeight = 100;
+				
+				box.validateNow();
+				
+				_detailTab.addChild(box);
+				
+				_detailTab.selectedIndex=_detailTab.numChildren-1;
+				
+				//center sequence detail window
+				PopUpManager.centerPopUp(this);
+			}
+			
+			private function switchTab(event:UpdateORFViewEvent):void{
+				_detailTab.selectedIndex = _detailTab.numChildren-1;
+				
+				//pass the event forward for MyOrfTab.as
+				var e:UpdateORFViewEvent = new UpdateORFViewEvent();
+				e.duplicate(event);
+				_util.app.dispatchEvent(e);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<readrpc:ReadRPC id="ReadRPC" showBusyCursor="true" fault="_util.faultHandler(event)"
+						 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.ReadRPC" />
+		<s:CallResponder id="getReadRequest" result="getReadResponse(event)" />
+	</fx:Declarations>
+	
+	<mx:TabNavigator id="_detailTab" width="100%" height="100%" />
+</mx:TitleWindow>

@@ -171,13 +171,13 @@
 				gr.addChild(gi);
 				
 				//Image
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "BLAST Image";
-				gi.width=90;
+				//lb = new Label();
+				//gi = new MyGridItem();
+				//lb.text = "BLAST Image";
+				//gi.width=90;
 				//gi.width = this.width*0.05;
-				gi.addChild(lb);
-				gr.addChild(gi);
+				//gi.addChild(lb);
+				//gr.addChild(gi);
 				
 				//Evalue
 				lb = new Label();
@@ -393,15 +393,15 @@
 				gr.addChild(gi);
 				
 				//image
-				var img:Image = new Image();
-				img.source = obj.IMAGE;
-				gi = new MyGridItem();
-				gi.setStyle("verticalAlign","middle");
-				gi.setStyle("horizontalAlign","center");
-				gi.width=90;
+				//var img:Image = new Image();
+				//img.source = obj.IMAGE;
+				//gi = new MyGridItem();
+				//gi.setStyle("verticalAlign","middle");
+				//gi.setStyle("horizontalAlign","center");
+				//gi.width=90;
 				//gi.width = twidth *0.05;
-				gi.addChild(img);
-				gr.addChild(gi);
+				//gi.addChild(img);
+				//gr.addChild(gi);
 				
 				//evalue
 				txt = new Text();

@@ -1,22 +1,15 @@
 package com
-{
-	import com.google.maps.interfaces.INavigationControl;
-	
-	import flash.display.DisplayObject;
+{	
+	import detail.MySequenceDetail;
 	
 	import mx.collections.ArrayCollection;
-	import mx.controls.Alert;
 	import mx.controls.DataGrid;
 	import mx.controls.dataGridClasses.DataGridColumn;
 	import mx.core.ClassFactory;
-	import mx.events.CollectionEvent;
-	import mx.events.FlexEvent;
 	import mx.events.ListEvent;
-	import mx.events.ModuleEvent;
-	import mx.modules.IModuleInfo;
-	import mx.modules.ModuleManager;
-	
-	import search.EvalueRenderer;
+	import mx.managers.PopUpManager;
+	import mx.core.FlexGlobals;
+	import flash.display.DisplayObject;	
 	import search.SequenceNLenRenderer;
 	
 	public class MyDBResult extends DataGrid{
@@ -194,13 +187,20 @@ package com
 		}
 		
 		protected function sequenceDetailRequest(event:ListEvent):void{
-			Alert.show("This feature is disabled temporarily");
+			//Alert.show("This feature is disabled temporarily");
 			//var DP:Object = _util.app.page.getChildByName("Sequenced");
 			//DP.sequenceId = event.currentTarget.selectedItem.SEQUENCEID;
 			//DP.environment = event.currentTarget.selectedItem.ENVIRONMENT;
 			//DP.seqname = event.currentTarget.selectedItem.NAME;
 			//DP.ncRNAFlag = ncRNAFlag;
 			//_util.app.simulateMenuClick('sequenced');
+			
+			var sequence_detail:MySequenceDetail = MySequenceDetail(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), MySequenceDetail, true));
+			sequence_detail.orfId = event.currentTarget.selectedItem.SEQUENCEID;
+			sequence_detail.environment = event.currentTarget.selectedItem.ENVIRONMENT;
+			sequence_detail.seqname = event.currentTarget.selectedItem.NAME
+			
+			PopUpManager.bringToFront(sequence_detail);			
 		}
 	}
 }

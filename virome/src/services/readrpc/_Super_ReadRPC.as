@@ -30,15 +30,9 @@ internal class _Super_ReadRPC extends com.adobe.fiber.services.wrapper.RemoteObj
         var operations:Object = new Object();
         var operation:mx.rpc.remoting.Operation;
 
-        operation = new mx.rpc.remoting.Operation(null, "getTaxonomicInfo");
-         operation.resultType = Object;
-        operations["getTaxonomicInfo"] = operation;
         operation = new mx.rpc.remoting.Operation(null, "getSequenceInfo");
          operation.resultType = Object;
         operations["getSequenceInfo"] = operation;
-        operation = new mx.rpc.remoting.Operation(null, "getORFSummary");
-         operation.resultType = Object;
-        operations["getORFSummary"] = operation;
 
         _serviceControl.operations = operations;
         _serviceControl.convertResultHandler = com.adobe.serializers.utility.TypeUtility.convertResultHandler;
@@ -59,24 +53,6 @@ internal class _Super_ReadRPC extends com.adobe.fiber.services.wrapper.RemoteObj
     
 
     /**
-      * This method is a generated wrapper used to call the 'getTaxonomicInfo' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function getTaxonomicInfo(id:Number, environment:String) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getTaxonomicInfo");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(id,environment) ;
-        return _internal_token;
-    }
-     
-    /**
       * This method is a generated wrapper used to call the 'getSequenceInfo' operation. It returns an mx.rpc.AsyncToken whose 
       * result property will be populated with the result of the operation when the server response is received. 
       * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
@@ -87,28 +63,10 @@ internal class _Super_ReadRPC extends com.adobe.fiber.services.wrapper.RemoteObj
       *
       * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
       */
-    public function getSequenceInfo(id:Number, name:String, environment:String) : mx.rpc.AsyncToken
+    public function getSequenceInfo(orfId:Number, readId:Number, environment:String) : mx.rpc.AsyncToken
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getSequenceInfo");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(id,name,environment) ;
-        return _internal_token;
-    }
-     
-    /**
-      * This method is a generated wrapper used to call the 'getORFSummary' operation. It returns an mx.rpc.AsyncToken whose 
-      * result property will be populated with the result of the operation when the server response is received. 
-      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
-      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
-      *
-      * @see mx.rpc.AsyncToken
-      * @see mx.rpc.CallResponder 
-      *
-      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
-      */
-    public function getORFSummary(id:Number, environment:String, database:String, topHit:Number) : mx.rpc.AsyncToken
-    {
-        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getORFSummary");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(id,environment,database,topHit) ;
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(orfId,readId,environment) ;
         return _internal_token;
     }
      

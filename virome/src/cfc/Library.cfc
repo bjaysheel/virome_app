@@ -9,7 +9,7 @@
 				
 		<cfset q="">
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	l.id,
 						l.name,
 						l.description,
@@ -56,7 +56,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARY", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARY", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -95,7 +95,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSEQUENCESIZEORGC", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSEQUENCESIZEORGC", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -108,10 +108,11 @@
 		
 	<cffunction name="getEnvironment" access="private" returntype="query">
 		<cfargument name="libraryIdList" type="string" default=""/>
-		<cfset q = "" />
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfset q = "" />
+			
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT 	distinct environment
 				FROM	library
 				WHERE	deleted = 0
@@ -121,7 +122,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETENVIRONMENT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETENVIRONMENT", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -156,7 +157,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / JSONHELPER", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / JSONHELPER", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -202,7 +203,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETTAXDOMAIN", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETTAXDOMAIN", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -244,7 +245,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
 								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -312,7 +313,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
 								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -422,7 +423,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
 								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -437,33 +438,33 @@
 		<cfset local.filename = "LIBRARY_STAT_" & arguments.id & ".json"/>
 		
 		<cftry>
-			<cfif NOT FileExists(application.xDocsFilePath&"/"&#local.filename#)>
+			<cfif NOT FileExists(request.xDocsFilePath&"/"&#local.filename#)>
 				<cfscript>
-					setReadObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=application.xDocsFilePath&"/"&#local.filename#);
+					setReadObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=request.xDocsFilePath&"/"&#local.filename#);
 					
-					setORFTypeObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=application.xDocsFilePath&"/"&#local.filename#);
+					setORFTypeObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=request.xDocsFilePath&"/"&#local.filename#);
 					
-					setVIROMECatObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=application.xDocsFilePath&"/"&#local.filename#);
+					setVIROMECatObject(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=request.xDocsFilePath&"/"&#local.filename#);
 					
-					getTaxAtLevel(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=application.xDocsFilePath&"/"&#local.filename#);
+					getTaxAtLevel(libraryId=arguments.id,server=arguments.server,environment=arguments.environment,filename=request.xDocsFilePath&"/"&#local.filename#);
 				</cfscript>
 			</cfif>
 			
 			<cfscript>
 				//check if there was any data for a given lib.
-				if (not FileExists(application.xDocsFilePath&"/"&#local.filename#)){
+				if (not FileExists(request.xDocsFilePath&"/"&#local.filename#)){
 					writelog(text="return empty",type="information",file="virome");
 					return stat_struct;
 				}
 
-				data = FileRead(application.xDocsFilePath&"/"&#local.filename#);
+				data = FileRead(request.xDocsFilePath&"/"&#local.filename#);
 				
 				if(not isNull(data))
 					stat_struct = deserializeJSON(data);
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSTATISTICS", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSTATISTICS", 
 								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -475,50 +476,31 @@
 
 	<cffunction name="serverOverviewHelper" access="private" returntype="Struct">
 		<cfargument name="environment" type="string" required="true">
-		<cfargument name="libraryId" type="numeric" required="true">
+		<cfargument name="libraryId" type="string" required="true">
 		
-		<cfset local.struct = StructNew()/>
 		<cftry>
-			<cfset serverObj = CreateObject("component", application.cfc & ".Utility").getServerName(environment=arguments.environment)/>
-			<cfset _server=serverObj.server/>
+			<cfset serverObj = CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfset _server = serverObj.server/>
 			
-			<!--- q of q get read counts --->
-			<cfquery name="rq" datasource="#_server#">
-				SELECT	COUNT(s.id) as rcount,
-						SUM(s.size) as rsize
-				FROM 	sequence s 
-					inner join 
-						sequence_relationship sr on sr.subjectId = s.id
-				WHERE	deleted = 0
-					and sr.typeId = 1
-					and s.libraryId=<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
+			<!--- get total library, read and orf counts, plus total read and orf size --->
+			<cfquery name="qry" datasource="#_server#">
+				SELECT	count(libraryId) as no_libs,
+						SUM(read_cnt) as no_reads,
+						SUM(read_mb) as read_mb,
+						SUM(complete_cnt+incomplete_cnt+lackstart_cnt+lackstop_cnt) as no_orfs,
+						SUM(complete_mb+incomplete_mb+lackstart_mb+lackstop_mb) as orf_mb
+				FROM 	statistics
+				WHERE	libraryId in (#arguments.libraryId#)
+					and deleted = 0
 			</cfquery>
-			<!--- add read counts into struct --->
-			<cfset StructInsert(local.struct,"reads",iif(isNumeric(rq.rcount),"#rq.rcount#","0"))/>
-			<cfset StructInsert(local.struct,"rsize",iif(isNumeric(rq.rsize),"#rq.rsize#","0"))/>	
-				
-			<!--- q of q get orf counts --->
-			<cfquery name="oq" datasource="#_server#">
-				SELECT	COUNT(s.id) as ocount,
-						SUM(s.size) as osize
-				FROM 	sequence s
-					inner join 
-						sequence_relationship sr on sr.objectId = s.id
-				WHERE	deleted = 0
-					and sr.typeId = 3
-					and s.libraryId=<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
-			</cfquery>
-			<!--- add orf counts into struct --->
-			<cfset StructInsert(local.struct,"orfs",iif(isNumeric(oq.ocount),"#oq.ocount#","0"))/>
-			<cfset StructInsert(local.struct,"osize",iif(isNumeric(oq.osize),"#oq.osize#","0"))/>	
 					
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / SERVEROVERVIEWHELPER", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SERVEROVERVIEWHELPER", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
-			<cffinally>
-				<cfreturn local.struct/>
+			<cffinally>				
+				<cfreturn CreateObject("component", request.cfc & ".Utility").QueryToStruct(Query=qry,Row=1)/>
 			</cffinally>
 		</cftry>
 	</cffunction>
@@ -547,7 +529,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETMEANSTD", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETMEANSTD", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -596,7 +578,7 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARYINFO", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARYINFO", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -607,25 +589,32 @@
 	</cffunction>
 
 	<cffunction name="getEnvironmentObject" access="remote" returntype="Array">
-		<cfargument name="libraryIdList" type="string" default=""/>
-	
-		<cfset e = getEnvironment(libraryIdList=arguments.libraryIdList) />
+		<cfargument name="libraryIdList" type="string" default="" />
+
+		<cfset e = getEnvironment(libraryIdList = arguments.libraryIdList) />
 		<cfset struct = StructNew()>
 		<cfset array = ArrayNew(1)>
-		
-		<cfset StructInsert(struct,"label","Select One")>
-		<cfset StructInsert(struct,"data","-1")>
-		<cfset ArrayAppend(array,struct)>
+
+		<cfset type = "PUBLIC" />
+		<cfif len(libraryIdList) gt 0>
+			<cfset type = "PRIVATE" />
+		</cfif>
+
+		<cfset StructInsert(struct,"label", "Select One")>
+		<cfset StructInsert(struct,"data", "-1")>
+		<cfset ArrayAppend(array, struct)>
 
 		<cfloop query="e">
 			<cfscript>
 				struct = StructNew();
 				structInsert(struct, "label", "#UCase(q.environment)#");
 				structInsert(struct, "data", "#UCase(q.environment)#");
+				structInsert(struct, "type", "#type#");
+
 				ArrayAppend(array, struct);
 			</cfscript>
 		</cfloop>
-		
+
 		<cfreturn array />
 	</cffunction>
 
@@ -687,7 +676,7 @@
 			</cfoutput>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -741,7 +730,7 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGENERALOBJECT", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGENERALOBJECT", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -771,7 +760,7 @@
 					filename = "ORF_HISTOGRAM_" & arguments.libraryId & ".xml";
 						
 				//if file does not exist create a new one		
-				if (not fileExists(application.xDocsFilePath&"/"&filename)){				
+				if (not fileExists(request.xDocsFilePath&"/"&filename)){				
 					//get size or gc --->
 					qry = getSequenceSizeOrGC(libraryId=arguments.libraryId,server=arguments.server,type=arguments.type);
 				
@@ -826,14 +815,14 @@
 					
 					//write to file as well
 				
-					fileWrite("#application.xDocsFilePath#/#filename#","#xroot#");
+					fileWrite("#request.xDocsFilePath#/#filename#","#xroot#");
 				} else {
-					xroot = fileRead("#application.xDocsFilePath#/#filename#");
+					xroot = fileRead("#request.xDocsFilePath#/#filename#");
 				}
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETHISTOGRAM", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETHISTOGRAM", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -857,49 +846,70 @@
 				<cfset filename = "SERVEROVERVIEW_PRIVATE_" & arguments.userId & ".json"/>
 			</cfif>
 			
-			<cfif not fileExists(application.xDocsFilePath&"/"&filename)>
+			<cfif not fileExists(request.xDocsFilePath&"/"&filename)>
 				<!--- get environment --->				
 				<cfset lib = getLibrary(libraryIdList=arguments.libraryIdList, publish=iif(arguments.privateOnly,"""0""","""1""") )/>
 				<cfset str = ""/>
+								
+				<cfscript>
+					total_no_reads = 0; total_read_mb = 0; total_no_orfs = 0; total_orf_mb = 0; total_no_libs=0;
+				</cfscript>
 				
 				<!--- for each environment get simple library stats --->
 				<cfoutput query="lib" group="environment">
-					<cfscript>
-						rcount = 0; rsize = 0; ocount = 0; osize = 0; //rncount = 0; rnsize = 0;
-						count = 0;
-						tStruct = StructNew();
-					</cfscript>
+					<cfset idList = ""/>
 					
 					<cfoutput>
-						<cfset obj = serverOverviewHelper(environment=lib.environment,libraryId=lib.id)/>
-						<cfset rcount += obj.reads/>
-						<cfset rsize += obj.rsize/>
-						<cfset ocount += obj.orfs/>
-						<cfset osize += obj.osize/>
-						<!---<cfset rncount += obj.rRNA/>
-						<cfset rnsize += obj.rnsize/>--->
-						<cfset count += 1/>
+						<cfset idList = listAppend(idList, lib.id) />
 					</cfoutput>
 					
-					<cfset StructInsert(tStruct,"ENVIRONMENT",#lib.environment#)/>
-					<cfset StructInsert(tStruct,"LIBCOUNT",count)/>
-					<cfset StructInsert(tStruct,"READS",rcount)/>
-					<cfset StructInsert(tStruct,"R_SIZE",rsize)/>
-					<cfset StructInsert(tStruct,"ORFS",ocount)/>
-					<cfset StructInsert(tStruct,"O_SIZE",osize)/>
+					<cfscript>
+						tStruct = StructNew();
+						tStruct = serverOverviewHelper(environment=lib.environment,libraryId=idList);
+						
+						if (tStruct.NO_LIBS){
+							total_no_reads += tStruct.NO_READS;
+							total_read_mb += tStruct.READ_MB;
+							total_no_orfs += tStruct.NO_ORFS;
+							total_orf_mb += tStruct.ORF_MB;
+							total_no_libs += tStruct.NO_LIBS;
+							
+							StructInsert(tStruct, "M_READ_SIZE", tStruct.READ_MB/tStruct.NO_READS);
+							StructInsert(tStruct, "M_ORF_SIZE", tStruct.ORF_MB/tStruct.NO_ORFS);
+							
+							StructUpdate(tStruct, "READ_MB", tStruct.READ_MB/1000000);						
+							StructUpdate(tStruct, "ORF_MB", (tStruct.ORF_MB*3)/1000000);	
+						} else {
+							StructInsert(tStruct, "M_READ_SIZE", 0);
+							StructInsert(tStruct, "M_ORF_SIZE", 0);
+						}
+						
+						StructInsert(tStruct, "ENVIRONMENT", #lib.environment#);
+						ArrayAppend(local.arr,tStruct);
+					</cfscript>
 					
-					<cfset ArrayAppend(local.arr,tStruct)/>
 				</cfoutput>
 				
 				<cfscript>
 					tStruct = StructNew();
+					StructInsert(tStruct, "ENVIRONMENT", "Total");
+					StructInsert(tStruct, "NO_LIBS", total_no_libs);
+					StructInsert(tStruct, "NO_READS", total_no_reads);
+					StructInsert(tStruct, "READ_MB", total_read_mb/1000000);
+					StructInsert(tStruct, "M_READ_SIZE", total_read_mb/total_no_reads);
+					StructInsert(tStruct, "NO_ORFS", total_no_orfs);
+					StructInsert(tStruct, "ORF_MB", (total_orf_mb*3)/1000000);
+					StructInsert(tStruct, "M_ORF_SIZE", total_orf_mb/total_no_orfs);
+					ArrayAppend(local.arr, tStruct);
+					
+					tStruct = StructNew();					
 					StructInsert(tStruct,"ServerOverview",local.arr);
 					
-					jsonHelper(tStruct,application.xDocsFilePath&"/"&filename);
+					jsonHelper(tStruct,request.xDocsFilePath&"/"&filename);
 				</cfscript>
 			<cfelse>
 				<cfscript>
-					data = FileRead(application.xDocsFilePath&"/"&#filename#);
+					data = FileRead(request.xDocsFilePath&"/"&#filename#);
 					ov_struct = StructNew();
 									
 					if(not isNull(data))
@@ -910,7 +920,7 @@
 			</cfif>
 						
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSERVEROVERVIEW", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSERVEROVERVIEW", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -932,7 +942,7 @@
 			
 			<cfset srv = getServerName(arguments.obj.environment)/>
 			
-			<cfquery name="q" datasource="#application.mainDSN#" >
+			<cfquery name="q" datasource="#request.mainDSN#" >
 				UPDATE library
 				SET	name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
 					description = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.description#">,
@@ -948,14 +958,15 @@
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> modified successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / EDIT_LIBRARY", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / EDIT_LIBRARY", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.message/>
 			</cfcatch>
 			
 			<cffinally>
+				
 				<cfif struct["MSG"] neq "failed">
-					<cfset CreateObject("component", application.cfc & ".Utility").reportLibrarySubmission(obj, "edit")/>
+					<!---<cfset CreateObject("component", request.cfc & ".Utility").reportLibrarySubmission(obj, "edit")/>--->
 				</cfif>
 				
 				<cfreturn struct/>		
@@ -980,8 +991,8 @@
 			<cfset srv = getServerName(arguments.obj.environment)/>
 			<cfset groupId = getGroupId(arguments.obj.user)/>
 			
-			<cfquery name="q" datasource="#application.mainDSN#">
-				INSERT INTO library(name,prefix,description,environment,project,publish,user,seqMethod,progress,groupId,server,deleted)
+			<cfquery name="q" datasource="#request.mainDSN#">
+				INSERT INTO library(name, prefix, description, environment, project, publish, user, seqMethod, progress, groupId, server, deleted)
 				VALUES	(<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
 						<cfqueryparam cfsqltype="cf_sql_varchar" value="#prefix#">,
 						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.description#">,
@@ -1000,14 +1011,14 @@
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> added successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / ADD_LIBRARY", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / ADD_LIBRARY", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.message/>
 			</cfcatch>
 			
 			<cffinally>
 				<cfif struct["MSG"] neq "failed">
-					<cfset CreateObject("component", application.cfc & ".Utility").reportLibrarySubmission(obj, "add")/>
+					<!---<cfset CreateObject("component", request.cfc & ".Utility").reportLibrarySubmission(obj, "add")/>--->
 				</cfif>
 				
 				<cfreturn struct/>
@@ -1023,7 +1034,7 @@
 			<cfset struct['MSG'] = "failed"/>
 			<cfset struct['ERROR'] = ""/>
 		
-			<cfquery name="q" datasource="#application.mainDSN#" >
+			<cfquery name="q" datasource="#request.mainDSN#" >
 				UPDATE 	library
 				SET		deleted = <cfqueryparam cfsqltype="cf_sql_tinyint" value="1">
 				WHERE	prefix = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.prefix#">
@@ -1033,14 +1044,14 @@
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> deleted successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / DELETE_LIBRARY", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / DELETE_LIBRARY", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.Message/>
 			</cfcatch>
 			
 			<cffinally>
 				<cfif struct["MSG"] neq "failed">
-					<cfset CreateObject("component", application.cfc & ".Utility").reportLibrarySubmission(obj, "delete")/>
+					<!---<cfset CreateObject("component", request.cfc & ".Utility").reportLibrarySubmission(obj, "delete")/>--->
 				</cfif>
 				<cfreturn struct/>		
 			</cffinally>
@@ -1066,7 +1077,7 @@
 		<cfset groupId = -1>
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	id
 				FROM	groups
 				WHERE	name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.username#">
@@ -1077,7 +1088,7 @@
 			</cfloop>
 				
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGROUPID", 
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGROUPID", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.Message/>
 			</cfcatch>
@@ -1096,7 +1107,7 @@
 			<cfloop condition="stop eq false">
 				<cfset prefix = ucase(createPrefix())/>
 				
-				<cfquery name="q" datasource="#application.mainDSN#">
+				<cfquery name="q" datasource="#request.mainDSN#">
 					SELECT	id
 					FROM	library
 					WHERE	prefix = '#prefix#'	
@@ -1108,7 +1119,7 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", application.cfc & ".Utility").ReportError("LIBRARY.CFC / GETPREFIX",
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETPREFIX",
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			

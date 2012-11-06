@@ -37,7 +37,17 @@
 			<location>/Library/WebServer/Documents/VIROME/cfc/Application.cfc</location>
 		</link>
 		<link>
+			<name>services/Application_Application.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/Application.cfc</location>
+		</link>
+		<link>
 			<name>services/Exporter.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/Exporter.cfc</location>
+		</link>
+		<link>
+			<name>services/Exporter_Exporter.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/VIROME/cfc/Exporter.cfc</location>
 		</link>
@@ -47,7 +57,17 @@
 			<location>/Library/WebServer/Documents/VIROME/cfc/Library.cfc</location>
 		</link>
 		<link>
+			<name>services/Library_Library.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/Library.cfc</location>
+		</link>
+		<link>
 			<name>services/OrfRPC.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/OrfRPC.cfc</location>
+		</link>
+		<link>
+			<name>services/OrfRPC_OrfRPC.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/VIROME/cfc/OrfRPC.cfc</location>
 		</link>
@@ -57,7 +77,17 @@
 			<location>/Library/WebServer/Documents/VIROME/cfc/ReadRPC.cfc</location>
 		</link>
 		<link>
+			<name>services/ReadRPC_ReadRPC.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/ReadRPC.cfc</location>
+		</link>
+		<link>
 			<name>services/SearchRPC.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/SearchRPC.cfc</location>
+		</link>
+		<link>
+			<name>services/SearchRPC_SearchRPC.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/VIROME/cfc/SearchRPC.cfc</location>
 		</link>
@@ -67,7 +97,17 @@
 			<location>/Library/WebServer/Documents/VIROME/cfc/Statistics.cfc</location>
 		</link>
 		<link>
+			<name>services/Statistics_Statistics.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/Statistics.cfc</location>
+		</link>
+		<link>
 			<name>services/Utility.cfc</name>
+			<type>1</type>
+			<location>/Library/WebServer/Documents/VIROME/cfc/Utility.cfc</location>
+		</link>
+		<link>
+			<name>services/Utility_Utility.cfc</name>
 			<type>1</type>
 			<location>/Library/WebServer/Documents/VIROME/cfc/Utility.cfc</location>
 		</link>

@@ -33,20 +33,28 @@
 		file['csv'] = "true";
 	</cfscript>
 	
-	<cfset domList = ""/>
+	<cfset domList = "size=183 gc=0.507761 start=451 stop=268 strand=- frame=1 model=phage score=10.978 type=lack_start caller=MetaGENE"/>
 	<cfset objarr = ArrayNew(1)/>
 	
-	<cfscript>
-		fname = "test.txt";		
-	</cfscript>
-	#fname#<br/>
-	#getFileFromPath(fname)#
-		
-	<cfset dna = "ATGC"/>
-	<cfset dna = CreateObject("component",  application.cfc & ".Library").getHistogram(31,"local",1)/>
-	#dna#
+	<cfset orf_info_struct = structnew()/>
+	<cfloop list="#domList#" index="item" delimiters=" " >
+		<cfset data = listToArray(item,"=")/>
+		<cfdump var="#data#"/>
+		<cfset orf_info_struct[data[1]] = data[2]/>
+	</cfloop>
 	
-	<!---<cfset rt_value = CreateObject("component",  application.cfc & ".Exporter").export(file,obj,binarydecode('',"Base64"),'')/>--->
+	<cfdump var="#orf_info_struct#"/>
+	
+	<cfscript>
+		domList = "size=183 gc=0.507761 start=451 stop=268 strand=- frame=1 model=phage score=10.978 type=lack_start caller=MetaGENE";
+		oStruct = structnew();
+		for (i=1; i lte listLen(domList," "); i++) {
+			data = listToArray(listGetAt(domList, i, " "), "=");
+			StructInsert(oStruct, ucase(data[1]), data[2]);
+		}
+	</cfscript>
+	<cfdump var="#oStruct#"/>
+	
 	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>--->
 	<!---<cfdump var="#rt_value#">--->
 		

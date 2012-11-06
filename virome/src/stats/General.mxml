@@ -215,28 +215,28 @@
 				var smbp:Number = 0;
 				var pmbp:Number = 0;
 				var orf:Number = 0;
-				var rmbp:Number = obj.READ[0]['mbp']/1000000;
-				_reads.text = nf.format(obj.READ[0]['count']) + "   /   " + new MyNumberFormatter().format(rmbp) + "Mbp";
+				var rmbp:Number = parseFloat(obj.READ[0]['mbp'])/1000000;
+				_reads.text = nf.format(parseFloat(obj.READ[0]['count'])) + "   /   " + new MyNumberFormatter().format(rmbp) + "Mbp";
 				
 				var _ot:Array = obj.ORFTYPE as Array;
 				for (var i:int=0; i<_ot.length; i++){
 					if (_ot[i]['type'] == "complete"){
-						cmbp = (_ot[i]['mbp']*3)/1000000;
-						_comorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(cmbp) + "Mbp";
+						cmbp = (parseFloat(_ot[i]['mbp'])*3)/1000000;
+						_comorf.text = nf.format(parseFloat(_ot[i]['count'])) + "   /   " + new MyNumberFormatter().format(cmbp) + "Mbp";
 					}
 					else if (_ot[i]['type'] == "lack both ends"){
-						imbp = (_ot[i]['mbp']*3)/1000000;
-						_incorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(imbp) + "Mbp";
+						imbp = (parseFloat(_ot[i]['mbp'])*3)/1000000;
+						_incorf.text = nf.format(parseFloat(_ot[i]['count'])) + "   /   " + new MyNumberFormatter().format(imbp) + "Mbp";
 					}
 					else if ((_ot[i]['type'] == "lack_start") || (_ot[i]['type'] == "lack start")){
-						smbp = (_ot[i]['mbp']*3)/1000000;
-						_strorf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(smbp) + "Mbp";
+						smbp = (parseFloat(_ot[i]['mbp'])*3)/1000000;
+						_strorf.text = nf.format(parseFloat(_ot[i]['count'])) + "   /   " + new MyNumberFormatter().format(smbp) + "Mbp";
 					}
 					else if ((_ot[i]['type'] == "lack_stop") || (_ot[i]['type'] == "lack stop")){
-						pmbp = (_ot[i]['mbp']*3)/1000000;
-						_stporf.text = nf.format(_ot[i]['count']) + "   /   " + new MyNumberFormatter().format(pmbp) + "Mbp";
+						pmbp = (parseFloat(_ot[i]['mbp'])*3)/1000000;
+						_stporf.text = nf.format(parseFloat(_ot[i]['count'])) + "   /   " + new MyNumberFormatter().format(pmbp) + "Mbp";
 					}
-					orf += _ot[i]['count'];
+					orf += parseFloat(_ot[i]['count']);
 				}
 				_orfs.text = nf.format(orf) + "   /   " + new MyNumberFormatter().format(cmbp+imbp+smbp+pmbp) + "Mbp";
 				_coding.text = new MyNumberFormatter().format(((cmbp+imbp+smbp+pmbp)/rmbp)*100) + "%";

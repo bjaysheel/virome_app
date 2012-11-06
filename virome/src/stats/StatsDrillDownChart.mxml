@@ -133,7 +133,7 @@
 					chartStack.selectedIndex = 1;
 					bAxis.text = hTitle + " [" + (rootNode.children()[0] as XML).name().localName + "]";
 					
-					if (rootNode.children().length() > 15)
+					if (rootNode.children().length() > 25)
 						this.pieSeries.setStyle("labelPosition","");
 					else 
 						this.pieSeries.setStyle("labelPosition","insideWithCallout");
@@ -331,7 +331,7 @@
 				var str:String = chartName+'_'+(rootNode.children()[0] as XML).name().localName;
 				new ChartnData(event,libraryName,str);
 			}
-
+			
 			protected function checkDoubleClick(event:ChartItemEvent):void{
 				if (event.shiftKey || event.ctrlKey){
 					chartClick(event as MouseEvent);

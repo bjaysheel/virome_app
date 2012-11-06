@@ -115,117 +115,6 @@
 			private function tRNASeqResponse(event:ResultEvent):void{
 				var ac:ArrayCollection = event.result as ArrayCollection;
 				tRNA_grid.dataProvider = ac;
-				
-				//var gr:MyGridRow = new MyGridRow();
-				//var gi:MyGridItem = new MyGridItem();
-				//var lb:Label = new Label();
-				//var t:Text = new Text();
-				
-				//tRNA_grid.removeAllChildren();
-				
-				/*lb.text = "Sequence Name";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "tRNA No.";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "Start";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "End";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "Amino Acid";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "Anticodon";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				
-				lb = new Label();
-				gi = new MyGridItem();
-				lb.text = "Score";
-				lb.styleName = "strong";
-				gi.addChild(lb);
-				gr.addChild(gi);
-				gr.header();
-				
-				tRNA_grid.addChild(gr);
-				
-				for (var i:int=0; i<ac.length; i++){
-					gr = new MyGridRow();
-					gi = new MyGridItem();
-					
-					if ((i%2)!=0)
-						gr.odd();
-					    
-					t = new Text();
-					t.text = ac.getItemAt(i).NAME;
-					var link:LinkButton = new LinkButton();
-					link.label = ac.getItemAt(i).NAME;
-					link.addEventListener(MouseEvent.CLICK,seqClickEvent);
-					gi.addChild(link);
-					gr.addChild(gi);
-					
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = ac.getItemAt(i).NUM;
-					gi.addChild(t);
-					gr.addChild(gi);
-						
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = ac.getItemAt(i).TRNA_START;
-					gi.addChild(t);
-					gr.addChild(gi);
-					
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = ac.getItemAt(i).TRNA_END;
-					gi.addChild(t);
-					gr.addChild(gi);
-					
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = ac.getItemAt(i).ANTI;
-					gi.addChild(t);
-					gr.addChild(gi);
-					
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = ac.getItemAt(i).INTRON;
-					gi.addChild(t);
-					gr.addChild(gi);
-					
-					t = new Text();
-					gi = new MyGridItem();
-					t.text = new MyNumberFormatter().format(ac.getItemAt(i).SCORE);
-					gi.addChild(t);
-					gr.addChild(gi);
-					
-					tRNA_grid.addChild(gr);
-				}*/
 			}
 			
 			private function dataTipFunc(hd:HitData):String {
@@ -260,7 +149,7 @@
 					timer.stop();
 					doubleClickFlag = true;
 					
-					//disable tRNA doubl click to search.
+					//disable tRNA double click to search.
 					
 					//var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 					//_sf.environment = environment;
@@ -284,8 +173,8 @@
 				generalObject.environment = environment;
 				generalObject.library = libraryId;
 				
-				downloadPanel._fileSelector = fileselector;
-				downloadPanel._searchDBObj = generalObject;
+				downloadPanel._fileSelector = fileselector.getFileSelectorObject();
+				downloadPanel._searchDBObj = generalObject.getStruct();
 				downloadPanel._content = gridContent;
 				
 				PopUpManager.bringToFront(downloadPanel);
@@ -341,7 +230,7 @@
 				
 				<mx:Button label="Download Grid" id="dl_tRNA_grid" click="downloadtRNAGrid()"/>
 				<!--<mx:Grid width="100%" id="tRNA_grid" paddingTop="35" verticalGap="0" />-->
-				
+
 				<mx:DataGrid width="100%" id="tRNA_grid">
 					<mx:columns>
 						<mx:DataGridColumn dataField="NAME" headerText="Sequence Name"/>

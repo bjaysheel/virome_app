@@ -22,9 +22,9 @@
 @namespace mx "library://ns.adobe.com/flex/mx";
 
 global {
-	/*modalTransparency:0.85;
-	modalTransparencyBlur:8;
-	modalTransparencyColor:#333333;*/
+	modalTransparency: 0.75;
+	modalTransparencyBlur: 5;
+	modalTransparencyColor: #CCCCCC;
 }
 
 mx|Button {

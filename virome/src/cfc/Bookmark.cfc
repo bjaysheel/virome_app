@@ -5,7 +5,7 @@
 		
 		<cfset arr = ArrayNew(1)>
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#" >
+			<cfquery name="q" datasource="#request.mainDSN#" >
 				SELECT 	id,
 						userId,
 						jobName,
@@ -19,7 +19,7 @@
 				ORDER BY dateCreated desc
 			</cfquery>
 
-			<cfset arr = createObject("component", application.cfc & ".Utility").QueryToStruct(q)/>
+			<cfset arr = createObject("component", request.cfc & ".Utility").QueryToStruct(q)/>
 			
 			<cfloop from="1" to="#ArrayLen(arr)#" step="1" index="idx">
 				<cfif len(arr[idx]['SEARCHPARAM'])>
@@ -28,7 +28,7 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - GET", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("BOOKMARK.CFC - GET", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -46,7 +46,7 @@
 		<cfargument name="count" type="numeric" required="true" />
 		
 		<cftry>
-			<cfquery name="q" datasource="#application.mainDSN#">
+			<cfquery name="q" datasource="#request.mainDSN#">
 				INSERT	bookmark(userId,jobName,jobAlias,searchParam,rcd_count,dateCreated)
 				VALUES	(<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.USERID#">,
 						 <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.jname#">,
@@ -57,7 +57,7 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("BOOKMARK.CFC - ADD", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("BOOKMARK.CFC - ADD", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>			
 		</cftry>

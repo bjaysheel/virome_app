@@ -10,11 +10,11 @@
 				paddingBottom="4" paddingLeft="5" 
 				paddingRight="5" paddingTop="10"
 				layout="vertical" verticalGap="3"
-				preloader="preload.Preloader"
+				preloader="com.preloader.Preloader"
 				applicationComplete="onApplicationComplete()"
 				creationComplete="onCreationComplete()" 
 				historyManagementEnabled="false"
-				preinitialize="onPreinitialize()"> 
+				preinitialize="onPreinitialize()" > 
 
 	<!--maxHeight="800" maxWidth="1280"-->
 
@@ -27,7 +27,7 @@
 			import com.events.SetSearchDBFormEvent;
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
-		
+	
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.LinkButton;
@@ -51,7 +51,7 @@
 
 			private var _cookie:Object = new Object();
 			private var _hostEndPoint:String = '';
-			private var _cfcObjectPath:String = '';			
+			private var _cfcObjectPath:String = '';
 			private var _trackerId:String = '';
 			private var _mapKey:String = '';
 			private var _os:String = '';
@@ -365,12 +365,11 @@
 				// -- set cookie
 				// -- check for private library
 				if (obj.LOGIN){
+					var now:Date = new Date();
+					obj['EXPIRE'] = new Date(now.getTime() + (1000 * 60 * 60 * 24));
 					cookie = obj;
 			
 					_util.setViromeLSO(obj);
-					
-					if ((cookie.LIBRARYID as String).length > 0)
-						privLib.visible = true;
 				} 
 				//if user logging out
 				// -- clear lso object
@@ -380,7 +379,6 @@
 					cookie = null;
 					_util.clearLSO();
 					
-					privLib.visible = false;
 					simulateMenuClick('home');
 				}
 				
@@ -402,7 +400,7 @@
 				setSearchEvent.recall['USERID'] = obj.USERID;
 				_util.simulateSearchClick(setSearchEvent);
 			}
-			
+		
 			private function bookmarkUserIdHandler(event:Event):void{
 				var ibook:* = bmarkMod.child as IBookmarkInterface;
 				if (bmarkMod.child != null){
@@ -420,12 +418,12 @@
 	<fx:Declarations>		
 		<fx:Array id="menuItem">
 			<fx:Object id="home" label="Home" name="Home" icon="@Embed(source='/assets/icons/Home.png')"/>
-			<fx:Object id="browse" label="Public Browse" name="Browse" icon="@Embed(source='/assets/icons/Browse.png')"/>
+			<fx:Object id="browse" label="Browse" name="Browse" icon="@Embed(source='/assets/icons/Browse.png')"/>
 			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='/assets/icons/Zoom.png')"/>
 			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='/assets/icons/Statistics.png')"/>
 			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='/assets/icons/Download.png')"/>
 			<fx:Object id="upload" label="Upload" name="Upload" icon="@Embed(source='/assets/icons/Upload.png')"/>
-			<fx:Object id="methods" label="General Info." name="Methods" icon="@Embed(source='/assets/icons/Lamp.png')"/>
+			<fx:Object id="methods" label="About" name="Methods" icon="@Embed(source='/assets/icons/Lamp.png')"/>
 		</fx:Array>
 		
 		<s:Wipe id="wipeUp" direction="up" duration="1500"/>
@@ -437,9 +435,9 @@
         <mx:Spacer width="2%"/>
         <mx:ToggleButtonBar id="nav_buttons" styleName="menu" dataProvider="{menuItem}" itemClick="simulateMenuClick(event.item.name)" />
         <mx:Spacer width="50%"/>
-		<mx:Button id="privLib" label="Private Browse" styleName="menu" click="simulateMenuClick('Private')" visible="false"/>
-		<mx:ModuleLoader id="bmarkMod" url="assets/modules/bookmark.swf" ready="bookmarkModuleReady(event)"/>
-		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" ready="userModuleReady(event)"/>
+		<!--<mx:Button id="privLib" label="Private Browse" styleName="menu" click="simulateMenuClick('Private')" visible="false"/>-->
+		<mx:ModuleLoader id="bmarkMod" url="assets/modules/bookmark.swf" styleName="menu" ready="bookmarkModuleReady(event)"/>
+		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" styleName="menu" ready="userModuleReady(event)"/>
 	</mx:ApplicationControlBar>
 	
 	<mx:ViewStack width="100%" height="100%" id="page" change="updateURL()" verticalGap="3">
@@ -463,13 +461,13 @@
 					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
 					  creationPolicy="none"/>
 
-		<local:SequenceDetail id="seqDetail" name="Sequenced" label="Sequence Detail" height="100%" width="100%"
+		<!--<local:SequenceDetail id="seqDetail" name="Sequenced" label="Sequence Detail" height="100%" width="100%"
 						 showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
 						 creationPolicy="auto" visible="false"/>
 		
 		<local:PrivateLib id="privateLib" name="Private" label="Private Library(s)" height="100%" width="100%"
 					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
-					   creationPolicy="none" visible="false"/>
+					   creationPolicy="none" visible="false"/>-->
 	</mx:ViewStack>
 	
 	<mx:HBox styleName="mid" width="100%" horizontalAlign="center">

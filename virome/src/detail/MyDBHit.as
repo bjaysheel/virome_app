@@ -59,7 +59,6 @@ package detail
 			gi = new MyGridItem;
 			head.text = "Name";
 			head.styleName = "header";
-			head.width = 50;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -67,7 +66,6 @@ package detail
 			gi = new MyGridItem;
 			head.text = "Accession";
 			head.styleName = "header";
-			head.width = 100;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -75,7 +73,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "Hit Definition"
 			head.styleName = "header";
-			head.width = 110;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -83,7 +80,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "Evalue"
 			head.styleName = "header";
-			head.width = 59;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -91,7 +87,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "Bit Score"
 			head.styleName = "header";
-			head.width = 50;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -99,7 +94,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "% QRY Coverage";
 			head.styleName = "header";
-			head.width = 76;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -107,7 +101,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "% Identity";
 			head.styleName = "header";
-			head.width = 68;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -115,7 +108,6 @@ package detail
 			gi = new MyGridItem();
 			head.text = "% Similarity";
 			head.styleName = "header";
-			head.width = 80;
 			gi.addChild(head);
 			gr.addChild(gi);
 			
@@ -142,16 +134,15 @@ package detail
 				gi = new MyGridItem;
 				if (lstr.length == 0){
 					_lb = new LinkButton();
-					_lb.label = "ORF " + arr[i].QUERYNAME.substring(arr[i].QUERYNAME.search(/_\d+$/)+1,arr[i].QUERYNAME.length);
-					_lb.name = arr[i].QUERYNAME.substring(arr[i].QUERYNAME.search(/_\d+$/)+1,arr[i].QUERYNAME.length);
+					_lb.label = "ORF " + arr[i].QUERY_NAME.substring(arr[i].QUERY_NAME.search(/_\d+$/)+1,arr[i].QUERY_NAME.length);
+					_lb.name = arr[i].QUERY_NAME.substring(arr[i].QUERY_NAME.search(/_\d+$/)+1,arr[i].QUERY_NAME.length);
 					_lb.id = arr[i].SEQUENCEID;
 					_lb.addEventListener(MouseEvent.CLICK,queryNameClickEvent);
-					_lb.width=70;
+					_lb.width=100;
 					gi.addChild(_lb);
 				} else {
 					t = new Text();
 					t.text = lstr;
-					t.width = 70;
 					gi.addChild(t);
 				}
 				gr.addChild(gi);
@@ -159,7 +150,7 @@ package detail
 				// add hit name
 				gi = new MyGridItem();
 				_lb = new LinkButton;
-				_lb.label = arr[i].HITNAME.split(/;/)[0];
+				_lb.label = arr[i].HIT_NAME.split(/;/)[0];
 				_lb.width=100;
 				_lb.setStyle("textAlign","left");
 				if ((str == "UNIREF100P") && (_lb.label.substr(0,2) == "UP"))
@@ -182,8 +173,8 @@ package detail
 				gi = new MyGridItem();
 
 				t = new Text();
-				t.text = arr[i].HITDESCRIPTION;
-				t.width = 200;
+				t.text = arr[i]['HIT_DESCRIPTION'];
+				t.percentWidth = 100;
 				gi.addChild(t);
 					
 				gr.addChild(gi);
@@ -191,40 +182,35 @@ package detail
 				// add e-value
 				t = new Text();
 				gi = new MyGridItem();
-				t.text = arr[i].EVALUE;
-				t.width = 60;
+				t.text = arr[i]['E_VALUE'];
 				gi.addChild(t);
 				gr.addChild(gi);
 				
 				// add bit score
 				t = new Text();
 				gi = new MyGridItem();
-				t.text = arr[i].BITSCORE;
-				t.width = 50;
+				t.text = arr[i]['BIT_SCORE'];
 				gi.addChild(t);
 				gr.addChild(gi);
 				
 				// add qry coverage
 				t = new Text();
 				gi = new MyGridItem();
-				t.text = nf.format((Math.abs(arr[i].QRYSTART-arr[i].QRYEND+1)/arr[i].SIZE)*100).toString();
-				t.width = 70;
+				t.text = nf.format(Math.abs(arr[i]['QRY_COVERAGE'])).toString();
 				gi.addChild(t);
 				gr.addChild(gi);
 				
 				// add % identity
 				t = new Text();
 				gi = new MyGridItem();
-				t.text = arr[i].IDENTITY;
-				t.width = 70;
+				t.text = arr[i]['PERCENT_IDENTITY'];
 				gi.addChild(t);
 				gr.addChild(gi);
 				
 				// add % similarity
 				t = new Text();
 				gi = new MyGridItem();
-				t.text = arr[i].SIMILARITY;
-				t.width = 80;
+				t.text = arr[i]['PERCENT_SIMILARITY'];
 				gi.addChild(t);
 				gr.addChild(gi);
 				
@@ -239,11 +225,11 @@ package detail
 					gi.colSpan = 7;
 					
 					t = new Text();
-					anno = arr[i].FXNANNO;
-					t.htmlText = "<b>FXN 1:</b> " + anno[0].FXN1 + 
-								 "<br/><b>FXN 2:</b> " + anno[0].FXN2 + 
-								 "<br/><b>DESC:</b> " + anno[0].DESC + 
-								 "<br/><b>SUBSYSTEM:</b> " + anno[0].SUBSYSTEM;
+					anno = arr[i]['FXNANNO'];
+					t.htmlText = "<b>FXN 1:</b> " + anno[0]['FXN1'] + 
+								 "<br/><b>FXN 2:</b> " + anno[0]['FXN2'] + 
+								 "<br/><b>DESC:</b> " + anno[0]['DESC'] + 
+								 "<br/><b>SUBSYSTEM:</b> " + anno[0]['SUBSYSTEM'];
 					t.percentWidth=100;
 					gi.addChild(t);
 					
@@ -269,11 +255,11 @@ package detail
 					gi.colSpan = 7;
 					
 					t = new Text();
-					anno = arr[i].FXNANNO;
-					t.htmlText = "<b>FXN 1:</b> " + anno[0].FXN1 + 
-								 "<br/><b>FXN 2:</b> " + anno[0].FXN2 + 
-								 "<br/><b>FXN 3:</b> " + anno[0].FXN3 + 
-								 "<br/><b>EC. NO.:</b> " + anno[0].ECNO;
+					anno = arr[i]['FXNANNO'];
+					t.htmlText = "<b>FXN 1:</b> " + anno[0]['FXN1'] + 
+								 "<br/><b>FXN 2:</b> " + anno[0]['FXN2'] + 
+								 "<br/><b>FXN 3:</b> " + anno[0]['FXN3'] + 
+								 "<br/><b>EC. NO.:</b> " + anno[0]['ECNO'];
 					t.percentWidth=100;
 					gi.addChild(t);
 					
@@ -299,10 +285,10 @@ package detail
 					gi.colSpan = 7;
 					
 					t = new Text();
-					anno = arr[i].FXNANNO;
-					t.htmlText = "<b>FXN 1:</b> " + anno[0].FXN1 + 
-								 "<br/><b>FXN 2:</b> " + anno[0].FXN2 + 
-								 "<br/><b>FXN 3:</b> " + anno[0].FXN3;
+					anno = arr[i]['FXNANNO'];
+					t.htmlText = "<b>FXN 1:</b> " + anno[0]['FXN1'] + 
+								 "<br/><b>FXN 2:</b> " + anno[0]['FXN2'] + 
+								 "<br/><b>FXN 3:</b> " + anno[0]['FXN3'];
 					t.percentWidth=100;
 					gi.addChild(t);
 					
@@ -327,27 +313,29 @@ package detail
 					gi = new MyGridItem();
 					gi.colSpan = 7;
 					
-					t = new Text();
-					anno = arr[i].FXNANNO;
-					t.htmlText = "<br/><b>GO SLIM DESC:</b> " + anno[0].GOSLIM_DESC;
-					//"<b>GO SLIM ACC:</b> " + arr[i].GOSLIM_ACC + 
-					t.percentWidth=100;
-					gi.addChild(t);
+					anno = arr[i]['FXNANNO'];
+					if (anno.length) {
+						t = new Text();
+						t.htmlText = "<br/><b>GO SLIM DESC:</b> " + anno[0]['GOSLIM_DESC'];
+						//"<b>GO SLIM ACC:</b> " + arr[i].GOSLIM_ACC + 
+						t.percentWidth=100;
+						gi.addChild(t);
 					
-					if (anno.length > 1){
-						_lb = new LinkButton();
-						//_lb.label = "more fxnal evidence...";
-						//_lb.addEventListener(MouseEvent.CLICK,function (e:MouseEvent):void{
-						//	fxnEvidence(e,anno,str);
-						//});
-						gi.addChild(_lb);
+						if (anno.length > 1){
+							_lb = new LinkButton();
+							_lb.label = "more fxnal evidence...";
+							_lb.addEventListener(MouseEvent.CLICK,function (e:MouseEvent):void{
+								fxnEvidence(e,anno,str);
+							});
+							gi.addChild(_lb);
+						}
 					}
 					
 					gr.addChild(gi);
 					this.addChild(gr);
 				}
 				
-				this.validateNow();
+				//this.validateNow();
 			}
 		}
 		

@@ -10,12 +10,11 @@
 			<cfquery name="q" datasource="#server#">
 				SELECT distinct s.id,
 								s.name,
-								s.basepair,
 								s.size,
 								s.header
 				FROM	sequence s
 					INNER JOIN
-						sequence_relationship sr on sr.objectId=s.id
+						sequence_relationship sr on sr.objectId = s.id
 				WHERE	sr.subjectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
 					and sr.typeId = 3
 					and s.deleted = 0
@@ -23,7 +22,7 @@
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("SEQUENCE.CFC - GETORFS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -51,7 +50,7 @@
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("SEQUENCE.CFC - GETTRNA", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -60,15 +59,18 @@
 	</cffunction>
 
 	<cffunction name="getBlastHit" access="private" returntype="query">
-		<cfargument name="id" type="Numeric" required="true" />
+		<cfargument name="orfId" type="Numeric" required="false" default="-1" />
+		<cfargument name="readId" type="numeric" required="false" default="-1"> 
 		<cfargument name="topHit" type="Numeric" required="true" />
 		<cfargument name="server" type="String" required="true" />
 		<cfargument name="database" type="String" required="true"/>
 		
-		<cfset q=""/>
 		<cftry>
-			<cfquery name="q" datasource="#arguments.server#">
+			<cfset q=""/>
+			
+			<cfquery name="q" datasource="#arguments.server#" result="qrslt">
 				SELECT	b.sequenceId,
+						b.id,
 						b.query_name,
 						b.query_length,
 						b.algorithm,
@@ -84,6 +86,7 @@
 						b.raw_score,
 						b.bit_score,
 						b.e_value,
+						format((((b.qry_end-b.qry_start+1)/b.query_length)*100),2) as qry_coverage,
 						b.subject_length,
 						b.domain,
 						b.kingdom,
@@ -94,101 +97,77 @@
 						b.genus,
 						b.species,
 						b.organism,
-						b.id,
 						b.sys_topHit,
 						b.fxn_topHit,
-						s.size
+						sr.objectId
 				FROM	blastp b
-					INNER JOIN
-						sequence s on b.sequenceId = s.id
-				WHERE	b.deleted = 0
-					and b.e_value <= 0.001
+					<cfif arguments.readId gt -1>
+						right join 
+							sequence_relationship sr on b.sequenceId = sr.objectId
+					</cfif>
+				WHERE	<cfif arguments.readId gt -1>
+							sr.subjectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+							and sr.typeId=3 
+						<cfelse>
+					 		b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
+						 </cfif>
 					<cfif arguments.topHit>
 						and	b.sys_topHit = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.topHit#"/>
 					</cfif>
 					<cfif len(arguments.database)>
-						and b.database_name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.database#"/>
+						and b.database_name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#trim(arguments.database)#"/>
 					</cfif>
-					and b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
-				ORDER BY b.fxn_topHit desc, b.sys_topHit desc, b.sequenceId, b.database_name desc 
+					and b.e_value <= 0.001
+					and b.deleted = 0
+				ORDER BY b.query_name, b.sequenceId, b.database_name desc 
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("SEQUENCE.CFC - GETDBDETAIL", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q>
+			</cffinally>
 		</cftry>
-
-		<cfreturn q>
+		
 	</cffunction>
 	
-	<cffunction name="splitBlastResult" access="private" returntype="any" 
-		hint="Split blast query result into hsp and tax ">
-		<cfargument name="qry" type="Query" required="true" />
-		<cfargument name="idx" type="Numeric" required="false" default="0"/>
-		<cfargument name="server" type="String" required="true" />
-		<cfargument name="environment" type="String" required="true"/>
+	<cffunction name="getEnvironmentDetail" access="private" returntype="Struct">
+		<cfargument name="prefix" type="string" required="true" >
 		
-		<cfset array=ArrayNew(1)/>
-
 		<cftry>
-			<cfscript>
-				if (arguments.idx){
-					fromIndex = idx;
-					toIndex = idx;
-				} else {
-					fromIndex = 1;
-					toIndex = qry.recordCount;
-				}
-				
-				for (rowIndex=fromIndex; rowIndex lte toIndex; rowIndex=rowIndex+1){
-					local.tax = StructNew();
-					local.hsp = StructNew();
-					local.bstruct = StructNew();
-					
-					_hitdesc = q['hit_description'][rowIndex];
-					//remove metagenome reformat correct value should be in blast table
-					/*if ((len(q['hit_description'][rowIndex]) < 1) and 
-						(qry["database_name"][rowIndex] eq "METAGENOMES"))
-							_hitdesc = CreateObject("component",  application.cfc & ".Utility").getMetaHitDesc(hitName=qry["hit_name"][rowIndex]);
-					*/
-					
-					// get hsp values
-					StructInsert(local.hsp,"EVALUE",qry["e_value"][rowIndex]);
-					StructInsert(local.hsp,"BITSCORE",qry["bit_score"][rowIndex]);
-					StructInsert(local.hsp,"IDENTITY",qry["percent_identity"][rowIndex]);
-					StructInsert(local.hsp,"SIMILARITY",qry["percent_similarity"][rowIndex]);
-					StructInsert(local.hsp,"HITNAME",qry["hit_name"][rowIndex]);
-					StructInsert(local.hsp,"QUERYNAME",qry["query_name"][rowIndex]);
-					StructInsert(local.hsp,"HITDESCRIPTION",_hitdesc);
-					StructInsert(local.hsp,"HITSTART",qry["hit_start"][rowIndex]);
-					StructInsert(local.hsp,"HITEND",qry["hit_end"][rowIndex]);
-					StructInsert(local.hsp,"QUERYSTART",qry["qry_start"][rowIndex]);
-					StructInsert(local.hsp,"QUERYEND",qry["qry_end"][rowIndex]);
-					StructInsert(local.hsp,"SUBJECTLENGTH",qry["subject_length"][rowIndex]);
-					StructInsert(local.hsp,"SIZE",qry["size"][rowIndex]);
-					StructInsert(local.hsp,"QRYSTART",qry["qry_start"][rowIndex]);
-					StructInsert(local.hsp,"QRYEND",qry["qry_end"][rowIndex]);
-					StructInsert(local.hsp,"DATABASENAME",qry["database_name"][rowIndex]);
-					StructInsert(local.hsp,"ALGORITHM",qry["algorithm"][rowIndex]);
-					StructInsert(local.hsp,"SEQUENCEID",qry["sequenceId"][rowIndex]);
-					StructInsert(local.hsp,"ENVIRONMENT",arguments.environment);
-					
-					local.bstruct['hsp']=local.hsp;
-					ArrayAppend(array,local.bstruct);
-				}
-				
-				if (arguments.idx)
-					return array[1];
-				else return array;
-			</cfscript>
+			<cfset struct = structNew()/>
+			
+			<cfquery name="q" datasource="#request.mainDSN#">
+				SELECT	seq_type,
+						lib_type,
+						na_type,
+						genesis,
+						sphere,
+						ecosystem,
+						phys_subst,
+						lib_name
+				FROM	mgol_library
+				WHERE	lib_prefix = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.prefix#">
+					and deleted = 0
+			</cfquery>
+			
+			<cfif q.recordcount>
+				<cfset struct = CreateObject("component", request.cfc & ".Utility").QueryToStruct(q, 1)/>
+			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("SEQUENCE.CFC - GETDBDETAIL", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn struct/>
+			</cffinally>
 		</cftry>
-	</cffunction>
+	</cffunction> 
 
 	<cffunction name="getBlastImage" access="private" returntype="String">
 		<cfargument name="qry" required="true" type="Query" />
@@ -206,7 +185,7 @@
 			<cfset imgFileName = sname & "_orf.gif">
 			
 			<cfscript>
-				myfile = FileOpen("#application.blastImgFilePath#/txt/#tabFileName#","write");
+				myfile = FileOpen("#request.blastImgFilePath#/txt/#tabFileName#","write");
 			</cfscript>
 				
 			<!--- Get true size of the read. --->
@@ -226,12 +205,12 @@
 							#chr(9)# & "0" & #chr(9)# & "0" & #chr(9)# & "0" & #chr(9)# & "0">
 				
 				<cfscript>
-					//FileWriteLine(myfile, str & application.linefeed);
+					//FileWriteLine(myfile, str & request.linefeed);
 					FileWriteLine(myfile, str);
 				</cfscript>
 			</cfloop>
 
-			<cfif not FileExists("#application.blastImgFilePath#/img")>
+			<cfif not FileExists("#request.blastImgFilePath#/img")>
 				<cfset count = 1>
 
 				<!--- get orf info in the blast imager. --->
@@ -245,29 +224,29 @@
 
 					<cfset orftype = 0>
 					<cfset orf_info_struct = structNew()/>
-					<cfloop list="qry.header" index="item" delimiters=" " >
+					<cfloop list="#qry.header#" index="item" delimiters=" " >
 						<cfset data = listToArray(item,"=")/>
 						<cfset orf_info_struct[data[1]] = data[2]/>
 					</cfloop>
 					
-					<cfif Find("incomplete",orf_info_strct['type'],0)>
+					<cfif Find("incomplete",orf_info_struct['type'],0)>
 						<cfset orftype = "3">
-					<cfelseif Find("complete",orf_info_strct['type'],0)>
+					<cfelseif Find("complete",orf_info_struct['type'],0)>
 						<cfset orftype = "0">
-					<cfelseif Find("lack_stop",orf_info_strct['type'],0)>
+					<cfelseif Find("lack_stop",orf_info_struct['type'],0)>
 						<cfset orftype = "1">
-					<cfelseif Find("lack_start",orf_info_strct['type'],0)>
+					<cfelseif Find("lack_start",orf_info_struct['type'],0)>
 						<cfset orftype = "2">
 					</cfif>
 
 					<cfset blastImager = blastImager & orftype & #chr(9)# &
-										 orf_info_strct['end']-orf_info_strct['start'] & #chr(9)# &
-										 orf_info_strct['strand'] & (abs(orf_info_strct['start']-orf_info_strct['frame']-1)%3) & 
+										 orf_info_struct['stop']-orf_info_struct['start'] & #chr(9)# &
+										 orf_info_struct['strand'] & (abs(orf_info_struct['start']-orf_info_struct['frame']-1)%3) & 
 										 #chr(9)# & 0 & #chr(9)# &
-										 orf_info_strct['start'] & #chr(9)# &
-										 orf_info_strct['end'] & #chr(9)# &
+										 orf_info_struct['start'] & #chr(9)# &
+										 orf_info_struct['stop'] & #chr(9)# &
 										 0 & #chr(9)# & 0 & #chr(9)# &
-										 NumberFormat(Round(orf_info_strct['score']), "__") & #chr(9)# & 0>
+										 NumberFormat(Round(orf_info_struct['score']), "__") & #chr(9)# & 0>
 					
 					<cfscript>
 						FileWriteLine(myfile, blastImager);
@@ -302,17 +281,17 @@
 					FileClose(myfile);
 				</cfscript>
 				
-				<cfexecute 	name="#application.blastImgFilePath#/wrapper.sh"
-			                arguments="#application.blastImgFilePath#/txt/#tabFileName#"
-			                outputFile="#application.blastImgFilePath#/img/#imgFileName#"
+				<cfexecute 	name="#request.blastImgFilePath#/wrapper.sh"
+			                arguments="#request.blastImgFilePath#/txt/#tabFileName#"
+			                outputFile="#request.blastImgFilePath#/img/#imgFileName#"
 			                timeout="10">
 				</cfexecute>				
 			</cfif>
 				
-			<cfset img= "#application.rootHostPath#/blastImager/img/#imgFileName#">
+			<cfset img= "#request.rootHostPath#/blastImager/img/#imgFileName#">
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("READRPC.CFC - GETBLASTIMAGE", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -331,7 +310,7 @@
 		<cfset local.acc = Left(arguments.acc,idx) />
 				
 		<cftry>			
-			<cfquery name="aq" datasource="#application.lookupDSN#">
+			<cfquery name="aq" datasource="#request.lookupDSN#">
 				SELECT	a.id,
 						a.realacc,
 						a.desc,
@@ -346,10 +325,10 @@
 				LIMIT 1
 			</cfquery>
 			
-			<cfset st = CreateObject("component", application.cfc & ".Utility").QueryToStruct(query=aq,row=1)/>
+			<cfset st = CreateObject("component", request.cfc & ".Utility").QueryToStruct(query=aq,row=1)/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
+				<cfset CreateObject("component",  request.cfc & ".Utility").
 					reporterror("READRPC.CFC - GETACLAMEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -358,188 +337,144 @@
 	</cffunction>
 
 	<cffunction name="getSequenceInfo" access="remote" returntype="Struct">
-		<cfargument name="id" type="Numeric" required="true"/>
-		<cfargument name="name" type="String" required="true"/>
-		<cfargument name="environment" type="String" required="true"/>
-
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.environment) />
-		<cfset _server = _serverObject['server']/>
-		<cfset _environment = _serverObject['environment']/>
+		<cfargument name="orfId" type="numeric" required="true" />
+		<cfargument name="readId" type="numeric" required="true" />
+		<cfargument name="environment" type="string" required="true" />
 		
-		<cfset struc = StructNew()>
-		<cfset _readId = 0>
+		<!--- 	get details about a read and return a detail struct
+				struct includes following fields
+					id
+					name
+					basepair
+					size
+					number of ORFs
+					number of tRNA
+					taxonomy table
+					blastImager 
+		--->
 		
 		<cftry>
-			<!--- id passed in will always be sequence Id of an orf, so first
-			get the read information of the given orf --->
-			<cfquery name="rq" datasource="#_server#">
+			<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.environment) />
+			<cfset _server = _serverObject['server']/>
+			
+			<!--- if orfId is passed then use orfId --->
+			<cfset local.id = arguments.readId />
+			<cfif arguments.orfId gt 0>
+				<cfset local.id = arguments.orfId />
+			</cfif>
+			
+			<cfset object = StructNew()/>
+			<cfset object['ENVIRONMENT'] = arguments.environment />
+			<cfset object['LIBRARYID'] = _serverObject['library'] />
+			
+			<cfquery name="qry" datasource="#_server#" >
 				SELECT	s.id,
 						s.name,
 						s.basepair,
-						s.size,
-						o.readId
-				FROM	orf o
+						s.size
+				FROM	sequence s
 					INNER JOIN
-						sequence s on o.readId=s.id
-				WHERE	o.seqId = <cfqueryparam cfsqltype="CF_SQL_NUMERIC" value="#arguments.id#" null="false">
+						sequence_relationship sr on sr.subjectId = s.id
+				WHERE	sr.objectId = <cfqueryparam cfsqltype="CF_SQL_NUMERIC" value="#local.id#" null="false">
+					<cfif arguments.orfId gt 0>
+						and sr.typeId = 3
+					<cfelse>
+						and sr.typeId = 1
+					</cfif>
+					and s.deleted = 0
 			</cfquery>
 			
-			<!--- if there is an orf value, then there will alway be a read,
-			so no need to check if query returned anything rows. 
-			IF RQ IS EMPTY THEN THERE IS A DISCREPANCY IN THE DATABASE --->
-			<cfset rStruct = structnew()/>
-			<cfoutput query="rq" maxrows="1">
-				<cfscript>
-					_readId = rq.readId;
-					
-					StructInsert(rStruct,"ID",rq.id);
-					StructInsert(rStruct,"NAME",rq.name);
-					StructInsert(rStruct,"BASEPAIR",rq.basepair);
-					StructInsert(rStruct,"SIZE",rq.size);
-				</cfscript>
-			</cfoutput>
-
 			<cfscript>
-				struct = StructNew();
+				if (qry.recordCount) {
+					object = CreateObject("component", request.cfc & ".Utility").QueryToStruct(qry, 1);
 
-				//get ORF's
-				orfQuery = getORFs(readId=_readId,server=_server);
-				orfArray = CreateObject("component", application.cfc & ".Utility").QueryToStruct(orfQuery);
-				
-				StructInsert(struct,"read",rStruct);
-				StructInsert(struct,"orf",orfArray);
-				//return the structure.
-				return struct;
-			</cfscript>
+					orfQry = getORFs(readId=qry['id'][1], server=_server);
+					tQry = gettRNA(readId=qry['id'][1], server=_server);
 
-			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETSEQUENCEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-			</cfcatch>
-		</cftry>
-	</cffunction>
-
-	<cffunction name="getORFSummary" access="remote" retuntype="Struct">
-		<cfargument name="id" type="Numeric" required="true" />
-		<cfargument name="environment" type="String" required="true"/>
-		<cfargument name="database" type="String" required="false" default=""/>
-		<cfargument name="topHit" type="Numeric" required="false" default="0"/>
-		
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.environment) />
-		<cfset _server = _serverObject['server']/>
-		<cfset _environment = _serverObject['environment']/>
-		
-		<cfset struct = StructNew()>
-		<cftry>
-			<cfset orfQry = getORFs(readId=arguments.id,server=_server)/>
-			<cfset tQry = gettRNA(readId=arguments.id,server=_server)/>
-			
-			<cfif orfQry.recordcount>
-				<!---  add image of orfs over original seq.--->
-				<cfset idx = REFind("_\d+_\d+_\d+$",orfQry.name,0,"false")/>
-				<cfset img = getBlastImage(qry=orfQry,tqry=tQry,sname=Left(orfQry.name,idx-1),readId=arguments.id,server=_server)/>
-				<cfset StructInsert(struct,"IMAGE",img)/>
-			</cfif>
-			
-			<!--- loop through all orfs for a given read --->
-			<cfloop query="orfQry">
-			<cfset arr = ArrayNew(1)>
-				<cfset blast = getBlastHit(id=orfQry.id,topHit=arguments.topHit,server=_server,database=arguments.database)/>
-				
-				<!--- loop over all top blast hits for a given orf --->
-				<cfif IsQuery(blast)>
-					<cfloop query="blast">
-						<!--- check  if database struct already exist--->
-						<cfset splt = splitBlastResult(qry=blast,idx=blast.currentRow,server=_server,environment=arguments.environment) />
-						<cfif not StructIsEmpty(struct) and StructKeyExists(struct,blast.database_name)>
-							<cfset arr = struct[blast.database_name]/>
-							<cfset ArrayAppend(arr,splt['hsp'])/>
-							<cfset Structupdate(struct,blast.database_name,arr)/>	
-						<cfelse>
-							<cfset arr = ArrayNew(1)>
-							<cfset ArrayAppend(arr,splt['hsp'])/>
-							<cfset StructInsert(struct,blast.database_name,arr)/>
-						</cfif>
-					</cfloop>
-				</cfif>
-			</cfloop>
-			
-			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETORFSUMMARY", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-			</cfcatch>
-		</cftry>
-		
-		<cfreturn struct/>
-	</cffunction>
-
-	<cffunction name="getTaxonomicInfo" access="remote" returntype="Struct">
-		<cfargument name="id" type="Numeric" required="true" />
-		<cfargument name="environment" type="String" required="true"/>
-
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.environment) />
-		<cfset _server = _serverObject['server']/>
-		<cfset _environment = _serverObject['environment']/>
-		
-		<cfset struct = StructNew()>
-		<cftry>
-			<cfset orfQry = getORFs(readId=arguments.id,server=_server)/>
-			<cfset taxArray = ArrayNew(1)/>
-			<cfset aclArray = ArrayNew(1)/>
-			
-			<cfloop query="orfQry">
-				<cfset local.qry = getBlastHit(id=orfQry.id,topHit=1,fxnHit=0,server=_server,database="")/>
-				
-				<cfloop query="local.qry">
-					<cfscript>
-						if (local.qry.database_name eq 'UNIREF100P'){
-							local.tax = StructNew();
-							StructInsert(local.tax,"DOMAIN",local.qry.domain);
-							StructInsert(local.tax,"KINGDOM",local.qry.kingdom);
-							StructInsert(local.tax,"PHYLUM",local.qry.phylum);
-							StructInsert(local.tax,"CLASS",local.qry.class);
-							StructInsert(local.tax,"ORDER",local.qry.order);
-							StructInsert(local.tax,"FAMILY",local.qry.family);
-							StructInsert(local.tax,"GENUS",local.qry.genus);
-							StructInsert(local.tax,"SPECIES",local.qry.species);
-							StructInsert(local.tax,"ORGANISM",local.qry.organism);
-							StructInsert(local.tax,"QUERYNAME",local.qry.query_name);
-							StructInsert(local.tax,"SEQUENCEID",local.qry.sequenceId);
-							
-							ArrayAppend(taxArray,local.tax);
+					
+					// create orf array of struct for blastImager and to create 
+					// empty orf viewstack.
+					orf_arr = ArrayNew(1);
+					
+					for (var i=1; i<=orfQry.recordcount; i++){
+						orf_st = StructNew();
+						orf_st['ID'] = orfQry['id'][i];
+						orf_st['NAME'] = orfQry['name'][i];
+						orf_st['SIZE'] = orfQry['size'][i];
+						
+						structappend(orf_st, CreateObject("component", request.cfc & ".Utility").SeqHeaderToStruct(orfQry['header'][i]));
+						arrayappend(orf_arr,orf_st);
+					}
+					
+					// create trna array of struct for blast imager
+					trna_arr = ArrayNew(1);
+					for (var i=1; i<= tQry.recordcount; i++) {
+						trna_st = structNew();
+						trna_st['NAME'] = object['NAME'];
+						if (tQry['trna_start'][i] gt tQry['trna_end'][i]) {
+							trna_st['START'] = tQry['trna_end'][i];
+							trna_st['STOP'] = tQry['trna_start'][i];
+							trna_st['STRAND'] = "-";
+						} else {
+							trna_st['START'] = tQry['trna_start'][i];
+							trna_st['STOP'] = tQry['trna_end'][i];
+							trna_st['STRAND'] = "+";
 						}
 						
-						if (local.qry.database_name eq 'ACLAME'){
-							astruct = getACLAMEInfo(acc=local.qry.hit_name);
-							
-							if (NOT StructIsEmpty(astruct)){
-								str = "";
-								orfNum = Left(reverse(local.qry.query_name),Find("_",reverse(local.qry.query_name))-1);
-								if (astruct["MGE_TYPE"] eq "plasmid"){
-									str = "ORF_#orfNum#  was homologus (eval: #local.qry.e_value#) to #astruct["realacc"]# #astruct["desc"]# ";
-									str = str & "from #astruct["mge_host_organism"]# plasmid #astruct["mge_name"]#.";
+						trna_st['ANTI'] = tQry['anti'][i];
+						trna_st['INTRON'] = tQry['INTRON'][i];
+						
+						arrayappend(trna_arr, trna_st);
+					}
+					
+					
+					object['ORF'] = orf_arr;
+					object['TRNA'] = trna_arr;
+					
+					object['TRNA_COUNT'] = tQry.recordcount;
+					object['ORF_COUNT'] = orfQry.recordcount;
+					
+					//required for blast imager
+					object['START'] = 1;
+					object['STOP'] = object['SIZE'];
+					object['STRAND'] = "+"; //dummy value
+					object['FRAME'] = "0"; //dummy value
+					object['TYPE'] = "complete"; //dummy value
+
+					// list of db's for top blast result table.
+					db_list = "UNIREF100P,ACLAME,SEED,KEGG,COG,METAGENOMES";
+					orf_env_detail = arrayNew(1);
+					
+					for (var i=1; i<=listLen(db_list); i++) {
+						orf_blast_details = getBlastHit(readId=qry['id'][1], topHit=1, server=_server, database=listGetAt(db_list, i));
+
+						orf_blast_struct = StructNew();
+						if (orf_blast_details.recordcount) {
+							orf_blast_struct = CreateObject("component", request.cfc & ".Utility").QueryToStruct(orf_blast_details);
+							object[listGetAt(db_list, i)] = orf_blast_struct;
+								
+							if (listGetAt(db_list,i) eq "METAGENOMES") {
+								for (var j=1; j<=orf_blast_details.recordcount; j++) {
+									orf_env_struct = getEnvironmentDetail(left(orf_blast_details['hit_name'][j], 3));
+									orf_env_struct['QUERY_NAME'] = orf_blast_details['query_name'][j];
+									arrayappend(orf_env_detail, orf_env_struct);
 								}
-								else {
-									str = "ORF_" & orfNum &  "was homologus (eval: #local.qry.e_value#) to #astruct["realacc"]# #astruct["desc"]# in a ";
-									str	= str &	"#astruct["mge_genome_org"]# #astruct["mge_genometype"]# virus (#astruct["mge_name"]#) ";
-									str = str & "infecting host #astruct["mge_host_organism"]#.";
-								}
-								ArrayAppend(aclArray,str);
+								object['ORF_ENV_DETAIL'] = orf_env_detail;
 							}
 						}
-					</cfscript>
-				</cfloop>
-			</cfloop>
-			
-			<cfset StructInsert(struct,"TAXONOMY",taxArray)/>
-			<cfset StructInsert(struct,"ACLAME",aclArray)/>
+					}
+				}
+			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETTAXONOMICINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").
+					reporterror("READRPC.CFC - GETSEQUENCEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
-		</cftry>
-		
-		<cfreturn struct/>
+			
+			<cffinally>
+				<cfreturn object/>
+			</cffinally>
+		</cftry>		
 	</cffunction>
+
 </cfcomponent>

@@ -105,7 +105,7 @@
 				}
 				
 				//get sequence information.
-				getReadSeqRequest.token=ReadRPC.getSequenceInfo(sequenceId,seqname,environment);
+				//getReadSeqRequest.token=ReadRPC.getSequenceInfo(sequenceId,seqname,environment);
 				var v:virome = _util.app;
 				v.addEventListener(MyChgTabEvent.CHANGE_TAB_EVENT,changeTabEventHandler);
 			}  
@@ -164,7 +164,7 @@
 				hbox.addChild(vbar);
 				hbox.validateNow();
 				
-				getTaxInfo.token = ReadRPC.getTaxonomicInfo(readId,environment);
+				//getTaxInfo.token = ReadRPC.getTaxonomicInfo(readId,environment);
 			}
 			
 			protected function orfTab(arr:Array):void{
@@ -182,12 +182,20 @@
 					_tabNav.addChild(hbox);
 					_tabNav.validateNow();
 					
-					colorTab(arr[i].TYPE);
+					//split header info to get orf type.
+					var key_val:Array = (arr[i].HEADER).split(/\s+/);
+					for (var j:int = 0; j<key_val.length; j++){
+						var item:Array = key_val[j].split(/=/);
+						if (item[0] == "type"){
+							colorTab(item[1]);
+						}
+					}
+					//colorTab(arr[i].TYPE);
 				}
 				
 				//change tab view to the selected orf from search view.
 				//eg _1 or _2 or _3
-				_tabNav.selectedIndex = _tabSelected;				
+				_tabNav.selectedIndex = _tabSelected;
 			}
 			
 			protected function taxInfoResponse(event:ResultEvent):void{
@@ -258,7 +266,7 @@
 				hbox.removeChildAt(0);
 				hbox.addChildAt(vbox,0);
 				
-				getORFTopHit.token = ReadRPC.getORFSummary(readId,environment,"",1);
+				//getORFTopHit.token = ReadRPC.getORFSummary(readId,environment,"",1);
 			}
 			
 			protected function allTopHitResponse(event:ResultEvent):void{
@@ -382,7 +390,7 @@
 				if ((!_loadTab[newIndex-1]) && (newIndex > 0)){
 					_loadTab[newIndex-1]=1;
 					var hbox:HBox = _tabNav.getChildAt(newIndex) as HBox;
-					getOrfSeqRequest.token = OrfRPC.getSequenceInfo(parseInt(hbox.id),_seqname,_environment,newIndex);
+					//getOrfSeqRequest.token = OrfRPC.getSequenceInfo(parseInt(hbox.id),_seqname,_environment,newIndex);
 				}
 			}
 			
@@ -458,7 +466,7 @@
 					
 					hbox.addChild(vbox);
 					hbox.validateNow();
-					getBlastHeatMap.token = OrfRPC.heatMap(parseInt(hbox.id),_environment,obj.TABINDEX);
+					//getBlastHeatMap.token = OrfRPC.heatMap(parseInt(hbox.id),_environment,obj.TABINDEX);
 					
 				}
 				else {

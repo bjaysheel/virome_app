@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:s="library://ns.adobe.com/flex/spark"
 	xmlns:mx="library://ns.adobe.com/flex/mx" 
-	layout="vertical" width="100%" height="100%"
+	width="100%" height="100%"
 	xmlns:cfservice="services.*"
-	title="Browse" 
 	addedToStage="onAddtoStage()"
 	creationComplete="onCreationComplete()" 
 	show="onShow()" xmlns:library="services.library.*">
@@ -26,115 +25,191 @@
 			import mx.rpc.events.ResultEvent;
 			
 			public var tracker:AnalyticsTracker;
-			private var loadarr:Array = new Array; 
+			private var _pubLoadArr:Array = new Array;
+			private var _privLoadArr:Array = new Array;
 			
 			[Bindable] public var readyNessBit:Boolean = false;
 			
 			[Bindable] private var _util:MyUtility = new MyUtility();
 			[Bindable] private var pendingEvent:BrowseEnvEvent = new BrowseEnvEvent();
-			[Bindable] private var _accordian:Accordion = new Accordion();
+			[Bindable] private var _pubAccordion:Accordion = new Accordion();
+			[Bindable] private var _privAccordion:Accordion = new Accordion();
 			
-			protected function onAddtoStage():void{
+			private function onAddtoStage():void{
 				tracker = new GATracker( this, _util.trackerId, "AS3", false );
 				
 				_util.app.addEventListener(BrowseEnvEvent.BROWSE_ENVIRONMENT_EVENT, browseEnvironment);				
 				this.addEventListener(BrowseEnvEvent.BROWSE_ENVIRONMENT_EVENT, browseEnvironment);
 			}
 			
-			protected function onShow():void{
+			private function onShow():void {
 				//set google tracker
 				tracker.trackPageview( "/Browser" );
 			}
 			
-			protected function onCreationComplete():void{
+			private function onCreationComplete():void {
 				//parameter passed is groupId
-				_accordian.percentHeight=100;
-				_accordian.percentWidth=100;
-				_accordian.addEventListener(IndexChangedEvent.CHANGE,accordianChangeHandler);
-				this.addChild(_accordian);
+				_pubAccordion.percentHeight = 100;
+				_pubAccordion.percentWidth = 100;
+				_pubAccordion.label = "Public libraries";
+				_pubAccordion.name = "PUBLIC";
+				_pubAccordion.addEventListener(IndexChangedEvent.CHANGE, accordianChangeHandler);
+				browse_tab.addChild(_pubAccordion);
 				
-				environmentRequest.token = Library.getEnvironmentObject('');
+				pubEnvRequest.token = Library.getEnvironmentObject('');
+				
+				// add handler if user log in/out after browser view is displayed.
+				_util.app.addEventListener("userLogInOut", userEventHandler);
+				
+				//first time when browse tab is created user could be logged in so check
+				checkUserAction();
 			}
 			
-			protected function browseEnvironment(e:BrowseEnvEvent):void{
-				if (!readyNessBit){
+			private function userEventHandler(e:Event):void {
+				checkUserAction();
+			}
+			
+			private function checkUserAction():void {
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined && (_util.app.cookie.LIBRARYID).length){
+					_privAccordion = new Accordion();
+					_privAccordion.percentHeight = 100;
+					_privAccordion.percentWidth = 100;
+					_privAccordion.label = "Private libraries";
+					_privAccordion.name = "PRIVATE";
+					_privAccordion.addEventListener(IndexChangedEvent.CHANGE, accordianChangeHandler);
+					browse_tab.addChild(_privAccordion);
+					
+					privEnvRequest.token = Library.getEnvironmentObject(_util.app.cookie.LIBRARYID);
+				} else {
+					for (var i:int=0; i<browse_tab.numChildren; i++) {
+						if (browse_tab.getChildAt(i).name != "PUBLIC")
+							browse_tab.removeChildAt(i);
+					}
+				}
+			}
+			
+			private function browseEnvironment(e:BrowseEnvEvent):void {
+				if (!readyNessBit) {
 					pendingEvent.duplicate(e);
 					pendingEvent.pending = true;
-				}else {
+				} else {
 					var event:IndexChangedEvent = new IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE,false,true);
 	
-					_accordian.selectedIndex = _accordian.getChildIndex(_accordian.getChildByName(e.environment));
-					event.newIndex = _accordian.selectedIndex;
-					_accordian.dispatchEvent(event);
+					_pubAccordion.selectedIndex = _pubAccordion.getChildIndex(_pubAccordion.getChildByName(e.environment));
+					event.newIndex = _pubAccordion.selectedIndex;
+					_pubAccordion.dispatchEvent(event);
 					pendingEvent.pending = false;
 				}
 			}
 			
-			protected function environmentResponse(event:ResultEvent):void {
+			private function pubEnvResponse(event:ResultEvent):void {
 				//local var
 				var result:ArrayCollection = event.result as ArrayCollection;
 				
-				//loop through all env returend
-				for (var i:int=0;i<result.length; i++){
-					if (result.getItemAt(i).label != "Select One"){
-						var str:String = (result.getItemAt(i).label as String);
-						
-						//create vbox for environment
-						var vbox:VBox = new VBox();
-						vbox.percentWidth = 100;
-						vbox.id = result.getItemAt(i).label;
-						vbox.name = result.getItemAt(i).label;
-						vbox.label = result.getItemAt(i).label;
-						
-						//add vbox to accordian.
-						_accordian.addChild(vbox);
-						loadarr.push(0);
-					}
-				}
+				addToAccordion(result);
 				
 				readyNessBit = true;
 				
 				if (pendingEvent.pending) {
 					this.dispatchEvent(pendingEvent);
 				} else {
-					_accordian.selectedIndex = 0;
-					_accordian.dispatchEvent(new mx.events.IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE));
+					_pubAccordion.selectedIndex = 0;
+					_pubAccordion.dispatchEvent(new mx.events.IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE));
 				}
 			}
+			
+			private function privEnvResponse(event:ResultEvent):void {
+				var result:ArrayCollection = event.result as ArrayCollection;
+				
+				addToAccordion(result);
+				
+				_privAccordion.selectedIndex = 0;
+				_privAccordion.dispatchEvent(new mx.events.IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE));
+			}
+			
+			private function addToAccordion(ac:ArrayCollection): void {
+				//loop through all env returend
+				for (var i:int=0; i<ac.length; i++) {
+					if (ac.getItemAt(i).label != "Select One") {
+						var str:String = (ac.getItemAt(i).label as String);
 						
-			protected function libraryResponse(event:ResultEvent):void{
+						//create vbox for environment
+						var vbox:VBox = new VBox();
+						vbox.percentWidth = 100;
+						vbox.id = ac.getItemAt(i).label;
+						vbox.name = ac.getItemAt(i).label;
+						vbox.label = ac.getItemAt(i).label;
+						
+						//add vbox to accordian.
+						if (ac.getItemAt(i).type == "PUBLIC") {
+							_pubAccordion.addChild(vbox);
+							_pubLoadArr.push(0);
+						} else {
+							_privAccordion.addChild(vbox);
+							_privLoadArr.push(0);
+						}
+					}
+				}
+			}
+
+			private function libraryResponse(event:ResultEvent):void {
 				//local variables.
 				var rslt:Object = event.result as Object;
 				
 				var libObject:MyLibraryObject = new MyLibraryObject();
 				libObject.makeGrid(rslt.children);
-					
+				
 				//add new libinfo object to the stage.
-				var vbox:VBox = _accordian.getChildByName(rslt.environment) as VBox;
-				vbox.addChild(libObject);
+				var vbox:VBox;
+				if (rslt.children[0].PUBLISH) {
+					vbox = _pubAccordion.getChildByName(rslt.environment) as VBox;
+					vbox.addChild(libObject);
+				} else {
+					vbox = _privAccordion.getChildByName(rslt.environment) as VBox;
+					vbox.addChild(libObject);
+				}
 			}
 			
-			protected function accordianChangeHandler(event:IndexChangedEvent):void{
+			private function accordianChangeHandler(event:IndexChangedEvent):void {
 				var libraryRequest:CallResponder = new CallResponder();
-				libraryRequest.addEventListener(ResultEvent.RESULT,libraryResponse);
-				libraryRequest.addEventListener(FaultEvent.FAULT,_util.faultHandler);
-
-				if ((event.newIndex < 0) || (loadarr[event.newIndex] == 0)){
+				libraryRequest.addEventListener(ResultEvent.RESULT, libraryResponse);
+				libraryRequest.addEventListener(FaultEvent.FAULT, _util.faultHandler);
+				
+				var loadarr:Array = new Array();
+				if (event.currentTarget.name == "PUBLIC") {
+					loadarr = _pubLoadArr;
+				} else {
+					loadarr = _privLoadArr;
+				}
+				
+				if ((event.newIndex < 0) || (loadarr[event.newIndex] == 0)) {
 					//check for very first time accordian is loaded
 					if (event.newIndex < 0)
 						loadarr[0] = 1;
 					else loadarr[event.newIndex] = 1;
+						
+					//update arrays
+					if (event.currentTarget.name == "PUBLIC") {
+						_pubLoadArr = loadarr;
+					} else {
+						_privLoadArr = loadarr;
+					}
 					
 					//arguments passed are environment, groupId, and private lib boolean
-					libraryRequest.token = Library.getLibraryInfo(_accordian.selectedChild.name,'',1);
+					if (event.currentTarget.name == "PUBLIC") {
+						libraryRequest.token = Library.getLibraryInfo(_pubAccordion.selectedChild.name,'',1);
+					} else {
+						libraryRequest.token = Library.getLibraryInfo(_privAccordion.selectedChild.name, _util.app.cookie.LIBRARYID, 0);
+					}
 				}
 			}
 			
-			public function simulateAccordianClick(v:String):void{
-				_accordian.selectedIndex = _accordian.getChildIndex(_accordian.getChildByName(v));
+			public function simulateAccordianClick(v:String):void {
+				_pubAccordion.selectedIndex = _pubAccordion.getChildIndex(_pubAccordion.getChildByName(v));
 				var event:IndexChangedEvent = new IndexChangedEvent(mx.events.IndexChangedEvent.CHANGE,false,true);
-				event.newIndex = _accordian.selectedIndex;
-				_accordian.dispatchEvent(event);
+				
+				event.newIndex = _pubAccordion.selectedIndex;
+				_pubAccordion.dispatchEvent(event);
 			}
 		]]>
 	</fx:Script>
@@ -142,6 +217,12 @@
 	<fx:Declarations>
 		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
 			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
-		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />	
+		<s:CallResponder id="pubEnvRequest" result="pubEnvResponse(event)" />
+		<s:CallResponder id="privEnvRequest" result="privEnvResponse(event)" />
 	</fx:Declarations>
-</mx:Panel>
+	
+	<mx:TabNavigator width="100%" height="100%" id="browse_tab">
+
+	</mx:TabNavigator>
+	
+</mx:Canvas>

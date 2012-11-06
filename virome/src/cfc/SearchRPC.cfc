@@ -16,7 +16,7 @@
 			<cfset ids = VALUELIST(read2orf.seqId)/>
 			
 			<cfcatch>
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETORFSEQIDFROMREAD", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - GETORFSEQIDFROMREAD", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -30,7 +30,7 @@
 		<cfargument name="server" type="String" required="true"/>
 		
 		<cftry>
-			<cffile action="read" file="#application.xDocsFilePath#/#arguments.file#" variable="idXDoc"/>
+			<cffile action="read" file="#request.xDocsFilePath#/#arguments.file#" variable="idXDoc"/>
 			
 			<cfset xdoc = xmlparse(idXDoc)/>
 			
@@ -39,6 +39,7 @@
 				
 				<cfset tbl_name = "tmp_" & DateFormat(now(),"mmddyy") & "" & TimeFormat(now(),"hhmmss")/>
 				<cfset values = searchXML[1].XmlAttributes.IDLIST/>
+				<cfset values = CreateObject("component",  request.cfc & ".Utility").dereplicateList(values)>
 				<cfset values = rereplace(values,",","),(","all" )/>
 				<cfset values = "("&values&")"/>
 					
@@ -60,7 +61,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_A", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_A", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -89,7 +90,7 @@
 				<cfif s.recordCount>
 					<cfscript>
 						filename = #getFileFromPath(s.file)#; //hack for older verion where full path is stored in db.
-						ids = FileRead(application.idFilePath & "/" & filename);
+						ids = FileRead(request.idFilePath & "/" & filename);
 					</cfscript>
 				</cfif>
 
@@ -117,11 +118,11 @@
 					
 				<cftransaction>
 					<cfquery name="dtmp" datasource="#arguments.server#">
-						DROP TABLE IF EXISTS #tbl_name# 
+						DROP TEMPORARY TABLE IF EXISTS #tbl_name# 
 					</cfquery>
 					
 					<cfquery name="ctmp" datasource="#arguments.server#">
-						CREATE TABLE #tbl_name# (id int(8) UNIQUE)
+						CREATE TEMPORARY TABLE #tbl_name# (id int(8) UNIQUE)
 					</cfquery>
 					
 					<cfquery name="itmp" datasource="#arguments.server#">
@@ -135,7 +136,7 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_B", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - RETRIEVESEQUENCEID_B", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -153,13 +154,13 @@
 		
 		<cftry>
 			<!--- get server from either sequence name using prefix or from environment --->
-			<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
+			<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
 			<cfset _server = _serverObject['server']/>
 			<cfset _environment = _serverObject['environment']/>
 			
 			<!--- error checking if _server is empty return error and stop --->
 			<cfif NOT len(_server)>
-				<cfset CreateObject("component",  application.cfc & ".Utility").reportServerError(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reportServerError(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
 				<cfthrow type="INCORRECT_ENV_SEQ" />
 			</cfif>
 			
@@ -167,7 +168,7 @@
 			<cfif (isDefined("arguments.obj.LIBRARY") and (arguments.obj.LIBRARY gt -1))>
 				<cfset _libraryId = #arguments.obj.LIBRARY# />
 			<cfelse>
-				<cfset _libraryId = CreateObject("component",  application.cfc & ".Utility").getLibraryList(_environment)/>
+				<cfset _libraryId = CreateObject("component",  request.cfc & ".Utility").getLibraryList(_environment)/>
 			</cfif>
 			
 			<!--- get seqeunce ids from idFiles --->
@@ -302,13 +303,13 @@
 				<cfsavecontent variable="obj2str" >
 					<cfdump var="#arguments.obj#">
 				</cfsavecontent>
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
 						#obj2str#, #cfcatch.Detail#, #cfcatch.tagcontext#)>
 			</cfcatch>
 			
 			<cfcatch type="any">
 				<cfset queryStr = ""/>
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - PARTIALSEARCHQUERY", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -340,12 +341,12 @@
 		</cfif>
 
 		<!--- get server from either sequence name using prefix or from environment --->
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
+		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 
 		<cftry>
-			<cfquery name="srch_qry" datasource="#_server#">
+			<cfquery name="srch_qry" datasource="#_server#" result="mainSearchQry">
 				SELECT	distinct
 						s.id as sequenceId,
 						s.libraryId,
@@ -391,14 +392,14 @@
 			</cfquery>
 				
 			<cfif srch_qry.RecordCount>
-				<cfset _arr = CreateObject("component",  application.cfc & ".Utility").QueryToStruct(srch_qry)>	
+				<cfset _arr = CreateObject("component",  request.cfc & ".Utility").QueryToStruct(srch_qry)>	
 
 				<cfscript>	
 					jobId = application.SessionId;
-					dir = lcase(application.searchFilePath & "/" & jobId);
+					dir = lcase(request.searchFilePath & "/" & jobId);
 
 					if ((isDefined("arguments.obj.USERNAME")) and len(arguments.obj.USERNAME)){
-						dir = lcase(application.searchFilePath & "/" & arguments.obj.USERNAME);
+						dir = lcase(request.searchFilePath & "/" & arguments.obj.USERNAME);
 						jobId = arguments.obj.USERID;
 					}
 				</cfscript>
@@ -413,7 +414,7 @@
 					
 					fname = _environment;
 					if (isDefined("arguments.obj.LIBRARY") and (arguments.obj.LIBRARY gt -1)){
-						lib = CreateObject("component",  application.cfc & ".Library").getLibrary(id=arguments.obj.LIBRARY);
+						lib = CreateObject("component",  request.cfc & ".Library").getLibrary(id=arguments.obj.LIBRARY);
 						fname &= "_" & lib.name;
 						fname = ReReplaceNoCase(fname,"\s+","_","all");
 					} 
@@ -433,18 +434,20 @@
 				</cfscript>
 				
 				<cfif isDefined("arguments.obj.USERID") and (arguments.obj.USERID gt 0)>
-					<cfset CreateObject("component", application.cfc & ".Bookmark").add(arguments.obj,fname,srch_qry.RecordCount)/>	
+					<cfset CreateObject("component", request.cfc & ".Bookmark").add(arguments.obj,fname,srch_qry.RecordCount)/>	
 				</cfif>
 				
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - PREPARERS", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - PREPARERS", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn struct/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn struct/>
 	</cffunction>
 	
 	<cffunction name="getSearchRSLT" access="remote" returntype="Array">
@@ -456,13 +459,13 @@
 		<cfif REFind("^VIROME_",jobId) eq 0>
 			<cfset uStruct = StructNew()/>
 			<cfset uStruct['USERID'] = jobId/>
-			<cfset userObj = CreateObject("component", application.cfc & ".User").GetUser(uStruct)/>
+			<cfset userObj = CreateObject("component", request.cfc & ".User").GetUser(uStruct)/>
 			<cfset jobId = userObj['USERNAME']/>
 		</cfif>
 		
 		<cftry>
 			<cfscript>
-					fname = lcase(application.searchFilePath & "/" & jobId & "/" & arguments.obj.JOBNAME); 
+					fname = lcase(request.searchFilePath & "/" & jobId & "/" & arguments.obj.JOBNAME); 
 					myfile = FileOpen(fname,"read","UTF-8");
 					
 					while(NOT FileIsEOF(myfile)) {
@@ -476,7 +479,7 @@
 				</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETSEARCHRSLT", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - GETSEARCHRSLT", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>			
 		</cftry> 
@@ -531,7 +534,7 @@
 			</cfloop>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETBLASTSEARCH", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - GETBLASTSEARCH", 
 								#cfcatch.Message#,#cfcatch.Detail#, #cfcatch.tagcontext#)>
 			</cfcatch>
 		</cftry>
@@ -543,7 +546,7 @@
 	<cffunction name="getSeqInfo" access="private" returntype="String">
 		<cfargument name="sequence_name" type="String" required="true">		
 		
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName("",sequence_name)/>
+		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName("",sequence_name)/>
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		<cfset retVal = "0_null">
@@ -560,7 +563,7 @@
 			</cfif>
 	
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("SEARCH.CFC - GETSEQUINFO - #arguments.sequence_name#", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - GETSEQUINFO - #arguments.sequence_name#", 
 								#cfcatch.Message#,#cfcatch.Detail#, #cfcatch.tagcontext#)>
 			</cfcatch>
 		</cftry>

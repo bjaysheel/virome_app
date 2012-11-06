@@ -47,10 +47,10 @@
 				
 				function requestGlobalValInfo() {
 					var appObject = new myObject();
-					appObject.cfc = '#application.cfc#';
-					appObject.endPoint = '#application.hostEndPoint#';
-					appObject.trackerId = '#application.tracker_id#';
-					appObject.mapKey = '#application.map_key#';
+					appObject.cfc = '#request.cfc#';
+					appObject.endPoint = '#request.hostEndPoint#';
+					appObject.trackerId = '#request.tracker_id#';
+					appObject.mapKey = '#request.map_key#';
 					appObject.os = BrowserDetect.OS;
 					return appObject;
 				}

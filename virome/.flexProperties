@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexProperties enableServiceManager="false" flexServerFeatures="8" flexServerType="4" serverContextRoot="" serverRoot="/Library/WebServer/Documents/VIROME" serverRootURL="http://localhost/" toolCompile="true" useServerFlexSDK="false" version="2"/>
+<flexProperties enableServiceManager="false" flexServerFeatures="8" flexServerType="4" fmlDataModelLocation=".model/virome.fml" serverContextRoot="" serverRoot="/Library/WebServer/Documents/VIROME" serverRootURL="http://localhost/" toolCompile="true" useServerFlexSDK="false" version="2"/>

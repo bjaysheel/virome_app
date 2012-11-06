@@ -31,16 +31,16 @@
 			//when directed here.
 			private var _tempLibId:Number = 0;
 						
-			protected function onAddtoStage():void{
+			private function onAddtoStage():void{
 				_util.app.addEventListener(SetSearchDBFormEvent.SET_SEARCH_DB_FORM_EVENT,updateFormValues);
 				
 				//local event listner to udpate form when its ready.
 				this.addEventListener(SetSearchDBFormEvent.SET_SEARCH_DB_FORM_EVENT,updateFormValues);
 			}
 			
-			protected function onCreationComplete():void{
+			private function onCreationComplete():void{
 				//add event listner for log in/out, to refresh library drop down with appropriate private data.
-				_util.app.addEventListener("userLogInOut",refreshLibraryList);
+				_util.app.addEventListener("userLogInOut", refreshLibraryList);
 				
 				//parameter passed is groupId
 				environmentRequest.token = Library.getEnvironmentObject('');
@@ -55,7 +55,7 @@
 				eval_list.selectedIndex=3;
 			}
 
-			protected function environmentResponse(event:ResultEvent):void{
+			private function environmentResponse(event:ResultEvent):void{
 				env_item.dataProvider = event.result as ArrayCollection;
 				readyNessBit=true;
 				
@@ -65,11 +65,11 @@
 				}
 			}
 			
-			protected function refreshLibraryList(event:Event):void{
+			private function refreshLibraryList(event:Event):void {
 				getlibReq();
 			}
 			
-			protected function getlibReq():void{
+			private function getlibReq():void {
 				var libraryIdList:String = "";
 				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
 					libraryIdList = _util.app.cookie.LIBRARYID;
@@ -78,7 +78,7 @@
 					libraryRequest.token=Library.getLibraryObject(env_item.selectedItem.data,libraryIdList);
 			}
 			
-			protected function libraryResponse(event:ResultEvent):void{
+			private function libraryResponse(event:ResultEvent):void {
 				_libs = event.result as ArrayCollection;
 				
 				lib_item.validateNow();
@@ -92,11 +92,11 @@
 				}
 			}
 			
-			protected function submitForm(event:SetSearchDBFormEvent=null):void{
+			private function submitForm(event:SetSearchDBFormEvent=null):void {
 				var _sf:SearchDBEvent = new SearchDBEvent();
 				var success:Boolean = false;
 				
-				if ((parseInt(env_item.selectedItem.data) < 0) && (seqname.text.length <= 0)){
+				if ((parseInt(env_item.selectedItem.data) < 0) && (seqname.text.length <= 0)) {
 					Alert.show("You must select an Environment", "Form validation", Alert.OK);
 				} else if (event != null) {
 					_sf.duplicateEvent(event.getStruct());
@@ -140,8 +140,8 @@
 					//_util.app.dispatchEvent(_sf);
 				}
 				
-				if (success){
-					if (event != null && event.recall != null){
+				if (success) {
+					if (event != null && event.recall != null) {
 						_util.app.dispatchEvent(_sf);
 					} else {
 						var searchAlias:SearchAlias = SearchAlias(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), SearchAlias, true));
@@ -153,7 +153,7 @@
 				}
 			}
 			
-			protected function resetForm(event:Event):void{
+			private function resetForm(event:Event):void {
 				env_item.selectedIndex = 0;
 				eval_list.selectedIndex=3;
 				orf_list.selectedIndex=0;
@@ -169,7 +169,7 @@
 					lib_item.selectedIndex=0;	
 			}
 			
-			protected function updateFormValues(event:SetSearchDBFormEvent):void{
+			private function updateFormValues(event:SetSearchDBFormEvent):void {
 				//Alert.show("serach db event heard");
 				// use when directed to search page from some place else.
 				var ac:ArrayCollection;

@@ -9,10 +9,10 @@
 		<cftry>
 			<cfscript>
 				uniqueId = createuuid();
-				dir = lcase(application.tmpFilePath & "/" & uniqueId);
+				dir = lcase(request.tmpFilePath & "/" & uniqueId);
 				zip = lcase(uniqueId & ".zip");
-				localFilePath = application.tmpFilePath & "/" & zip; 
-				webFilePath = application.roothostpath & "/tmp/" & zip;		
+				localFilePath = request.tmpFilePath & "/" & zip; 
+				webFilePath = request.roothostpath & "/tmp/" & zip;		
 				
 				DirectoryCreate(#dir#);
 				
@@ -24,7 +24,7 @@
 										
 					//append library name
 					if (arguments.genInfoObject.LIBRARY gt -1)
-						fname &= createobject("component", application.cfc & ".Library").getLibrary(id=arguments.genInfoObject.LIBRARY).name & "_";
+						fname &= createobject("component", request.cfc & ".Library").getLibrary(id=arguments.genInfoObject.LIBRARY).name & "_";
 					
 					//append database
 					if (len(arguments.genInfoObject.BLASTDB) gt 0)
@@ -109,7 +109,7 @@
 			<cfzip action="zip" source="#dir#" file="#localFilePath#" overwrite="yes" prefix="#uniqueId#"/>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -132,7 +132,7 @@
 			</cfscript>
 			 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTCSV", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTCSV", 
 							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -143,14 +143,14 @@
 		<cfargument name="obj" type="Struct" required="true" />
 		<cfargument name="typeId" type="numeric" default="-1" required="false" />
 		
-		<cfset partialQuery = CreateObject("component",  application.cfc & ".SearchRPC").partialSearchQuery(obj=arguments.obj, typeId=arguments.typeId)/>
+		<cfset partialQuery = CreateObject("component",  request.cfc & ".SearchRPC").partialSearchQuery(obj=arguments.obj, typeId=arguments.typeId)/>
 		
 		<cfif partialQuery eq "">
 			<cfreturn "false"/>
 		</cfif>
 		
 		<!--- get server from either sequence name using prefix or from environment --->
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT, arguments.obj.SEQUENCE)/>
+		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT, arguments.obj.SEQUENCE)/>
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		
@@ -184,7 +184,7 @@
 				
 				for (i=1; i lte qry.recordcount; i++){
 					if (left(qry["name"][i], 3) neq prev){
-						seq_desc = createObject("component", application.cfc & ".Utility").getMGOLDescription(qry["name"][i]);
+						seq_desc = createObject("component", request.cfc & ".Utility").getMGOLDescription(qry["name"][i]);
 						prev = left(qry["name"][i],3);
 					}
 					
@@ -201,7 +201,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPROTFSA", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPROTFSA", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
@@ -217,7 +217,7 @@
 		<cfargument name="typeId" type="numeric" default="1"/>
 		
 		<!--- get server from either sequence name using prefix or from environment --->
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
+		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		
@@ -244,7 +244,7 @@
 			</cfquery>
 			
 			<!--- this function is called for one library only so just get description for library once. --->
-			<cfset seq_desc = CreateObject("component",  application.cfc & ".Utility").getMGOLDescription(qry.name[1])/>
+			<cfset seq_desc = CreateObject("component",  request.cfc & ".Utility").getMGOLDescription(qry.name[1])/>
 			
 			<cfscript>
 				myfile = FileOpen("#arguments.filename#","write","UTF-8");
@@ -263,7 +263,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTSEQ", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTSEQ", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -274,7 +274,7 @@
 		<cfargument name="obj" type="Struct" required="true" />
 		
 		<!--- get server from either sequence name using prefix or from environment --->
-		<cfset _serverObject = CreateObject("component",  application.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
+		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.obj.ENVIRONMENT,arguments.obj.SEQUENCE)/>
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>
 		
@@ -301,7 +301,7 @@
 			</cfquery>
 			
 			<!--- this function is called for one library only so just get description for library once. --->
-			<cfset seq_desc = CreateObject("component",  application.cfc & ".Utility").getMGOLDescription(qry.name[1])/>
+			<cfset seq_desc = CreateObject("component",  request.cfc & ".Utility").getMGOLDescription(qry.name[1])/>
 			
 			<cfscript>
 				myfile = FileOpen("#arguments.filename#","write","UTF-8");
@@ -326,7 +326,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTTRNASEQ", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - EXPORTTRNASEQ", 
 						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -342,7 +342,7 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - SAVEIMAGE", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - SAVEIMAGE", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
@@ -357,24 +357,24 @@
 				FileWrite("#arguments.filename#","#arguments.data#");
 			</cfscript>
 			
-			<cfdocument format="PDF" filename="#application.chartFilePath#/#_filename#.pdf" overwrite="yes">
+			<cfdocument format="PDF" filename="#request.chartFilePath#/#_filename#.pdf" overwrite="yes">
 				This is a generated PDF containing image data from Flex.
 				<br><br>
-				<img src="#application.chartFilePath#/#_filename#.png" >
+				<img src="#request.chartFilePath#/#_filename#.png" >
 				Enjoy!
 			</cfdocument>
 	
 			<cfscript>
-				FileDelete("#application.chartFilePath#/#_filename#.png");
+				FileDelete("#request.chartFilePath#/#_filename#.png");
 			</cfscript>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - SAVEPDF", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - SAVEPDF", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
-		<cfreturn "#application.rootHostPath#/charts/#_filename#.pdf">
+		<cfreturn "#request.rootHostPath#/charts/#_filename#.pdf">
 	</cffunction>
 	
 	<cffunction name="formatSequence" access="private" returntype="string">
@@ -384,13 +384,13 @@
 			<cfset str = ''/>
 			
 			<cfloop index="idx" from="1" to="#len(sequence)#" step="80">
-				<cfset str &= mid(sequence,idx,80) & application.linefeed/>
+				<cfset str &= mid(sequence,idx,80) & request.linefeed/>
 			</cfloop>
 			
 			<cfset str = left(str,len(str)-1) />
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  application.cfc & ".Utility").reporterror("EXPORTER.CFC - FORMATSEQUENCE", 
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("EXPORTER.CFC - FORMATSEQUENCE", 
 									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
