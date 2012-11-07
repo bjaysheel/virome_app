@@ -659,7 +659,7 @@
 				}
 			}
 			
-			return structKeyList(object);
+			return structKeyList(temp_struct);
 		</cfscript>
 	</cffunction>  
 	
