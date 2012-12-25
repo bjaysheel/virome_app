@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="100%" height="100%"
+		 title="Compare"
+		 addedToStage="onAddtoStage()"
+		 creationComplete="onCreationComplete()" 
+		 show="onShow()" xmlns:library="services.library.*">
+
+
+	<fx:Script>
+		<![CDATA[
+			import com.MyUtility;
+			import com.events.BIOMSelectorEvent;
+			import com.events.FileSelectorEvent;
+			import com.google.analytics.AnalyticsTracker;
+			import com.google.analytics.GATracker;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.collections.Sort;
+			import mx.collections.SortField;
+			import mx.controls.Alert;
+			import mx.core.DragSource;
+			import mx.core.FlexGlobals;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable] private var _util:MyUtility = new MyUtility();
+			private var completeLibraryList:ArrayCollection;
+			private var listDataSort:Sort;
+			private var biomArray:Array = ["taxonomy", "kegg", "cog", "seed", "aclame", "go", "library", "libtype", "ecosystem", "envo"];
+			private var outputArray:Array = ["bit1", "bit2", "bit3", "bit4"];
+			public var tracker:AnalyticsTracker;
+			
+			
+			private function onAddtoStage():void{
+				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+			}
+			
+			private function onShow():void {
+				//set google tracker
+				tracker.trackPageview( "/Compare" );
+			}
+			
+			private function onCreationComplete():void{
+				allLibs.dataProvider = new ArrayCollection();
+				shortList.dataProvider = new ArrayCollection();
+				completeLibraryList = new ArrayCollection();
+				
+				// create sort object to sort arraycollection later.
+				var dataSortField:SortField = new SortField();
+				dataSortField.name = "env";
+				dataSortField.numeric = false;
+				
+				// Create the Sort object and add the SortField object created earlier to the array of fields to sort on.
+				listDataSort = new Sort();
+				listDataSort.fields = [dataSortField];
+				
+				// toggle submit button
+				toggleSubmit();
+				
+				// sent library request
+				libraryRequest.token = Library.getAllLibrary("");
+			}
+			
+			private function libraryResponse(event:ResultEvent):void {
+				var tmp:ArrayCollection = event.result as ArrayCollection;
+				
+				allLibs.dataProvider = cloneAC(event.result as ArrayCollection);
+				
+				completeLibraryList = cloneAC(event.result as ArrayCollection);
+			}
+			
+			private function cloneAC(ac:ArrayCollection):ArrayCollection{
+				var t:ArrayCollection = new ArrayCollection();
+				
+				for (var i:int=0; i<ac.length; i++){
+					var obj:Object = new Object();
+					obj['env'] = ac.getItemAt(i).env;
+					obj['data'] = ac.getItemAt(i).data;
+					obj['label'] = ac.getItemAt(i).label;
+					
+					t.addItem(obj);
+				}
+				
+				return t;
+			}
+			
+			/*private function dragDropHandler(event:DragEvent):void {
+				if (event.dragSource.hasFormat("items"))
+				{                
+					// Explicitly handle the dragDrop event.            
+					event.preventDefault();
+					
+					// Since you are explicitly handling the dragDrop event,
+					// call hideDropFeedback(event) to have the drop target
+					// hide the drop indicator. 
+					// The drop indicator is created
+					// automatically for the list controls by the built-in 
+					// event handler for the dragOver event.
+					event.currentTarget.hideDropFeedback(event);
+					
+					// Get drop target.
+					var dropTarget:List=List(event.currentTarget);
+					
+					// Get the dragged item from the drag initiator.
+					// The List control always writes an Array 
+					// to the dragSource object,
+					// even if there is only one item being dragged.
+					var itemsArray:Array = 
+						event.dragSource.dataForFormat("items") as Array;
+					
+					// Copy the dragged data into a new Object.
+					var tempItem:Object = 
+						{label: itemsArray[0].label, data: itemsArray[0].data};
+					
+					// Get the drop location in the destination.
+					var dropLoc:int = dropTarget.calculateDropIndex(event);
+					
+					// Add the new object to the drop target.       
+					IList(dropTarget.dataProvider).addItemAt(tempItem, dropLoc);
+					(dropTarget.dataProvider).sort = listDataSort;
+					(dropTarget.dataProvider).refresh();
+				}
+			}*/
+			
+			private function moveItemFromList(event:MouseEvent):void {
+				
+				//check which list activated the call
+				if (event.currentTarget.name == "allLibs") {
+					(shortList.dataProvider).addItem(event.currentTarget.selectedItem);
+					(shortList.dataProvider).sort = listDataSort;
+					(shortList.dataProvider).refresh();
+				} else {
+					(allLibs.dataProvider).addItem(event.currentTarget.selectedItem);
+					(allLibs.dataProvider).sort = listDataSort;
+					(allLibs.dataProvider).refresh();
+				}
+				
+				removeItemFromTarget(event);
+			}
+			
+			private function removeItemFromTarget(event:MouseEvent):void {
+				var tmpAC:ArrayCollection = new ArrayCollection();
+				tmpAC = event.currentTarget.dataProvider;
+
+				var removeIdx:int = -1;
+
+				for(var p:int=0; p < tmpAC.length; p++) {
+					if (tmpAC.getItemAt(p).data == event.currentTarget.selectedItem.data)
+						removeIdx = p;
+				}
+				
+				if (removeIdx > -1)
+					tmpAC.removeItemAt(removeIdx);
+				
+				tmpAC.sort = listDataSort;
+				tmpAC.refresh();
+				
+				event.currentTarget.dataProvider = tmpAC;
+				
+				toggleSubmit();
+			}
+			
+			private function filter():void {
+				(allLibs.dataProvider).filterFunction = filterMyArrayCollection;
+				(allLibs.dataProvider).refresh();
+			}
+			
+			private function filterMyArrayCollection(item:Object):Boolean {
+				var searchString:String = filterBy.text.toLowerCase();
+				var itemName:String = (item.label as String).toLowerCase();
+				return itemName.indexOf(searchString) > -1;
+			}
+			
+			private function toggleSubmit():void{
+				//check if at least one library is selected
+				var isLibrarySelected:Boolean = false;
+				if((shortList.dataProvider).length >= 1)
+					isLibrarySelected = true;
+				
+				//check if at least one file type is selected
+				var isTypeSelected:Boolean = false;
+				for(var j:int=0; j<biomArray.length; j++){
+					if ((this[biomArray[j]] as CheckBox).selected) {
+						isTypeSelected = true;
+					}
+				}
+				
+				//check if at least one output type is selected
+				var isOutputSelected:Boolean = false;
+				for(j=0; j<outputArray.length; j++){
+					if ((this[outputArray[j]] as CheckBox).selected) {
+						isOutputSelected = true;
+					}
+				}
+				
+				submit.enabled = false;
+				if (isLibrarySelected && isTypeSelected && isOutputSelected)
+					submit.enabled = true;
+			}
+			
+			private function onReset():void {
+				// reset library selections
+				shortList.dataProvider = new ArrayCollection();
+				allLibs.dataProvider = cloneAC(completeLibraryList);
+				filterBy.text = "";
+				
+				// reset biom selection				
+				for(var j:int=0; j<biomArray.length; j++){
+					(this[biomArray[j]] as CheckBox).selected = false;
+				}
+				this.taxonomy.selected = true;
+				
+				
+				// reset output bit flags
+				this.bit1.selected = true;
+				this.bit2.selected = true;
+				this.bit3.selected = true;
+				this.bit4.selected = true;
+				
+				toggleSubmit();
+			}
+			
+			private function onSubmit():void {
+				// get all libraries from short list
+				var biom:BIOMSelectorEvent = new BIOMSelectorEvent();
+				var pattern:RegExp = /^,/;
+				for(var i:int=0; i<(shortList.dataProvider).length; i++) {
+					biom.libraryIdList += "," + (shortList.dataProvider).getItemAt(i).data;
+				}
+				
+				// get all types of biom files requested.
+				for(var j:int=0; j<biomArray.length; j++){
+					if ((this[biomArray[j]] as CheckBox).selected) {
+						biom.xtype += "," + biomArray[j];
+					}
+				}
+				
+				// get output bit flags
+				biom.output = "";
+				for(j=0; j<outputArray.length; j++){
+					if ((this[outputArray[j]] as CheckBox).selected) {
+						biom.output += 1;
+					} else {
+						biom.output += 0;
+					}
+				}
+				
+				biom.libraryIdList = (biom.libraryIdList).replace(pattern, "");
+				biom.xtype = (biom.xtype).replace(pattern, "");
+				
+				var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+				
+				downloadPanel._fileSelector = new FileSelectorEvent().getFileSelectorObject();
+				downloadPanel._searchDBObj = new Object();
+				downloadPanel._content = "";
+				downloadPanel._biom = biom.getBIOMSelectorObject();
+				
+				PopUpManager.bringToFront(downloadPanel);
+				PopUpManager.centerPopUp(downloadPanel);
+				
+				onReset();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:CallResponder id="libraryRequest" result="libraryResponse(event)" />
+		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
+						 destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
+		
+	</fx:Declarations>
+	<mx:HDividedBox width="100%" height="100%">
+		<mx:VBox width="100%" height="100%">
+			<mx:Label text="List of all libraries sorted by environment" styleName="strong" />
+			
+			<!--  dragEnabled="true" -->
+			<mx:List id="allLibs" doubleClickEnabled="true" 
+					 doubleClick="moveItemFromList(event)"
+					 height="100%" width="100%"/>	
+		</mx:VBox>
+		
+		<mx:VBox width="100%" height="100%">
+			<mx:Label text="Libraries selected (At least one must be selected)" styleName="strong"/>
+			
+			<!-- dropEnabled="true" dragDrop="dragDropHandler(event);" -->
+			<mx:List id="shortList" 
+					 doubleClickEnabled="true" 
+					 doubleClick="moveItemFromList(event)"
+					 width="100%" height="100%" />
+		</mx:VBox>
+	</mx:HDividedBox>
+	
+	<mx:HBox width="100%" paddingRight="5">
+		<mx:Label text="Filter libraries quickly: "/>
+		<mx:TextInput id="filterBy" change="filter()"/>
+	</mx:HBox>
+	
+	<mx:HBox width="100%" styleName="subheading">
+		<mx:Label text="Choose metrics for library comparison (At least one must be selected)" width="100%" styleName="strong"/>	
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Grid width="100%" height="100%">
+			<mx:GridRow>
+				<mx:GridItem colSpan="3">
+					<mx:Label text="Taxonomy" styleName="strong" />
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="NCBI Taxonomy"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="taxonomy" selected="true" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+		</mx:Grid>
+		
+		<mx:Grid width="100%" height="100%">
+			<mx:GridRow>
+				<mx:GridItem colSpan="3">
+					<mx:Label text="Function" styleName="strong"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="ACLAME"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="aclame" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="COG"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="cog" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="GO"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="go" change="toggleSubmit()" enabled="false"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="KEGG"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="kegg" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="SEED"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="seed" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+		</mx:Grid>
+		
+		<mx:Grid width="100%" height="100%">
+			<mx:GridRow>
+				<mx:GridItem colSpan="3">
+					<mx:Label text="Environment" styleName="strong"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="LIBRARY"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="library" change="toggleSubmit()" enabled="false"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="LIBRARY TYPE"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="libtype" change="toggleSubmit()" enabled="false"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="ECOSYSTEM"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="ecosystem" change="toggleSubmit()" enabled="false"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="EnVO TERMS"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="envo" change="toggleSubmit()" enabled="false"/>
+				</mx:GridItem>
+			</mx:GridRow>	
+		</mx:Grid>		
+	</mx:HBox>
+	
+	<mx:HBox width="100%" styleName="subheading">
+		<mx:Label text="Choose output format (At least one must be selected)" width="100%" styleName="strong"/>	
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Grid width="100%" height="100%">
+			<mx:GridRow>
+				<mx:GridItem colSpan="3">
+					<mx:Label text="Biological Observation Matrix format for QIIME analysis" styleName="strong"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Data normalized by size of largest library"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="bit1" selected="true" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>	
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Raw numbers"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="bit2" selected="true" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+		</mx:Grid>
+		
+		<mx:Grid width="100%" height="100%">
+			<mx:GridRow>
+				<mx:GridItem colSpan="3">
+					<mx:Label text="Tab delimited file" styleName="strong"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Data normalized by size of largest library"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="bit3" selected="true" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>	
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Raw numbers"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="bit4" selected="true" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+		</mx:Grid>
+	</mx:HBox>
+	
+	<mx:ControlBar width="100%" horizontalAlign="right">
+		<mx:Button label="Submit" id="submit" click="onSubmit()"/>
+		
+		<mx:Button label="Reset" id="reset" click="onReset()"/>	
+	</mx:ControlBar>
+	
+</mx:Panel>

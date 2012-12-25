@@ -47,6 +47,7 @@
 		<cfargument name="environment" type="string" default="-1" required="false">
 		<cfargument name="sequence_name" type="string" default="" required="false">
 		<cfargument name="mgol_hit" type="boolean" default="false">
+		<cfargument name="libraryId" type="numeric" default="-1" required="false" >
 		
 		<cfset obj=StructNew()>
 		<cfset obj['server'] = "">
@@ -58,10 +59,12 @@
 				SELECT 	server, environment, id
 				FROM	library
 				WHERE	deleted = 0
-					<cfif len(arguments.environment) && (arguments.environment neq "-1")>
+					<cfif len(arguments.environment) and (arguments.environment neq "-1")>
 						and	environment = <cfqueryparam cfsqltype="cf_sql_varchar" null="false" value="#arguments.environment#">
 					<cfelseif len(arguments.sequence_name)>
 						and prefix = <cfqueryparam cfsqltype="cf_sql_varchar" null="false" value="#left(arguments.sequence_name,3)#"/>
+					<cfelseif arguments.libraryId neq -1>
+						and id = <cfqueryparam cfsqltype="cf_sql_integer" null="false" value="#arguments.libraryId#"> 
 					<cfelse>
 						<!--- fail safe, if environment of seq does not find a server, nothing should be returned --->
 						and environment = "NOTFOUND"

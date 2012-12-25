@@ -4,24 +4,27 @@
 		<cfargument name="readId" type="string" required="true"/>
 		<cfargument name="server" type="String" required="true"/>
 		
-		<cfset ids = ""/>
 		<cftry>
-			<cfquery name="read2orf" datasource="#arguments.server#">
+			<cfset ids = ""/>
+		
+			<cfquery name="read2orf" datasource="#arguments.server#" result="read2orf_rslt">
 				SELECT 	sr.objectId
 				FROM	sequence_relationship sr
 				WHERE	sr.subjectId in (#arguments.readId#)
 					and sr.typeId = 3
 			</cfquery>
 			
-			<cfset ids = VALUELIST(read2orf.seqId)/>
+			<cfset ids = VALUELIST(read2orf.objectId)/>
 			
 			<cfcatch>
 				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("SEARCH.CFC - GETORFSEQIDFROMREAD", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+									cfcatch.Message & "<br/><br/>" & #read2orf_rslt.sql#, cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn ids/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn ids/>
 	</cffunction>
 	
 	<cffunction name="retrieveSequenceId_A" access="remote" returntype="String" hint="Get sequenceId for idfile xdoc">
@@ -96,7 +99,7 @@
 
 				<!--- if filtering tRNA get all orfs that belong to readIds in var=>ids --->
 				<cfif #arguments.str# eq 'tRNA_id'>
-					<cfset ids = getORFSeqIdFromRead(ids,arguments.server)/>
+					<cfset ids = getORFSeqIdFromRead(ids, arguments.server)/>
 				</cfif>
 				
 				<!--- if ids are available append it to the list, make sure not duplicate ids exist --->

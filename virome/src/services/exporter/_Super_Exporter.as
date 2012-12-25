@@ -87,10 +87,10 @@ internal class _Super_Exporter extends com.adobe.fiber.services.wrapper.RemoteOb
       *
       * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
       */
-    public function export(fileObject:Object, genInfoObject:Object, bin:ByteArray, content:String) : mx.rpc.AsyncToken
+    public function export(fileObject:Object, genInfoObject:Object, bin:ByteArray, content:String, biom:Object) : mx.rpc.AsyncToken
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("export");
-		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(fileObject,genInfoObject,bin,content) ;
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(fileObject,genInfoObject,bin,content,biom) ;
         return _internal_token;
     }
      

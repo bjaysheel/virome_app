@@ -421,6 +421,7 @@
 			<fx:Object id="browse" label="Browse" name="Browse" icon="@Embed(source='/assets/icons/Browse.png')"/>
 			<fx:Object id="search" label="Search" name="Search" icon="@Embed(source='/assets/icons/Zoom.png')"/>
 			<fx:Object id="stats" label="Statistics" name="Statistics" icon="@Embed(source='/assets/icons/Statistics.png')"/>
+			<fx:Object id="compare" label="Compare" name="Compare" icon="@Embed(source='/assets/icons/Check.png')"/>
 			<fx:Object id="download" label="Download" name="Download" icon="@Embed(source='/assets/icons/Download.png')"/>
 			<fx:Object id="upload" label="Upload" name="Upload" icon="@Embed(source='/assets/icons/Upload.png')"/>
 			<fx:Object id="methods" label="About" name="Methods" icon="@Embed(source='/assets/icons/Lamp.png')"/>
@@ -431,11 +432,12 @@
 	</fx:Declarations>
 	
 	<mx:ApplicationControlBar id="menu" paddingBottom="0" dock="true" width="100%">
-        <mx:Image source="assets/logos/virome-beta.png" id="logo"/>
+        <mx:Image source="assets/logos/virome2.png" id="logo"/>
         <mx:Spacer width="2%"/>
         <mx:ToggleButtonBar id="nav_buttons" styleName="menu" dataProvider="{menuItem}" itemClick="simulateMenuClick(event.item.name)" />
         <mx:Spacer width="50%"/>
-		<!--<mx:Button id="privLib" label="Private Browse" styleName="menu" click="simulateMenuClick('Private')" visible="false"/>-->
+
+		
 		<mx:ModuleLoader id="bmarkMod" url="assets/modules/bookmark.swf" styleName="menu" ready="bookmarkModuleReady(event)"/>
 		<mx:ModuleLoader id="loginMod" url="assets/modules/user.swf" styleName="menu" ready="userModuleReady(event)"/>
 	</mx:ApplicationControlBar>
@@ -457,17 +459,13 @@
 				showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
 				creationPolicy="none"/>
 		
-		<local:Method id="methodsPage" name="Methods" label="Methods" width="100%" height="100%" 
-					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Statistics.png')"
-					  creationPolicy="none"/>
-
-		<!--<local:SequenceDetail id="seqDetail" name="Sequenced" label="Sequence Detail" height="100%" width="100%"
-						 showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
-						 creationPolicy="auto" visible="false"/>
+		<local:Compare id="comparePage" name="Compare" label="Compare" width="100%" height="100%" 
+					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Check.png')"
+					   creationPolicy="none"/>
 		
-		<local:PrivateLib id="privateLib" name="Private" label="Private Library(s)" height="100%" width="100%"
-					   showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Preppy.png')"
-					   creationPolicy="none" visible="false"/>-->
+		<local:Method id="methodsPage" name="Methods" label="Methods" width="100%" height="100%" 
+					  showEffect="{wipeDown}" hideEffect="{wipeUp}" icon="@Embed(source='/assets/icons/Lamp.png')"
+					  creationPolicy="none"/>
 	</mx:ViewStack>
 	
 	<mx:HBox styleName="mid" width="100%" horizontalAlign="center">

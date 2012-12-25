@@ -3,7 +3,7 @@
 <cfoutput>
 	<cfscript>
 		obj = StructNew();
-		obj['ENVIRONMENT']="";
+		obj['ENVIRONMENT']="ORGANISMAL SUBSTRATE";
 		obj['EVALUE']=0.001;
 		obj['LIBRARY']=31;
 		obj['BLASTDB']="";
@@ -33,7 +33,7 @@
 		file['csv'] = "true";
 	</cfscript>
 	
-	<cfset domList = "size=183 gc=0.507761 start=451 stop=268 strand=- frame=1 model=phage score=10.978 type=lack_start caller=MetaGENE"/>
+	<!---<cfset domList = "size=183 gc=0.507761 start=451 stop=268 strand=- frame=1 model=phage score=10.978 type=lack_start caller=MetaGENE"/>
 	<cfset objarr = ArrayNew(1)/>
 	
 	<cfset orf_info_struct = structnew()/>
@@ -55,8 +55,8 @@
 	</cfscript>
 	<cfdump var="#oStruct#"/>
 	
-	<!---<cfset rt_value = CreateObject("component", application.cfc & ".SearchRPC").prepareRS(obj)/>--->
-	<!---<cfdump var="#rt_value#">--->
+	<cfset rt_value = CreateObject("component", request.cfc & ".Library").getGeneralObject(obj)/>
+	<cfdump var="#rt_value#">--->
 		
 	<!---<cfscript>
 		sobj = StructNew();
@@ -73,7 +73,7 @@
 	
 	<cfset value = CreateObject("component", application.cfc & ".Library").add_library(sobj)/>
 	<cfdump var="#value#">--->	
-</cfoutput>
+
 
 
 <!---<cfquery name="q" datasource="local" >
@@ -106,3 +106,11 @@
 
 <cflog file="virome" type="information" text="update seed and aclame sys_topHit flags"/>
 <cflog file="virome" type="information" text="#all_ids_updated#"/>--->
+
+
+
+<!--- Get the number of Child Elements off the root --->
+<!---<cfset numberOfChildren = ArrayLen(theRootElement.XmlChildren)>--->
+
+<!---<cfdump var="#theRootElement.XMLChildren[1]#"/>--->
+</cfoutput>

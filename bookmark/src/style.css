@@ -37,13 +37,13 @@ mx|LinkButton {
 	textDecoration: underline;
 }
 
-mx|TitleWindow {
+/*mx|TitleWindow {
 	closeButtonSkin: Embed(source="/assets/icons/Stop.png");
 }
 
 mx|CursorManager {
 	busyCursor: Embed(source="/assets/BusyCursor.swf");
-}
+}*/
 
 mx|Text.htmlText.a:link, mx|Text.htmlText.a:visited {text-decoration:none; color:#cc3300; font-weight:bold}
 mx|Text.a:hover {text-decoration:underline}
@@ -180,8 +180,7 @@ mx|Application {
 }
 
 .subheading {
-	/*backgroundColor: #ffcc99;*/
-	backgroundColor: #eff1f2;
+	backgroundColor: #ffcc99;
 	font-weight: bold;
 	font-variant: small-caps;
 	letterSpacing: 1px;

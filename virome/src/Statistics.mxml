@@ -170,7 +170,9 @@
 					
 					cv.name = "_general";
 					_util.app.dispatchEvent(cv);
-					goToSleep(_ls.struct);
+					
+					if (e != null)
+						goToSleep(_ls.struct);
 					
 					//reset flags to reload data.
 					virclass_view.flag = true;

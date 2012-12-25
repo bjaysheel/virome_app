@@ -180,8 +180,7 @@ mx|Application {
 }
 
 .subheading {
-	/*backgroundColor: #ffcc99;*/
-	backgroundColor: #eff1f2;
+	backgroundColor: #ffcc99;
 	font-weight: bold;
 	font-variant: small-caps;
 	letterSpacing: 1px;

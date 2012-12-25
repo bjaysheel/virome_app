@@ -48,7 +48,7 @@ package com
 			this.addChild(label);
 		}
 		
-		private function clickHandler(event:MouseEvent):void{
+		private function clickHandler(event:MouseEvent):void {
 			var gridContent:String = DataGridUtils.loadDataGridInExcel(dgAC);
 			var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
 			

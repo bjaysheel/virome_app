@@ -63,6 +63,9 @@ internal class _Super_Library extends com.adobe.fiber.services.wrapper.RemoteObj
         operation = new mx.rpc.remoting.Operation(null, "getLibraryObject");
          operation.resultElementType = Object;
         operations["getLibraryObject"] = operation;
+        operation = new mx.rpc.remoting.Operation(null, "getAllLibrary");
+         operation.resultElementType = Object;
+        operations["getAllLibrary"] = operation;
 
         _serviceControl.operations = operations;
         _serviceControl.convertResultHandler = com.adobe.serializers.utility.TypeUtility.convertResultHandler;
@@ -277,6 +280,24 @@ internal class _Super_Library extends com.adobe.fiber.services.wrapper.RemoteObj
     {
         var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getLibraryObject");
 		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(environment,libraryIdList) ;
+        return _internal_token;
+    }
+     
+    /**
+      * This method is a generated wrapper used to call the 'getAllLibrary' operation. It returns an mx.rpc.AsyncToken whose 
+      * result property will be populated with the result of the operation when the server response is received. 
+      * To use this result from MXML code, define a CallResponder component and assign its token property to this method's return value. 
+      * You can then bind to CallResponder.lastResult or listen for the CallResponder.result or fault events.
+      *
+      * @see mx.rpc.AsyncToken
+      * @see mx.rpc.CallResponder 
+      *
+      * @return an mx.rpc.AsyncToken whose result property will be populated with the result of the operation when the server response is received.
+      */
+    public function getAllLibrary(libraryIdList:String) : mx.rpc.AsyncToken
+    {
+        var _internal_operation:mx.rpc.AbstractOperation = _serviceControl.getOperation("getAllLibrary");
+		var _internal_token:mx.rpc.AsyncToken = _internal_operation.send(libraryIdList) ;
         return _internal_token;
     }
      

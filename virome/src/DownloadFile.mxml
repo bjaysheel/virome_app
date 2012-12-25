@@ -32,6 +32,7 @@
 			
 			[Bindable] public var _fileSelector:Object = new Object();
 			[Bindable] public var _searchDBObj:Object = new Object();
+			[Bindable] public var _biom:Object = new Object();
 			[Bindable] public var _bin:ByteArray = new ByteArray();
 			[Bindable] public var _content:String = "";
 			
@@ -40,6 +41,7 @@
 				_bin = new ByteArray();
 				_searchDBObj = new Object();
 				_fileSelector = new Object();
+				_biom = new Object();
 			}
 			
 			protected function onCreationComplete():void{
@@ -70,7 +72,7 @@
 				
 				this.titleBar.addChild(tbox);
 				
-				fileexport.token = Exporter.export(_fileSelector, _searchDBObj, _bin, _content);
+				fileexport.token = Exporter.export(_fileSelector, _searchDBObj, _bin, _content, _biom);
 				
 				tick = new Timer(1000);
 				tick.addEventListener(TimerEvent.TIMER,updateTick);

@@ -156,6 +156,8 @@
 					doubleClickFlag=true;
 					
 					var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+					downloadPanel._content = "";
+					
 					var tObject:SearchDBEvent = new SearchDBEvent();
 					var fObject:FileSelectorEvent = new FileSelectorEvent();
 					

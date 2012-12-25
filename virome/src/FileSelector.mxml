@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
-		  xmlns:mx="library://ns.adobe.com/flex/mx" 
-		  xmlns:cfservice="services.*" width="100%" height="100%" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  width="100%" height="100%"
+		  xmlns:cfservice="services.*" 
 		  title="Select download type"
 		  creationComplete="init()" showCloseButton="true" close="removeMe()">
 	
@@ -28,38 +29,34 @@
 			private var _totalCount:Number = 0;
 			private var fsObject:FileSelectorEvent = new FileSelectorEvent();
 						
-			public function get totalCount():Number
-			{
+			public function get totalCount():Number {
 				return _totalCount;
 			}
 
-			[Bindable] public function set totalCount(value:Number):void
-			{
+			[Bindable] public function set totalCount(value:Number):void {
 				_totalCount = value;
 			}
 
-			public function get currentCount():Number
-			{
+			public function get currentCount():Number {
 				return _currentCount;
 			}
 
-			[Bindable] public function set currentCount(value:Number):void
-			{
+			[Bindable] public function set currentCount(value:Number):void {
 				_currentCount = value;
 			}
 
-			protected function init():void{
+			protected function init():void {
 				csv.selected = false;
 				pep.selected = false;
 				read.selected = false;
 				nuc.selected = false;
 			}
 			
-			protected function removeMe():void{
+			protected function removeMe():void {
 				PopUpManager.removePopUp(this);	
 			}
 			
-			protected function updateFileSelectorObject(event:MouseEvent):void{
+			protected function updateFileSelectorObject(event:MouseEvent):void {
 				var cb:CheckBox = event.currentTarget as CheckBox;
 				if (cb.name == 'csv')
 					fsObject.csv = cb.selected;
@@ -71,12 +68,13 @@
 					fsObject.read = cb.selected;
 			}
 			
-			protected function submitForm():void{
+			protected function submitForm():void {
 				_util.app.dispatchEvent(fsObject);
 				removeMe();
 			}
 		]]>
 	</fx:Script>
+	
 	<mx:Grid id="fs_grid" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
 		<mx:GridRow>
 			<mx:GridItem>
@@ -120,5 +118,5 @@
 			</mx:GridItem>
 		</mx:GridRow>
 	</mx:Grid>
-	
+
 </mx:TitleWindow>

@@ -106,6 +106,7 @@
 				
 				downloadPanel._fileSelector = fObject.getFileSelectorObject();
 				downloadPanel._searchDBObj = tObject.getStruct();
+				downloadPanel._content = "";
 				
 				PopUpManager.bringToFront(downloadPanel);
 				PopUpManager.centerPopUp(downloadPanel);

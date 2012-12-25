@@ -500,7 +500,7 @@
 			</cfcatch>
 			
 			<cffinally>				
-				<cfreturn CreateObject("component", request.cfc & ".Utility").QueryToStruct(Query=qry,Row=1)/>
+				<cfreturn CreateObject("component", request.cfc & ".Utility").QueryToStruct(Query=qry, Row=1)/>
 			</cffinally>
 		</cftry>
 	</cffunction>
@@ -513,7 +513,7 @@
 	
 		<cfset lstr = structnew()/>
 		<cftry>
-			<cfquery name="q" datasource="#arguments.server#">
+			<!---<cfquery name="q" datasource="#arguments.server#">
 				SELECT	avg(s.size) as mean,
 						stddev(s.size) as sdev
 				FROM	sequence s
@@ -521,6 +521,14 @@
 						sequence_relationship sr on s.id = sr.objectId
 				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
 					and sr.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
+			</cfquery>--->
+			
+			<cfquery name="q" datasource="#arguments.server#">
+				SELECT	avg(s.size) as mean,
+						stddev(s.size) as sdev
+				FROM	sequence s
+				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
+					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
 			</cfquery>
 			
 			<cfif q.recordcount>
@@ -655,6 +663,35 @@
 		<cfreturn array />
 	</cffunction>
 	
+	<cffunction name="getAllLibrary" access="remote" returntype="Array">
+		<cfargument name="libraryIdList" type="string" default=""/>
+		
+		<cftry>
+			<cfset arr = ArrayNew(1)/>
+			
+			<cfset lib = getLibrary(publish=1) />
+			
+			<cfloop query="lib">
+				<cfscript>
+					struct = StructNew();
+					structInsert(struct, "label", #ucase(lib.environment)# & ": " & #ucase(lib.name)#);
+					structInsert(struct, "env", #lcase(lib.environment)#);
+					structInsert(struct, "data", "#lib.id#");
+					ArrayAppend(arr, struct);
+				</cfscript>
+			</cfloop>
+			
+			<cfcatch type="any">
+				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 
+									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn arr/>
+			</cffinally>
+		</cftry>
+	</cffunction>
+	
 	<cffunction name="getBLASTDBObject" access="remote" returntype="Array">
 		<cfset struct = StructNew()/>
 		<cfset arr = ArrayNew(1)/>
@@ -691,6 +728,7 @@
 		
 		<cfset summary=StructNew()>
 		<cftry>
+			<cflog text="start: #arguments.obj.LIBRARY#" type="information" file="Virome.Library">
 			<cfset lib=getLibrary(id=arguments.obj.LIBRARY)/>
 			
 			<cfloop query="lib">
@@ -735,6 +773,7 @@
 			</cfcatch>
 			
 			<cffinally>
+				<cflog text="returning: #arguments.obj.LIBRARY#" type="information" file="Virome.Library">
 				<cfreturn summary/>
 			</cffinally>
 		</cftry>
