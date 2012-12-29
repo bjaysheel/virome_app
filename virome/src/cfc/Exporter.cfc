@@ -383,9 +383,9 @@
 				<cfset local_dir = arguments.dir & "/" & lcase(idx) />				
 				<cfset directorycreate(local_dir)/>
 				
-				<cfset writeBIOMTab(local_struct, arguments.object.libraryIdList, local_dir, idx)/>
+				<cfset writeBIOMTab(local_struct, arguments.object.libraryIdList, local_dir, idx, arguments.object.output)/>
 				
-				<cfset writeBIOMJSON(local_struct, arguments.object.libraryIdList, local_dir, idx)/>
+				<cfset writeBIOMJSON(local_struct, arguments.object.libraryIdList, local_dir, idx, arguments.object.output)/>
 				
 				<cfset writeBIOMMapping(arguments.object.libraryIdList, local_dir)/>
 			</cfloop>
@@ -510,15 +510,32 @@
 		<cfargument name="libIdList" type="string" required="true">
 		<cfargument name="dir" type="string" required="true">
 		<cfargument name="xType" type="string" required="true">
+		<cfargument name="output" type="string" required="true" >
 		
 		<cftry>
 			
 			<cfset RNcounts = getRawAndNormalizedCounts(libIdList)/>
 			
 			<cfscript>
+				var outputFlag = InputBaseN( arguments.output, 2 );
+				
+				var rawFlag = 0;
+				var norFlag = 0;
+				
+				if (outputFlag eq 8 or outputFlag eq 9 or outputFlag eq 10 or outputFlag eq 11 or outputFlag eq 12 or outputFlag eq 13 or outputFlag eq 14 or outputFlag eq 15) {
+				    rawFlag = 1;
+				}
+				if (outputFlag eq 4 or outputFlag eq 5 or outputFlag eq 6 or outputFlag eq 7 or outputFlag eq 12 or outputFlag eq 13 or outputFlag eq 14 or outputFlag == 15) {
+				    norFLag = 1;
+				}
+
+				
 				//open file to write
-				var raw_out = FileOpen(arguments.dir & "/#arguments.xType#.raw.tab", "append", "UTF-8");
-				var nor_out = FileOpen(arguments.dir & "/#arguments.xType#.normalized.tab", "append", "UTF-8");
+				if (rawFlag)
+					var raw_out = FileOpen(arguments.dir & "/#arguments.xType#.raw.tab", "append", "UTF-8");
+				
+				if (norFlag)
+					var nor_out = FileOpen(arguments.dir & "/#arguments.xType#.normalized.tab", "append", "UTF-8");
 				
 				//create header for the file
 				var header = "##ID#chr(9)#";
@@ -526,9 +543,12 @@
 					header &= RNcounts[i]['lib_name'] & "#chr(9)#";
 				}
 				header &= "taxonomy#request.linefeed#";
-						
-				filewrite(raw_out, header);
-				filewrite(nor_out, header);
+				
+				if (rawFlag)	
+					filewrite(raw_out, header);
+					
+				if (norFlag)
+					filewrite(nor_out, header);
 				
 				
 				//loop over each lineage hash_key
@@ -557,15 +577,21 @@
 					raw_str &= arguments.object['lineage'][key] & "#request.linefeed#";
 					nor_str &= arguments.object['lineage'][key] & "#request.linefeed#";
 					
-					filewrite(raw_out, raw_str);
-					filewrite(nor_out, nor_str);
+					if (rawFlag)
+						filewrite(raw_out, raw_str);
+					
+					if (norFlag)
+						filewrite(nor_out, nor_str);
 					
 					// increment id counter
 					counter++;
 				}
 			
-				FileClose(raw_out);
-				FileClose(nor_out);
+				if (rawFlag)
+					FileClose(raw_out);
+				
+				if (norFlag)
+					FileClose(nor_out);
 				
 			</cfscript>
 			
@@ -581,14 +607,30 @@
 		<cfargument name="libIdList" type="string" required="true">
 		<cfargument name="dir" type="string" required="true">
 		<cfargument name="xType" type="string" required="true">
+		<cfargument name="output" type="string" required="true"> 
 		
 		<cftry>
 			<cfset RNcounts = getRawAndNormalizedCounts(libIdList)/>
 
 			<cfscript>
+				var outputFlag = InputBaseN( arguments.output, 2 );
+				
+				var rawFlag = 0;
+				var norFlag = 0;
+				
+				if (outputFlag eq 2 or outputFlag eq 3 or outputFlag eq 6 or outputFlag eq 7 or outputFlag eq 10 or outputFlag eq 11 or outputFlag eq 14 or outputFlag eq 15) {
+				    rawFlag = 1;
+				}
+				if (outputFlag eq 1 or outputFlag eq 3 or outputFlag eq 5 or outputFlag eq 7 or outputFlag eq 9 or outputFlag eq 11 or outputFlag eq 13 or outputFlag eq 15) {
+				   	norFlag = 1;
+				}
+				
 				//open file to write
-				var raw_out = FileOpen(arguments.dir & "/#arguments.xType#.raw.biom", "append", "UTF-8");
-				var nor_out = FileOpen(arguments.dir & "/#arguments.xType#.normalized.biom", "append", "UTF-8");
+				if (rawFlag)
+					var raw_out = FileOpen(arguments.dir & "/#arguments.xType#.raw.biom", "append", "UTF-8");
+					
+				if (norFlag)
+					var nor_out = FileOpen(arguments.dir & "/#arguments.xType#.normalized.biom", "append", "UTF-8");
 						
 				//start biom JSON object
 				var columns = "";
@@ -597,8 +639,11 @@
 					
 				var metadata = "{""rows"": [#request.linefeed##chr(9)#";
 				
-				filewrite(raw_out, metadata);
-				filewrite(nor_out, metadata);
+				if (rawFlag)
+					filewrite(raw_out, metadata);
+				
+				if (norFlag)
+					filewrite(nor_out, metadata);
 				
 				//loop over each lineage hash_key
 				var counter = 1;
@@ -619,8 +664,11 @@
 					
 					metadata &= arguments.object['lineage'][key] & "]}} #request.linefeed##chr(9)# ";
 					
-					filewrite(raw_out, metadata);
-					filewrite(nor_out, metadata);
+					if (rawFlag)
+						filewrite(raw_out, metadata);
+					
+					if (norFlag)
+						filewrite(nor_out, metadata);
 					
 					raw_str &= "[";
 					nor_str &= "[";
@@ -656,22 +704,32 @@
 				metadata = "], #request.linefeed#";
 				metadata &= """data"": [#request.linefeed##chr(9)#";
 			
-				filewrite(raw_out, metadata);
-				filewrite(nor_out, metadata);
+				if (rawFlag)
+					filewrite(raw_out, metadata);
+				
+				if (norFlag)
+					filewrite(nor_out, metadata);
 				
 				// close last data value, and then close data block.
 				raw_str = rereplace(raw_str, "], #request.linefeed##chr(9)# $", "]], #request.linefeed#", "one");
 				nor_str = rereplace(nor_str, "], #request.linefeed##chr(9)# $", "]], #request.linefeed#", "one");
 				
-				filewrite(raw_out, raw_str);
-				filewrite(nor_out, nor_str);
+				if (rawFlag)
+					filewrite(raw_out, raw_str);
+				
+				if (norFlag)
+					filewrite(nor_out, nor_str);
 			
 				//add columns
 				columns = rereplace(columns, ", #request.linefeed# $", "", "one");
 				
 				metadata = " ""columns"": [#request.linefeed##columns#], #request.linefeed#";
-				filewrite(raw_out, metadata);
-				filewrite(nor_out, metadata);
+				
+				if (rawFlag)
+					filewrite(raw_out, metadata);
+				
+				if (norFlag)
+					filewrite(nor_out, metadata);
 				
 				// end biom file
 				metadata = " ""format"": ""Biological Observation Matrix 1.0.0"", #request.linefeed#";		
@@ -683,11 +741,17 @@
 				metadata &= " ""type"": ""Taxon table"", #request.linefeed#";
 				metadata &= " ""id"": null, ""matrix_element_type"": ""float""}";
 				
-				filewrite(raw_out, metadata);
-				filewrite(nor_out, metadata);
+				if (rawFlag)
+					filewrite(raw_out, metadata);
+					
+				if (norFlag)
+					filewrite(nor_out, metadata);
 			
-				FileClose(raw_out);
-				FileClose(nor_out);
+				if (rawFlag)
+					FileClose(raw_out);
+				
+				if (norFlag)
+					FileClose(nor_out);
 				
 			</cfscript>
 			
@@ -717,12 +781,14 @@
 				var summary = CreateObject("component", request.cfc & ".Utility").QueryToStructure(theQuery=q, primaryKey="libraryId");
 				var map = FileOpen(arguments.dir & "/mapping.txt", "write", "UTF-8");
 				
-				filewrite(map, "##SampleId#chr(9)#Description#request.linefeed#");
+				filewrite(map, "##SampleID#chr(9)#Description#request.linefeed#");
 				
 				for(var i=1; i lte listlen(arguments.libIdList); i++){
 					var str = summary[listGetAt(arguments.libIdList, i)]['lib_name'] & "#chr(9)#" & summary[listGetAt(arguments.libIdList, i)]['lib_name'];
 					str &= " " & summary[listGetAt(arguments.libIdList, i)]['lib_prefix'] & " " & summary[listGetAt(arguments.libIdList, i)]['na_type'];
 					str &= request.linefeed;
+					
+					str = rereplace(str, "-", "_", "all"); 
 					
 					fileWrite(map, str); 	
 				}

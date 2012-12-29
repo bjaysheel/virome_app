@@ -213,6 +213,11 @@ mx|Application {
 	font-size: 11px;
 }
 
+.qiime {
+	backgroundImage: Embed(source="/assets/logos/qiime.png");
+	backgroundAlpha: 0.5;
+}
+
 .acrd {
    fillColors: #339900, #cccccc, #cccccc, #66cc00;
 }

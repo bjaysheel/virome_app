@@ -432,7 +432,7 @@
 	</fx:Declarations>
 	
 	<mx:ApplicationControlBar id="menu" paddingBottom="0" dock="true" width="100%">
-        <mx:Image source="assets/logos/virome2.png" id="logo"/>
+        <mx:Image source="assets/logos/virome3.png" id="logo"/>
         <mx:Spacer width="2%"/>
         <mx:ToggleButtonBar id="nav_buttons" styleName="menu" dataProvider="{menuItem}" itemClick="simulateMenuClick(event.item.name)" />
         <mx:Spacer width="50%"/>

@@ -110,6 +110,8 @@
 		]]>
 	</fx:Script>
 	
+	<fx:Style source="style.css" />
+	
 	<fx:Declarations>
 		<user:User id="UserRPC" showBusyCursor="true" fault="faultHandler(event)"
 				   destination="ColdFusion" endpoint="{serviceEndPoint}" source="{serviceSource}.User"/>
