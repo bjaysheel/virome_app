@@ -12,7 +12,7 @@
 	creationComplete="init()"
 	hide="onHide();" 
 	show="onShow();" 
-	horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:library="services.library.*">
+	horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:library="services.library.*" xmlns:ns="http://code.google.com/p/flexlib/">
 	
 	
 	<fx:Script>
@@ -313,7 +313,7 @@
 						<mx:Label text="Library" />
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:PopUpMenuButton id="libList" dataProvider="{libraries}" itemClick="getLibDetails(event)" width="180"/>
+						<ns:ScrollablePopUpMenuButton id="libList" dataProvider="{libraries}" itemClick="getLibDetails(event)" width="180" maxHeight="250"/>
 					</mx:GridItem>
 				</mx:GridRow>
 			</mx:Grid>

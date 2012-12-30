@@ -8,7 +8,7 @@
     paddingLeft="4" paddingRight="12" 
     paddingTop="12" paddingBottom="8" 
 	addedToStage="onAddtoStage()"
-    creationComplete="onCreationComplete()" xmlns:library="services.library.*">
+    creationComplete="onCreationComplete()" xmlns:library="services.library.*" xmlns:controls="com.dougmccune.controls.*" xmlns:ns="http://code.google.com/p/flexlib/">
     
 	<fx:Script>
 		<![CDATA[
@@ -356,8 +356,7 @@
 				<mx:Label text="Query Library" />
 			</mx:GridItem>
 			<mx:GridItem>
-				<mx:PopUpMenuButton id="lib_item" dataProvider="{_libs}" top="10" width="175" itemClick="setCurrentLibSelected(event)"/>
-				<!--<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="180" top="10"/>--> 
+				<ns:ScrollablePopUpMenuButton id="lib_item" dataProvider="{_libs}" width="175" itemClick="setCurrentLibSelected(event)" maxHeight="250"/>
 			</mx:GridItem>
 		</mx:GridRow>
 		
