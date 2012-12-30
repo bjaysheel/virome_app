@@ -16,8 +16,11 @@
 			import com.events.SearchDBEvent;
 			import com.events.SetSearchDBFormEvent;
 			
-			import mx.core.FlexGlobals;
 			import mx.controls.Alert;
+			import mx.controls.Menu;
+			import mx.core.FlexGlobals;
+			import mx.events.ItemClickEvent;
+			import mx.events.MenuEvent;
 			import mx.managers.PopUpManager;
 			import mx.rpc.events.ResultEvent;
 			
@@ -26,6 +29,8 @@
 			[Bindable] private var pendingEvent:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 			[Bindable] private var _libs:ArrayCollection = new ArrayCollection();
 			[Bindable] private var eval:ArrayCollection = new ArrayCollection();
+			
+			private var currentLibSelected:int = -1;
 			
 			//main use of this var is to prepopulate lib drop down
 			//when directed here.
@@ -82,14 +87,26 @@
 				_libs = event.result as ArrayCollection;
 				
 				lib_item.validateNow();
-				lib_item.selectedIndex=0;
 				
-				for (var i:int=0;i<_libs.length; i++){
+				// set default popupbutton selection
+				this.currentLibSelected=-1;
+				Menu(lib_item.popUp).selectedIndex = 0;
+				lib_item.label = Menu(lib_item.popUp).selectedItem.label;
+				
+				for (var i:int=0; i < _libs.length; i++){
 					if (_libs.getItemAt(i).data == _tempLibId){
-						lib_item.selectedIndex=i;
+						// set popupbutton selection
+						Menu(lib_item.popUp).selectedIndex = i;
+						lib_item.label = Menu(lib_item.popUp).selectedItem.label;
+						this.currentLibSelected = Menu(lib_item.popUp).selectedItem.data;
+						
 						break;
 					}
 				}
+			}
+			
+			private function setCurrentLibSelected(event:MenuEvent):void{
+				this.currentLibSelected = parseInt(event.item.data);
 			}
 			
 			private function submitForm(event:SetSearchDBFormEvent=null):void {
@@ -112,7 +129,8 @@
 					if ((_libs.length <= 0) || (_libs == null))
 						_sf.library = -1;
 					else
-						_sf.library = parseInt(lib_item.selectedItem.data);
+						_sf.library = this.currentLibSelected;
+						//_sf.library = parseInt(Menu(lib_item.popUp).selectedItem.data);
 					
 					_sf.evalue = eval_list.selectedItem.data;
 					_sf.vircat = vircat_list.selectedItem.data;
@@ -165,8 +183,11 @@
 				tax_item.text="";
 				seqname.text="";
 				
-				if (_libs.length)
-					lib_item.selectedIndex=0;	
+				if (_libs.length) {
+					Menu(lib_item.popUp).selectedIndex = 0;
+					this.currentLibSelected = -1;
+				}
+					//lib_item.selectedIndex=0;
 			}
 			
 			private function updateFormValues(event:SetSearchDBFormEvent):void {
@@ -335,7 +356,8 @@
 				<mx:Label text="Query Library" />
 			</mx:GridItem>
 			<mx:GridItem>
-				<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="175" top="10"/> 
+				<mx:PopUpMenuButton id="lib_item" dataProvider="{_libs}" top="10" width="175" itemClick="setCurrentLibSelected(event)"/>
+				<!--<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="180" top="10"/>--> 
 			</mx:GridItem>
 		</mx:GridRow>
 		

@@ -23,8 +23,10 @@
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
 			
+			import mx.controls.Menu;
 			import mx.collections.ArrayCollection;
 			import mx.events.ItemClickEvent;
+			import mx.events.MenuEvent;
 			import mx.rpc.events.ResultEvent;
 			
 			public var tracker:AnalyticsTracker;
@@ -117,7 +119,6 @@
 						}
 					}
 					
-					//_section.selectedIndex=0;
 					cv.name = "_general";
 					_util.app.dispatchEvent(cv);
 					
@@ -140,7 +141,6 @@
 			}
 			
 			protected function showInformation(event:MouseEvent):void{
-				//_section.selectedIndex=event.index;
 				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
 				cv.name = event.currentTarget.name;
 				_util.app.dispatchEvent(cv);
@@ -160,38 +160,40 @@
 					libraryRequest.token = Library.getLibraryObject(envList.selectedItem.label,libraryIdList);	
 			}
 			
-			//This function is called when a library is selected
-			protected function getLibDetails(e:Event=null):void{				
-				if(libList.selectedIndex != 0) {
-					var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
-					var _ls:LibraryStatEvent = new LibraryStatEvent();
-					libraryId = _ls.library = libList.selectedItem.data as Number;
-					environment = _ls.environment = envList.selectedItem.data;
-					
-					cv.name = "_general";
-					_util.app.dispatchEvent(cv);
-					
-					if (e != null)
-						goToSleep(_ls.struct);
-					
-					//reset flags to reload data.
-					virclass_view.flag = true;
-					trna.flag = true;
-					fxn.flag = true;
-					aclame.flag = true;
-					go.flag = true;
-					seed.flag = true;
-					kegg.flag = true;
-					cog.flag = true;	
-					tax.flag = true;
-					envlib.flag = true;
-					libtype.flag = true;
-					genesis.flag = true;
-					sphere.flag = true;
-					ecosys.flag = true;
-					extreme.flag = true;
-					physiochem.flag = true;
-				}
+			//This function is called when a library is selected by user from PopUpMenuButton
+			protected function getLibDetails(e:MenuEvent=null):void{
+				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
+				var _ls:LibraryStatEvent = new LibraryStatEvent();
+									
+				// change selected item label for PopUpButton.
+				libList.label = e.item.label;
+				
+				libraryId = _ls.library = e.item.data as Number;
+				environment = _ls.environment = envList.selectedItem.data;
+				
+				cv.name = "_general";
+				_util.app.dispatchEvent(cv);
+				
+				if (e != null)
+					goToSleep(_ls.struct);
+				
+				//reset flags to reload data.
+				virclass_view.flag = true;
+				trna.flag = true;
+				fxn.flag = true;
+				aclame.flag = true;
+				go.flag = true;
+				seed.flag = true;
+				kegg.flag = true;
+				cog.flag = true;	
+				tax.flag = true;
+				envlib.flag = true;
+				libtype.flag = true;
+				genesis.flag = true;
+				sphere.flag = true;
+				ecosys.flag = true;
+				extreme.flag = true;
+				physiochem.flag = true;
 			}
 
 			//add sleep timer to eliminate possible race condition for 
@@ -228,12 +230,18 @@
 				libraries = event.result as ArrayCollection;
 				
 				libList.validateNow();
-				libList.selectedIndex=0;
 				
-				for (var i:int=0; i<libraries.length; i++){
-					if (libraries[i]['data'] == libraryId){
-						libList.selectedIndex = i;
-						getLibDetails(null);
+				// set default selected item for PopupButton
+				Menu(libList.popUp).selectedIndex = 0;
+				libList.label = Menu(libList.popUp).selectedItem.label;
+				
+				for (var i:int=0; i < libraries.length; i++){
+					if (libraries.getItemAt(i).data == libraryId){
+						
+						// set PopUpButton selecte item.
+						Menu(libList.popUp).selectedIndex = i;
+						libList.label = Menu(libList.popUp).selectedItem.label;
+						
 						break;
 					}
 				}
@@ -296,7 +304,7 @@
 						<mx:Label text="Environment" />
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:ComboBox id="envList" dataProvider="{environments}" change="getLibrary()" rowCount="10"/>	
+						<mx:ComboBox id="envList" dataProvider="{environments}" change="getLibrary()" rowCount="10" width="180"/>	
 					</mx:GridItem>
 				</mx:GridRow>
 				
@@ -305,7 +313,7 @@
 						<mx:Label text="Library" />
 					</mx:GridItem>
 					<mx:GridItem>
-						<mx:ComboBox id="libList" dataProvider="{libraries}" change="getLibDetails(event)" width="175" top="10"/>
+						<mx:PopUpMenuButton id="libList" dataProvider="{libraries}" itemClick="getLibDetails(event)" width="180"/>
 					</mx:GridItem>
 				</mx:GridRow>
 			</mx:Grid>
