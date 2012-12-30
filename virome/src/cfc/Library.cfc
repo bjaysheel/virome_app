@@ -669,17 +669,33 @@
 		<cftry>
 			<cfset arr = ArrayNew(1)/>
 			
-			<cfset lib = getLibrary(publish=1) />
+			<cfset pub_lib = getLibrary(publish=1) />
 			
-			<cfloop query="lib">
+			<cfloop query="pub_lib">
 				<cfscript>
-					struct = StructNew();
-					structInsert(struct, "label", #ucase(lib.environment)# & ": " & #ucase(lib.name)#);
-					structInsert(struct, "env", #lcase(lib.environment)#);
-					structInsert(struct, "data", "#lib.id#");
+					var struct = StructNew();
+					structInsert(struct, "label", #ucase(pub_lib.environment)# & ": " & #ucase(pub_lib.name)#);
+					structInsert(struct, "env", #lcase(pub_lib.environment)#);
+					structInsert(struct, "data", #pub_lib.id#);
 					ArrayAppend(arr, struct);
 				</cfscript>
 			</cfloop>
+			
+			<cfif listLen(arguments.libraryIdList)>
+				<cfset priv_lib = getLibrary(libraryIdList=arguments.libraryIdList)>
+				
+				<cfloop query="priv_lib">
+					<cfscript>
+						var struct = StructNew();
+						structInsert(struct, "label", #ucase(priv_lib.environment)# & ": " & #ucase(priv_lib.name)#);
+						structInsert(struct, "env", #lcase(priv_lib.environment)#);
+						structInsert(struct, "data", #priv_lib.id#);
+						ArrayAppend(arr, struct);
+					</cfscript>
+				</cfloop>
+			</cfif>
+			
+			<cfset arr = CreateObject("component", request.cfc & ".Utility").SortArrayOfStrut(arr, "env")/>
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 

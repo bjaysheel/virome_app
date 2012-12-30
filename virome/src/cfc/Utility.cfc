@@ -371,6 +371,66 @@
 		</cfscript>
      </cffunction>
 
+	<cffunction name="SortArrayOfStrut" access="public" returntype="array">
+		<cfargument name="aOfS" type="array" required="true">
+		<cfargument name="key" type="string" required="true">
+		<cfargument name="sOrder" type="string" default="asc">
+		<cfargument name="sType" type="string" default="textnocase">
+		<cfargument name="delim" type="string" default=".">
+		
+		
+		<cfscript>
+			/**
+			* Sorts an array of structures based on a key in the structures.
+			*
+			* @param aofS      Array of structures.
+			* @param key      Key to sort by.
+			* @param sortOrder      Order to sort by, asc or desc.
+			* @param sortType      Text, textnocase, or numeric.
+			* @param delim      Delimiter used for temporary data storage. Must not exist in data. Defaults to a period.
+			* @return Returns a sorted array.
+			* @author Nathan Dintenfass (nathan@changemedia.com)
+			* @version 1, December 10, 2001
+			* @version 1.0 Dec 29, 2012 by Jaysheel Bhavsar
+			*/
+			        //by default we'll use an ascending sort
+			        var sortOrder = arguments.sOrder;        
+			        
+			        //by default, we'll use a textnocase sort
+			        var sortType = arguments.sType;
+			        
+			        //by default, use ascii character 30 as the delim
+			        var delimeter = arguments.delim;
+			        
+			        //make an array to hold the sort stuff
+			        var sortArray = arraynew(1);
+			        
+			        //make an array to return
+			        var returnArray = arraynew(1);
+			        
+			        //grab the number of elements in the array (used in the loops)
+			        var count = arrayLen(arguments.aOfS);
+			        
+			        //make a variable to use in the loop
+			        var ii = 1;
+			        
+			        //loop over the array of structs, building the sortArray
+			        for(ii = 1; ii lte count; ii = ii + 1)
+			            sortArray[ii] = arguments.aOfS[ii][key] & delimeter & ii;
+			        
+			        //now sort the array
+			        arraySort(sortArray,sortType,sortOrder);
+			        
+			        //now build the return array
+			        for(ii = 1; ii lte count; ii = ii + 1)
+			            returnArray[ii] = arguments.aOfS[listLast(sortArray[ii], delimeter)];
+			        
+			        //return the array
+			        return returnArray;
+		</cfscript>
+	</cffunction>
+
+
 	<cffunction name="getMedianEvalue" access="public" returntype="Numeric">
 		<cfargument name="arr" type="array" required="true">
 

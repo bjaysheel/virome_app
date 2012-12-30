@@ -47,6 +47,9 @@
 			}
 			
 			private function onCreationComplete():void{
+				
+				_util.app.addEventListener("userLogInOut", refreshLibraryList);
+				
 				allLibs.dataProvider = new ArrayCollection();
 				shortList.dataProvider = new ArrayCollection();
 				completeLibraryList = new ArrayCollection();
@@ -64,7 +67,19 @@
 				toggleSubmit();
 				
 				// sent library request
-				libraryRequest.token = Library.getAllLibrary("");
+				getlibReq();
+			}
+			
+			private function refreshLibraryList(event:Event):void {
+				getlibReq();
+			}
+			
+			private function getlibReq():void {
+				var libraryIdList:String = "";
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
+					libraryIdList = _util.app.cookie.LIBRARYID;
+				
+				libraryRequest.token = Library.getAllLibrary(libraryIdList);
 			}
 			
 			private function libraryResponse(event:ResultEvent):void {

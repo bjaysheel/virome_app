@@ -129,6 +129,8 @@
 					}
 				}
 
+				searchDBResultGrid.validateNow();
+				
 				//reset combobox values
 				cb.dataProvider = columns;
 				cb.selectedIndex = 0;
@@ -264,6 +266,7 @@
 					gridResultSet = ac;
 					
 					searchDBResultGrid.dataProvider = gridResultSet;
+					searchDBResultGrid.validateNow();
 					
 					//temp hack getting all rows
 					currentGridRowCount = totalGridRowCount;
@@ -274,6 +277,7 @@
 					this.cb.enabled = true;
 				} 
 				
+				this.validateNow();
 				_util.app.simulateMenuClick("Search");
 			}
 		    
