@@ -104,7 +104,9 @@ package com
 			var shape:Sprite = new Sprite();
 			var c:UIComponent = new UIComponent();
 			
-			img_width = (parseInt(obj['STOP']) - parseInt(obj['START'])) + 1;
+			// take absolute value of numbers so that if start and stop in reverse direction
+			// value are not negative
+			img_width = Math.abs((parseInt(obj['STOP']) - parseInt(obj['START'])) + 1);
 			if (img_width > KB) {
 				img_width = (img_width/KB) * DEFAULT_WIDTH;
 			} else {
@@ -133,7 +135,9 @@ package com
 				c.toolTip = getToolTip(obj, "orf");
 			this.addChild(c);
 			
-			scale = (img_width / (parseInt(obj['STOP']) - parseInt(obj['START']) + 1));
+			// take absolute value of numbers so that if start and stop in reverse direction
+			// value are not negative
+			scale = (img_width / Math.abs((parseInt(obj['STOP']) - parseInt(obj['START'])) + 1) );
 		}
 		
 		private function drawReadGrid():void{
@@ -256,8 +260,14 @@ package com
 				}
 				
 				var y:Number = FEATURE_X + (FEATURE_GAP * frame);
-				var x:Number = parseInt(ac[i]['START'])*scale;
-				var w:Number = (((parseInt(ac[i]['STOP'])-parseInt(ac[i]['START']))+1)*scale);
+				var x:Number = parseInt(ac[i]['START']) * scale;
+				
+				// x alway have to be the left most coordinate point.
+				if (parseInt(ac[i]['START']) > parseInt(ac[i]['STOP'])) {
+					x = parseInt(ac[i]['STOP']) * scale;
+				}
+				
+				var w:Number = ( Math.abs( (parseInt(ac[i]['STOP']) - parseInt(ac[i]['START']) ) + 1 ) * scale);
 				
 				if (ac[i]['TYPE'] == "complete") {
 					shape.graphics.beginFill(COMPLETE_COLOR, 1);
@@ -311,8 +321,13 @@ package com
 				}
 				
 				var y:Number = FEATURE_X + (FEATURE_GAP * frame);
-				var x:Number = parseInt(arr[i]['hsp']['QRY_START'])*scale;
-				var w:Number = (((parseInt(arr[i]['hsp']['QRY_END'])-parseInt(arr[i]['hsp']['QRY_START']))+1)*scale)*3;
+				var x:Number = parseInt(arr[i]['hsp']['QRY_START']) * scale;
+				
+				if (parseInt(arr[i]['hsp']['QRY_START']) > parseInt(arr[i]['hsp']['QRY_STOP'])) {
+					x = parseInt(arr[i]['hsp']['QRY_STOP']) * scale;
+				}
+				
+				var w:Number = ( Math.abs( (parseInt(arr[i]['hsp']['QRY_END']) - parseInt(arr[i]['hsp']['QRY_START']) ) + 1 ) * scale ) * 3;
 				
 				shape.graphics.beginFill(READ_COLOR, 1);
 				shape.graphics.drawRect(x, y, w, FEATURE_HEIGHT);
@@ -341,7 +356,13 @@ package com
 				
 				var y:Number = FEATURE_X;
 				var x:Number = parseInt(ac[i]['START'])*scale;
-				var w:Number = ((parseInt(ac[i]['STOP'])-parseInt(ac[i]['START']))+1)*scale;
+				
+				// x alway have to be the left most coordinate point.
+				if (parseInt(ac[i]['START']) > parseInt(ac[i]['STOP'])) {
+					x = parseInt(ac[i]['STOP']) * scale;
+				}
+				
+				var w:Number = ( Math.abs( (parseInt(ac[i]['STOP']) - parseInt(ac[i]['START']) ) + 1 ) * scale);
 				
 				shape.graphics.beginFill(TRNA_COLOR, 1);
 				shape.graphics.drawRect(x, y, w, FEATURE_HEIGHT);
@@ -394,7 +415,7 @@ package com
 				str += "Name: " + obj['QUERY_NAME'] + "\n";
 				str += "Start: " + obj['QRY_START']*3 + "\n";
 				str += "End: " + obj['QRY_END']*3 + "\n";
-				str += "Size: " + (((parseInt(obj['QRY_END'])-parseInt(obj['QRY_START']))+1)/scale)*3 + "\n";
+				str += "Size: " + ( Math.abs( (parseInt(obj['QRY_END']) - parseInt(obj['QRY_START'])) + 1 ) / scale ) * 3 + "\n";
 				str += "E-value: " + obj['E_VALUE'] + "\n";
 				str += "Hit Desc: " + obj['HIT_DESCRIPTION'] + "\n";
 				str += "Domain: " + obj['DOMAIN'];
@@ -402,7 +423,7 @@ package com
 				str += "Name: " + obj['NAME'] + "\n";
 				str += "Start: " + obj['START'] + "\n";
 				str += "End: " + obj['STOP'] + "\n";
-				str += "Size: " + (parseInt(obj['STOP'])-parseInt(obj['START'])+1).toString() + "\n";
+				str += "Size: " + (Math.abs( parseInt(obj['STOP']) - parseInt(obj['START'])) + 1 ).toString() + "\n";
 				
 				if (src == "orf") {
 					str += "Type: " + obj['TYPE'] + "\n";
