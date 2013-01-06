@@ -107,6 +107,15 @@
 			
 			private function setCurrentLibSelected(event:MenuEvent):void{
 				this.currentLibSelected = parseInt(event.item.data);
+				
+				for (var i:int=0; i < (lib_item.dataProvider).length; i++){
+					if ((lib_item.dataProvider).getItemAt(i).data == event.item.data){
+						Menu(lib_item.popUp).selectedIndex = i;
+						break;
+					}
+				}
+				
+				lib_item.label = event.item.label;
 			}
 			
 			private function submitForm(event:SetSearchDBFormEvent=null):void {

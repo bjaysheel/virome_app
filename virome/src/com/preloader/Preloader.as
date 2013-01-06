@@ -20,6 +20,7 @@ package com.preloader
 		private var _startTime:int;
 		private var preloaderDisplay:PreloaderDisplay;
 		private var rslBaseText:String = "loading: ";
+		private var _appVersion:String = "ver. 1.0";
 		
 		
 		public function Preloader()
@@ -43,6 +44,7 @@ package com.preloader
 		{    
 			if (!preloaderDisplay) {
 				preloaderDisplay = new PreloaderDisplay();
+				preloaderDisplay.app_version.text = _appVersion;
 				
 				var startX:Number = Math.round((stageWidth - preloaderDisplay.width) / 2);
 				var startY:Number = Math.round((stageHeight - preloaderDisplay.height) / 2);

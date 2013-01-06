@@ -32,5 +32,5 @@
 		</mx:htmlText>
 	</mx:Text>
 	
-	<mx:Image source="assets/viromepipe/unirefdb.png"/>
+	<mx:Image source="assets/viromepipe/unirefdb2.png"/>
 </mx:VBox>

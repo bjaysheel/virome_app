@@ -523,18 +523,39 @@
 					and sr.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
 			</cfquery>--->
 			
-			<cfquery name="q" datasource="#arguments.server#">
+			<!---<cfquery name="q" datasource="#arguments.server#">
 				SELECT	avg(s.size) as mean,
 						stddev(s.size) as sdev
 				FROM	sequence s
 				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
 					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
+			</cfquery>--->
+			
+			<cfquery name="q" datasource="#arguments.server#">
+				SELECT	s.size
+				FROM	sequence s
+				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
+					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
 			</cfquery>
 			
-			<cfif q.recordcount>
-				<cfset StructInsert(lstr,"MEAN",#q.mean#)/>
-				<cfset StructInsert(lstr,"STDEV",#q.sdev#)/>
-			</cfif>
+			<cfset xBar = 0/>
+			<cfset std_dev = 0/>
+			<cfset sumXBar = 0/>
+			
+			<cfloop query="q" >
+				<cfset sum += q.size/> 
+			</cfloop>
+			
+			<cfset xBar = (sum/q.RecordCount) >
+			
+			<cfloop query="q" >
+				<cfset sumXBar += ((q.size - xBar)*(q.size - xBar)) /> 
+			</cfloop>
+			
+			<cfset std_dev = sqr(sumXBar/q.RecordCount)/>
+			
+			<cfset StructInsert(lstr,"MEAN", xBar) />
+			<cfset StructInsert(lstr,"STDEV", std_dev) />
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETMEANSTD", 
@@ -903,7 +924,7 @@
 			
 			<cfif not fileExists(request.xDocsFilePath&"/"&filename)>
 				<!--- get environment --->				
-				<cfset lib = getLibrary(libraryIdList=arguments.libraryIdList, publish=iif(arguments.privateOnly,"""0""","""1""") )/>
+				<cfset lib = getLibrary(libraryIdList=arguments.libraryIdList, publish=iif(arguments.privateOnly,"""0""","""-1""") )/>
 				<cfset str = ""/>
 								
 				<cfscript>
