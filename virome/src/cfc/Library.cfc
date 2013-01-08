@@ -531,6 +531,12 @@
 					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
 			</cfquery>--->
 			
+			<cfset count = 0/>
+			<cfset xBar = 0/>
+			<cfset std_dev = 0/>
+			<cfset sumXBar = 0/>
+			<cfset sum = 0/>
+			
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	s.size
 				FROM	sequence s
@@ -538,28 +544,26 @@
 					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
 			</cfquery>
 			
-			<cfset xBar = 0/>
-			<cfset std_dev = 0/>
-			<cfset sumXBar = 0/>
+			<cfset count = q.RecordCount/>
 			
 			<cfloop query="q" >
 				<cfset sum += q.size/> 
 			</cfloop>
 			
-			<cfset xBar = (sum/q.RecordCount) >
+			<cfset xBar = (sum/count) >
 			
 			<cfloop query="q" >
 				<cfset sumXBar += ((q.size - xBar)*(q.size - xBar)) /> 
 			</cfloop>
 			
-			<cfset std_dev = sqr(sumXBar/q.RecordCount)/>
+			<cfset std_dev = sqr(sumXBar/count)/>
 			
 			<cfset StructInsert(lstr,"MEAN", xBar) />
 			<cfset StructInsert(lstr,"STDEV", std_dev) />
 			
 			<cfcatch type="any">
 				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETMEANSTD", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+									cfcatch.Message & "<br/>\n recordcount: #q.RecordCount# lib: #arguments.libraryId# typeId: #arguments.typeId#", cfcatch.Detail, cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -795,8 +799,8 @@
 				<cfset detail = getStatistics(id=arguments.obj.LIBRARY,server=lib.server,environment=arguments.obj.ENVIRONMENT)>
 				<cfset StructInsert(summary,"DETAIL",detail)>
 				
-				<cfset rmean = getMeanSTD(libraryId=arguments.obj.LIBRARY,server=lib.server,typeId=1)/>
-				<cfset omean = getMeanSTD(libraryId=arguments.obj.LIBRARY,server=lib.server,typeId=2)/>
+				<cfset rmean = getMeanSTD(libraryId=arguments.obj.LIBRARY, server=lib.server, typeId=1)/>
+				<cfset omean = getMeanSTD(libraryId=arguments.obj.LIBRARY, server=lib.server, typeId=3)/>
 				
 				<cfset StructInsert(summary,"RMEAN",rmean.MEAN)/>
 				<cfset StructInsert(summary,"RSTDEV",rmean.STDEV)/>

@@ -777,66 +777,7 @@
 		</cftry>
 		
 	</cffunction>
-
-	<!---<cffunction name="getSequenceInfo" access="remote" returntype="Struct">
-		<cfargument name="id" type="Numeric" required="true"/>
-		<cfargument name="name" type="String" required="true"/>
-		<cfargument name="environment" type="String" required="true"/>
-		<cfargument name="tabIndex" type="Numeric" required="true"/>
-
-		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.environment) />
-		<cfset _server = _serverObject['server']/>
-		<cfset _environment = _serverObject['environment']/>
-		
-		<cftry>
-			<!--- id passed in will always be sequence Id of an orf --->
-			<cfquery name="q" datasource="#_server#">
-				SELECT distinct s.id,
-								s.name,
-								s.basepair,
-								s.size,
-								s.header
-				FROM	sequence s
-					INNER JOIN
-						sequence_relationship sr on s.id = sr.objectId
-				WHERE	sr.objectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
-					and	sr.typeId = 3
-					and s.deleted = 0
-				ORDER BY s.id
-			</cfquery>
-			
-			<cfscript>
-				oStruct = StructNew();
-				if (q.recordcount) {
-					StructInsert(oStruct,"ID",q["id"][1]);
-					StructInsert(oStruct,"NAME",q["name"][1]);
-					StructInsert(oStruct,"BASEPAIR",q["basepair"][1]);
-					//StructInsert(oStruct,"SIZE",q["size"][1]);
-					StructInsert(oStruct,"TABINDEX",arguments.tabIndex);
-					
-					//header is formated as 
-					//start=123 stop=354 model=xyz type=abc....
-					for (i=1; i lte listLen(q["header"][1], " "); i++) {
-						data = listToArray(listGetAt(q["header"][1], i, " "), "=");
-						StructInsert(oStruct, ucase(data[1]), data[2]);
-					}
-				} else {
-					//throw error for no sequence record for an orf id
-					//something wrong in db records.
-					//this should not happen
-				}
-			</cfscript>
-			
-			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETSEQUENCEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-			</cfcatch>
-			
-			<cffinally>
-				<cfreturn oStruct/>
-			</cffinally>
-		</cftry>
-	</cffunction>--->
+	
 
 	<cffunction name="orfBlastHit" access="remote" returntype="Struct">
 		<cfargument name="id" type="Numeric" required="true" />

@@ -22,7 +22,7 @@
 @namespace mx "library://ns.adobe.com/flex/mx";
 
 global {
-	modalTransparency: 0.75;
+	modalTransparency: 0.85;
 	modalTransparencyBlur: 5;
 	modalTransparencyColor: #CCCCCC;
 }
@@ -240,6 +240,6 @@ mx|Panel {
 }
 
 .lightLink{
-	color: #AAB2B7;
+	color: #cc3300;
 	textDecoration: underline;	
 }

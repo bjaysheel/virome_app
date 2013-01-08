@@ -74,7 +74,7 @@
 				return _libraryInfoObject;
 			}
 			
-			protected function onAddtoStage():void{
+			private function onAddtoStage():void{
 				//track
 				tracker = new GATracker( this, _util.trackerId, "AS3", false );
 
@@ -85,7 +85,7 @@
 			}
 			
 			//This function add the event listner to show library statics when any library is selected
-			protected function init():void{
+			private function init():void{
 				//add event listner for log in/out, to refresh library drop down with appropriate private data.
 				_util.app.addEventListener("userLogInOut",refreshLibraryList);
 				
@@ -93,11 +93,11 @@
 				environmentRequest.token = Library.getEnvironmentObject('');
 			}
 			
-			protected function onHide():void{
+			private function onHide():void{
 				this.gen.onHide();
 			}
 			
-			protected function onShow():void{
+			private function onShow():void{
 				//set google tracker
 				tracker.trackPageview( "/Statistics" );				
 				this.gen.onShow();
@@ -105,11 +105,13 @@
 						
 			//This function is called when any library is selected
 			//from browse page
-			protected function libStatsHandler(event:LibraryStatEvent):void{
+			private function libStatsHandler(event:LibraryStatEvent):void{
 				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
 				var obj:Object = event.struct;
 				libraryId = obj['LIBRARY'];
 				environment = obj['ENVIRONMENT'];
+				
+				resetFlags();
 				
 				if (readyNessBit){
 					for (var i:int=0; i<environments.length; i++){
@@ -129,7 +131,7 @@
 				}
 			}
 			
-			protected function changeViewHandler(event:StatsChangeViewEvent):void{				
+			private function changeViewHandler(event:StatsChangeViewEvent):void{				
 				for (var i:int=0; i<buttons.length; i++){
 					if (buttons[i].name == event.name){
 						(this[event.name] as Button).enabled = false;
@@ -140,18 +142,18 @@
 				_section.selectedIndex = _section.getChildIndex(_section.getChildByName(event.name));				
 			}
 			
-			protected function showInformation(event:MouseEvent):void{
+			private function showInformation(event:MouseEvent):void{
 				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
 				cv.name = event.currentTarget.name;
 				_util.app.dispatchEvent(cv);
 			}
 			
-			protected function refreshLibraryList(event:Event):void{
+			private function refreshLibraryList(event:Event):void{
 				getLibrary();
 			}
 			
 			//This function is called when a environment is selected
-			protected function getLibrary():void{
+			private function getLibrary():void{
 				var libraryIdList:String = '';
 				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
 					libraryIdList = _util.app.cookie.LIBRARYID;
@@ -161,7 +163,7 @@
 			}
 			
 			//This function is called when a library is selected by user from PopUpMenuButton
-			protected function getLibDetails(e:MenuEvent=null):void{
+			private function getLibDetails(e:MenuEvent=null):void{
 				var cv:StatsChangeViewEvent = new StatsChangeViewEvent();
 				var _ls:LibraryStatEvent = new LibraryStatEvent();
 									
@@ -177,28 +179,12 @@
 				if (e != null)
 					goToSleep(_ls.struct);
 				
-				//reset flags to reload data.
-				virclass_view.flag = true;
-				trna.flag = true;
-				fxn.flag = true;
-				aclame.flag = true;
-				go.flag = true;
-				seed.flag = true;
-				kegg.flag = true;
-				cog.flag = true;	
-				tax.flag = true;
-				envlib.flag = true;
-				libtype.flag = true;
-				genesis.flag = true;
-				sphere.flag = true;
-				ecosys.flag = true;
-				extreme.flag = true;
-				physiochem.flag = true;
+				resetFlags();
 			}
 
 			//add sleep timer to eliminate possible race condition for 
 			//google map generation. 
-			protected function goToSleep(obj:Object):void{
+			private function goToSleep(obj:Object):void{
 				var sleep:Timer = new Timer(1000,2); //2 sec delay
 				sleep.addEventListener(TimerEvent.TIMER_COMPLETE,function (e:TimerEvent):void{
 																		timeToWakeUp(obj);
@@ -207,12 +193,12 @@
 			}
 			
 			//after sleeping get general library information.
-			protected function timeToWakeUp(obj:Object):void{
+			private function timeToWakeUp(obj:Object):void{
 				generalRequest.token = Library.getGeneralObject(obj);
 			}
 			
 			//Displays all the environemnts
-			protected function environmentResponse(event:ResultEvent):void{
+			private function environmentResponse(event:ResultEvent):void{
 				environments = event.result as ArrayCollection;
 				
 				this.envList.validateNow();
@@ -226,7 +212,7 @@
 			}
 			
 			//Displays all the libraries in selected environemnt
-			protected function libraryResponse(event:ResultEvent):void{
+			private function libraryResponse(event:ResultEvent):void{
 				libraries = event.result as ArrayCollection;
 				
 				libList.validateNow();
@@ -247,11 +233,31 @@
 				}
 			}
 			
-			protected function generalResponse(event:ResultEvent):void{
+			private function generalResponse(event:ResultEvent):void{
 				libraryInfoObject = event.result as Object;
 				gen.libraryInfoObject = libraryInfoObject;
 				gen.populate();
-			}			
+			}
+			
+			private function resetFlags():void{
+				//reset flags to reload data.
+				virclass_view.flag = true;
+				trna.flag = true;
+				fxn.flag = true;
+				aclame.flag = true;
+				go.flag = true;
+				seed.flag = true;
+				kegg.flag = true;
+				cog.flag = true;	
+				tax.flag = true;
+				envlib.flag = true;
+				libtype.flag = true;
+				genesis.flag = true;
+				sphere.flag = true;
+				ecosys.flag = true;
+				extreme.flag = true;
+				physiochem.flag = true;
+			}
 		]]>
 	</fx:Script>
 	

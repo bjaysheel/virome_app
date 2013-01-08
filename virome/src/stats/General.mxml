@@ -110,8 +110,8 @@
 				_samdate.text = libraryInfoObject['SAMPLEDATE'].toString().length ? libraryInfoObject['SAMPLEDATE'] : "N/A";
 				
 				//mean and stdev
-				_mrl.text = new MyNumberFormatter().format(libraryInfoObject['RMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['RSTDEV']) + ")";
-				_mol.text = new MyNumberFormatter().format(libraryInfoObject['OMEAN']) + "(+/- " + new MyNumberFormatter().format(libraryInfoObject['OSTDEV']) + ")";
+				_mrl.text = nf.format(libraryInfoObject['RMEAN']) + "(+/- " + nf.format(libraryInfoObject['RSTDEV']) + ")";
+				_mol.text = nf.format(libraryInfoObject['OMEAN']) + "(+/- " + nf.format(libraryInfoObject['OSTDEV']) + ")";
 					
 				//geo location
 				_geo.text = (libraryInfoObject['LOCATION'].toString().length) ? libraryInfoObject['LOCATION'] : "N/A";

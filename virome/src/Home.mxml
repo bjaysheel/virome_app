@@ -269,6 +269,82 @@
 
 			<mx:HRule width="100%"/>
 		
+			<!-- tutorial vids -->
+			<mx:Text condenseWhite="true" width="100%" paddingTop="15">
+				<mx:htmlText>
+					<![CDATA[
+						<b>VIROME Tutorial videos</b><br/><br/>
+						<ul>
+							<li>
+								<b>
+									<a href="http://www.youtube.com/watch?v=4wsHltA5_xQ">
+										<font color="#3399FF">
+											VIROME Overview tutorial
+										</font>
+									</a>
+								</b>
+							</li>
+							<textformat blockindent="36">
+								This video tutorial covers the basic features of the Viral Informatics Resource 
+								for Metagenome Exploration. Use the You Tube video menu bar to view in full 1080p.
+							</textformat>
+							
+							<br/><br/>
+							
+							<li>
+								<b>
+									<a href="http://www.youtube.com/watch?v=sVoku4GyK6s">
+										<font color="#3399FF">
+											Downloading whole libraries of VIROME data
+										</font>
+									</a>
+								</b>
+							</li>
+							<textformat blockindent="36">
+								The video tutorial shows how to download entire libraries of viral metagenome sequence
+								data from the Viral Informatics Resource for Metagenome Exploration. 
+								Use the You Tube video menu bar to view in full 1080p.
+							</textformat>
+						
+							<br/><br/>
+					
+							<li>
+								<b>
+									<a href="http://www.youtube.com/watch?v=Jj3KP5ri7mY">
+										<font color="#3399FF">
+											Discovering new genetic polymorphism with VIROME
+										</font>
+									</a>
+								</b>
+							</li>
+							<textformat blockindent="36">
+								This video tutorial covers the use of VIROME to discover novel genetic polymorphism 
+								within viral metagenomic libraries.  Use the You Tube video menu bar to view in full 1080p.
+							</textformat>
+					
+							<br/><br/>
+					
+							<li>
+								<b>
+									<a href="http://www.youtube.com/watch?v=mL0qRR1uYUM">
+										<font color="#3399FF">
+											Comparative metagenomic analysis using VIROME
+										</font>
+									</a>
+								</b>
+							</li>
+							<textformat blockindent="36">
+								This video tutorial covers the use of VIROME data for comparative analysis of viral 
+								communities using the Quantitative Insights in Microbial Ecology package (QIIME).  
+								Use the You Tube video menu bar to view in full 1080p.
+							</textformat>
+						</ul>
+					]]>
+				</mx:htmlText>
+			</mx:Text>
+			
+			<mx:HRule width="100%"/>
+			
 			<!-- table overview -->
 			<local:OverviewTable width="100%" height="100%" isPrivate="false"/>
 			
@@ -279,19 +355,22 @@
 				<mx:htmlText>
 					<![CDATA[
 					<font size="11">
-					<p>
-					<b>VIROME</b> is the collective creative and scientific output of principally: 
-					<a href="mailto:bjaysheel@gmail.com">Jaysheel Bhavsar</a>, 
-					<a href="mailto:polson@dbi.udel.edu">Shawn Polson</a>, 
-					<a href="mailto:wommack@dbi.udel.edu">K. Eric Wommack</a>. 
-					If you use <b>VIROME</b> in the preparation of data for publication please
-					give the URL (http://virome.dbi.udel.edu) and cite: Wommack, K. E., J. Bhavsar, S. W. Polson, J. Chen, M. Dumas, S. Srinivasiah, M. Furman, S. Jamindar, and D. J. Nasko. 2012. 
-					<a href="http://standardsingenomics.org/index.php/sigen/article/view/sigs.2945051/753" target="_blank">VIROME: a standard operating procedure for analysis of viral metagenome sequences. Standards in Genomic Sciences 6:427-439</a>
-					</p><br/>
-					<p>
-					<b>VIROME</b> development supported through research grants from the National Science Foundation, the US.
-					Department of Agriculture, and the Delaware EPSCoR program
-					</p>
+						<p>
+							<b>VIROME</b> is the collective creative and scientific output of principally: 
+							<a href="mailto:bjaysheel@gmail.com">Jaysheel Bhavsar</a>, 
+							<a href="mailto:polson@dbi.udel.edu">Shawn Polson</a>, 
+							<a href="mailto:wommack@dbi.udel.edu">K. Eric Wommack</a>. 
+					
+							If you use <b>VIROME</b> in the preparation of data for publication please
+							give the URL (http://virome.dbi.udel.edu) and cite: Wommack, K. E., J. Bhavsar, S. W. Polson, J. Chen, M. Dumas, S. Srinivasiah, M. Furman, S. Jamindar, and D. J. Nasko. 2012. 
+					
+							<a href="http://standardsingenomics.org/index.php/sigen/article/view/sigs.2945051/753" target="_blank">VIROME: a standard operating procedure for analysis of viral metagenome sequences. Standards in Genomic Sciences 6:427-439</a>
+						</p>
+						<br/>
+						<p>
+							<b>VIROME</b> development supported through research grants from the National Science Foundation, the US.
+							Department of Agriculture, and the Delaware EPSCoR program
+						</p>
 					</font>
 					]]>
 				</mx:htmlText>					
