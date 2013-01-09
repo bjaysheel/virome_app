@@ -11,9 +11,9 @@
 		<cftry>
 			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	l.id,
-						l.name,
+						lower(l.name),
 						l.description,
-						l.environment,
+						lower(l.environment),
 						l.prefix,
 						l.server,
 						l.publish,
