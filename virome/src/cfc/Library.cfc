@@ -11,9 +11,9 @@
 		<cftry>
 			<cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	l.id,
-						lower(l.name),
+						lower(l.name) as name,
 						l.description,
-						lower(l.environment),
+						lower(l.environment) as environment,
 						l.prefix,
 						l.server,
 						l.publish,
@@ -52,7 +52,7 @@
 					<cfif len(arguments.environment)>
 						and l.environment = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.environment#">
 					</cfif>
-				order by l.publish desc, l.environment, l.description asc
+				order by l.environment, l.description asc, l.publish desc
 			</cfquery>
 			
 			<cfcatch type="any">

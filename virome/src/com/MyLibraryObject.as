@@ -192,7 +192,7 @@ package com
 			if (obj.CITATION != undefined && obj.CITATION.length){
 				var link:LinkButton=new LinkButton();
 				//link.addEventListener();
-				link.label = obj.LIBNAME + "  ( " + obj.CITATION.substr(0,10) + "..." +" ) ";
+				link.label = util.properCase(obj.LIBNAME) + "  ( " + obj.CITATION.substr(0,10) + "..." +" ) ";
 				link.toolTip = obj.CITATION;
 				link.name = obj.CITATION.substr(0,10);
 				//link.addEventListener(MouseEvent.CLICK,goToLink);
