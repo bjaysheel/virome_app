@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas 	xmlns:mx="http://www.adobe.com/2006/mxml" 
+<mx:Canvas 	xmlns:mx="http://www.adobe.com/2006/mxml"
+			xmlns:s="library://ns.adobe.com/flex/spark"
 			xmlns:search="search.*"
 			xmlns:sequenceView="sequenceView.*"
 			width="100%" 
@@ -75,30 +76,32 @@
        	</mx:State>
 	
 		<mx:State name="show_seq_detail">
-			<!--<mx:RemoveChild target="{searchGrip1}"/>
+			<mx:RemoveChild target="{searchGrip1}"/>
 			<mx:RemoveChild target="{searchGrip2}"/>
-			<mx:RemoveChild target="{blastSearch}"/>-->
+			<mx:RemoveChild target="{blastSearch}"/>
 			<mx:RemoveChild target="{textSearch}"/>
 			<mx:RemoveChild target="{searchResultPnl}"/>
 		</mx:State>
     </mx:states>
     
 	<mx:HBox id="searchWindow" width="100%" height="100%" dropShadowEnabled="true">
-		<!--<search:Grip id="searchGrip1" 
-						 gripIcon="@Embed('/assets/icons/text.png')"
-            			 gripTip="TEXT SEARCH PANEL" 
-            			 click="currentState = 'showSearchPanel'"/>-->
+		<mx:Canvas id="searchGrip1" height="100%">
+			<s:Image width="100%" height="100%" depth="0" scaleMode="stretch" source="@Embed(source='/assets/icons/grip2.png')"
+					 toolTip="Database search" click="_util.app.searchPage.currentState = 'showSearchPanel'"/>
+			<s:Image x="0" y="118" depth="999" source="@Embed(source='/assets/icons/db_search.png')" click="_util.app.searchPage.currentState = 'showSearchPanel'"/>
+		</mx:Canvas>
             			 
         <search:DBForm id="textSearch" width="302" horizontalScrollPolicy="off" borderStyle="none"/>
         
-		<!--<mx:Spacer width="100%"/>
+		<mx:Spacer width="100%"/>
         
         <search:BlastForm id="blastSearch" width="299" horizontalScrollPolicy="off" borderStyle="none"/>
         
-        <search:Grip id="searchGrip2" 
-						 gripIcon="@Embed('/assets/icons/blast.png')"
-            			 gripTip="BLAST SEARCH PANEL" 
-            			 click="currentState = 'showBlastPanel'"/>-->
+		<mx:Canvas id="searchGrip2" height="100%">
+			<s:Image width="100%" height="100%" depth="0" scaleMode="stretch" source="@Embed(source='/assets/icons/grip2.png')"
+					 toolTip="BLAST search" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>
+			<s:Image x="0" y="118" depth="999" source="@Embed(source='/assets/icons/blast_search.png')" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>
+		</mx:Canvas>
 	</mx:HBox>
 	
 	<search:ResultPanel id="searchResultPnl" x="325" width="{this.width-340}" height="100%"/>

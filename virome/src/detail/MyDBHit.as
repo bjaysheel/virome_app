@@ -12,6 +12,7 @@ package detail
 	import flash.events.MouseEvent;
 	
 	import mx.containers.Grid;
+	import mx.controls.Alert;
 	import mx.controls.LinkButton;
 	import mx.controls.Text;
 	import mx.core.FlexGlobals;
@@ -155,6 +156,8 @@ package detail
 				_lb.setStyle("textAlign","left");
 				if ((str == "UNIREF100P") && (_lb.label.substr(0,2) == "UP"))
 					_lb.addEventListener(MouseEvent.CLICK, util.followUNIPARC);
+				else if ((str == "UNIREF100P") && (_lb.label.substr(0,3) == "fig"))
+					_lb.addEventListener(MouseEvent.CLICK, util.followPHGSEED);
 				else if (str == "UNIREF100P")
 					_lb.addEventListener(MouseEvent.CLICK, util.followUNIREF);
 				else if (str == "KEGG")
@@ -217,7 +220,7 @@ package detail
 				this.addChild(gr);
 				
 				//add seed functional evidence info.
-				if ((str == "SEED") && (lstr == "Top FXNal Hit")){
+				if (((str == "SEED") || (str == "PHGSEED")) && (lstr == "Top FXNal Hit")){
 					gr = new MyGridRow();
 					gi = new MyGridItem();
 					gr.addChild(gi);

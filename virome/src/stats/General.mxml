@@ -34,6 +34,7 @@
 			import mx.formatters.NumberFormatter;
 			import mx.managers.ToolTipManager;
 			import mx.rpc.events.ResultEvent;
+
 			
 			public var tracker:AnalyticsTracker;
 			
@@ -177,6 +178,7 @@
 						+ _project.text + " project, from\n" 
 						+ _environment.text + " environment.\n" 
 						+ _geo.text;
+					
 					gmap.init(lat,lon,str);
 					_map.addChild(gmap);
 					_map.validateNow();

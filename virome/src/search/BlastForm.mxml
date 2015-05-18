@@ -10,7 +10,7 @@
     paddingTop="12" 
     paddingBottom="8" 
     verticalGap="0" 
-	creationComplete="initBlastForm()" xmlns:library="services.library.*" xmlns:searchrpc="services.searchrpc.*">
+	creationComplete="onCreationComplete()" xmlns:library="services.library.*" xmlns:searchrpc="services.searchrpc.*">
 	
 	<fx:Script>
 		<![CDATA[
@@ -22,8 +22,11 @@
 			[Bindable] private var eval:ArrayCollection = new ArrayCollection();
 			[Bindable] private var _database:ArrayCollection = new ArrayCollection();
 
-			protected function initBlastForm():void{
-				blastDBRequest.token = Library.getBLASTDBObject();
+			private function onCreationComplete():void{
+				//add event listner for log in/out, to refresh library drop down with appropriate private data.
+				_util.app.addEventListener("userLogInOut", refreshLibraryList);
+				
+				getlibReq();
 				
 				//create extensive list of evalues
 				for (var i:int=0; i<50; i++){
@@ -35,7 +38,19 @@
 				expect.selectedIndex=3;
 			}
 			
-			protected function submitBlastForm():void{
+			private function refreshLibraryList(event:Event):void {
+				getlibReq();
+			}
+			
+			private function getlibReq():void{
+				var libraryIdList:String = "";
+				if (_util.app.cookie != null && _util.app.cookie.LIBRARYID != undefined)
+					libraryIdList = _util.app.cookie.LIBRARYID;
+				
+				blastDBRequest.token = Library.getBLASTDBObject(libraryIdList);
+			}
+			
+			private function submitBlastForm():void{
 				var obj:Object = new Object;
 				obj['PROGRAM'] = program.selectedItem.data;
 				obj['DATABASE'] = database.selectedItem.data;
@@ -47,7 +62,7 @@
 				_blastsearch.token = Search.getBlastSearch(obj);
 			}
 			
-			protected function resetBlastForm():void{
+			private function resetBlastForm():void{
 				this.sequence.text = "";
 				this.expect.selectedIndex = 0;
 				this.description.selectedIndex = 0;
@@ -55,11 +70,11 @@
 				this.program.selectedIndex = 0;
 			}
 			
-			protected function blastSearchHandler(event:ResultEvent):void{
+			private function blastSearchHandler(event:ResultEvent):void{
 				dispatchEvent(new SearchBlastEvent(event.result.toString()));
 			}			
 			
-			protected function blastDBResponse(event:ResultEvent):void{
+			private function blastDBResponse(event:ResultEvent):void{
 				var ac:ArrayCollection = event.result as ArrayCollection;
 				_database = event.result as ArrayCollection;
 			}
@@ -80,6 +95,7 @@
 	<fx:Declarations>
 		<mx:ArrayCollection id="_program">
 			<fx:Object label="BLASTP" data="blastp"/>
+			<fx:Object label="BLASTN" data="blastn"/>
 		</mx:ArrayCollection>
 		
 		<mx:ArrayCollection id="_descrip">
@@ -93,8 +109,7 @@
 		<mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />		
 	</fx:Declarations>
 		
-	<!-- <mx:Label text="Blast Search"/> -->
-	<mx:LinkButton label="DB Search" textAlign="right"
+	<mx:LinkButton label="Database Search" textAlign="right"
 			   icon="@Embed(source='/assets/icons/back.png')"
 			   click="_util.app.searchPage.currentState = 'showSearchPanel'"/>
 	

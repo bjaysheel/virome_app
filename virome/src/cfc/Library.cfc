@@ -1,10 +1,23 @@
-<cfcomponent output="false">
+<cfcomponent displayname="Library" output="false" hint="
+			This componented is used to get everything Library related information.  
+			It is used to gather, format and return all information in reference to Library.
+			Functions within this component are used directly by Flex and as helper
+			function by other components
+			">
 
-	<cffunction name="getLibrary" access="remote" returntype="query">
-		<cfargument name="id" default="-1" type="Numeric">
-		<cfargument name="libraryIdList" default="" type="string">
-		<cfargument name="publish" default="-1" type="Numeric" >
-		<cfargument name="environment" default="" type="String">
+	<cffunction name="getLibrary" access="remote" returntype="query" hint="
+				Get all metadata in refernece to a library, list of libraries or all libraries in an environment
+				This function acts as a helper functions to ther ColdFusion components such as OrfRPC, ReadRPC, SearchRPC and StatisticsRPC.
+				This function be called directly from Flex view to display library information in browse, search and statistics view.  
+				
+				Return: A hash of libray metadata
+				">
+				
+		<cfargument name="id" default="-1" type="Numeric" hint="Library ID">
+		<cfargument name="libraryIdList" default="" type="string" hint="Comma separated list of library IDs">
+		<cfargument name="publish" default="-1" type="Numeric" hint="Flag to get library information for public/private or both type of libraries ">
+		<cfargument name="environment" default="" type="String" hint="Environment name">
+		
 		<!---<cfargument name="privateOnly" default="False" type="boolean">--->
 				
 		<cfset q="">
@@ -38,7 +51,7 @@
 				FROM	library l
 					INNER JOIN
 						lib_summary ls on l.id = ls.libraryId
-				WHERE	l.deleted = 0
+				WHERE	l.deleted = 0 and l.progress="complete"
 					<cfif arguments.id gt -1>
 						and l.id = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
 					</cfif>
@@ -52,12 +65,16 @@
 					<cfif len(arguments.environment)>
 						and l.environment = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.environment#">
 					</cfif>
-				order by l.environment, l.description asc, l.publish desc
+				order by l.environment, l.prefix, l.name, l.description asc, l.publish desc
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARY", 
-							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -66,10 +83,17 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getSequenceSizeOrGC" access="private" returntype="Query">
-		<cfargument name="libraryId" type="numeric" required="true">
-		<cfargument name="server" type="string" required="true">
-		<cfargument name="type" type="numeric" required="true">
+	<cffunction name="getSequenceSizeOrGC" access="private" returntype="Query" hint="
+				Get length of reads/contig sequence in nucleotide or length of ORFs in amino acid or GC value of all sequences in a give library
+				A helper function for 
+					getHistogram()
+				
+				Return: A strucutre of GC value or sequence size per sequence.
+				">
+				
+		<cfargument name="libraryId" type="numeric" required="true" hint="Library ID">
+		<cfargument name="server" type="string" required="true" hint="Server/Database name to look for sequences in">
+		<cfargument name="type" type="numeric" required="true" hint="Flag indicating weather to retrieve read/contig sequence or ORF sequences">
 		
 		<cfset q=""/>
 		<cftry>
@@ -89,14 +113,17 @@
 						and sr.typeId = 1
 					<cfelse>
 						and sr.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.type#"/>
-					</cfif>	
-					
+					</cfif>					
 				ORDER BY hval desc
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSEQUENCESIZEORGC", 
-							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -106,8 +133,14 @@
 	</cffunction>
 	
 		
-	<cffunction name="getEnvironment" access="private" returntype="query">
-		<cfargument name="libraryIdList" type="string" default=""/>
+	<cffunction name="getEnvironment" access="private" returntype="query" hint="
+				Get environment name for give library(ies)
+				A helper function for 
+					getEnvironmentObject()
+				 
+				Return: A hash of evironment name for each library
+				">
+		<cfargument name="libraryIdList" type="string" default="" hint="Comma separated list of library IDs"/>
 		
 		<cftry>
 			<cfset q = "" />
@@ -122,8 +155,12 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETENVIRONMENT", 
-							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -132,9 +169,20 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="jsonHelper" access="private" returntype="void" hint="create JSON object and write to file" >
-		<cfargument name="struct" type="Struct" required="true">
-		<cfargument name="filename" type="String" required="true">
+	<cffunction name="jsonHelper" access="private" returntype="void" hint="
+				Create a JSON object of a given hash and write it to a file. 
+				This make it easy to read and format data for constant repeated requested data.
+				A helper function for 
+					getTaxAtLevel()
+					setReadObject()
+					setORFTypeObject()
+					setVIROMECatObject() and 
+					getServerOverview()
+					
+				Return: NA" >
+				
+		<cfargument name="struct" type="Struct" required="true" hint="A hash of data to be written in JSON format">
+		<cfargument name="filename" type="String" required="true" hint="Filename to write JSON object">
 		
 		<cftry>
 			<cfscript>
@@ -157,13 +205,23 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / JSONHELPER", 
-							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getTaxAtLevel" access="private" returntype="void">
+	<cffunction name="getTaxAtLevel" access="private" returntype="void" hint="
+				Get domain level taxonomy breakdown for a give library
+				A helper function for: 
+					getStatistics()
+					
+				Return: NA (write data to JSON object realted to the library)
+				">
 		<cfargument name="libraryId" type="Numeric" required="true" />
 		<cfargument name="server" type="String" required="true" />
 		<cfargument name="environment" type="String" default="" />
@@ -203,13 +261,23 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETTAXDOMAIN", 
-							cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="setReadObject" access="private" returntype="void" hint="create read JSON object">
+	<cffunction name="setReadObject" access="private" returntype="void" hint="
+				Generate detail read/contig level metadata for give library. All data is saved/appened to overall JSON object
+				A helper function for:
+					getStatistics()
+			
+				Return: NA (write data to JSON object realted to the library)
+				">
 		<cfargument name="libraryId" type="numeric" required="true">
 		<cfargument name="server" type="string" required="true" >
 		<cfargument name="environment" type="string" required="true" >
@@ -221,7 +289,7 @@
 						read_mb
 				FROM	statistics
 				WHERE	deleted = 0 
-					and	libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>		
+					and	libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
 			</cfquery>
 			
 			<cfscript>
@@ -240,22 +308,33 @@
 					struct = structnew();
 					StructInsert(struct,"READ",objarr);
 					
-					jsonHelper(struct,arguments.filename);	
+					jsonHelper(struct,arguments.filename);
 				}
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
-								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="setORFTypeObject" access="private" returntype="void" hint="create ORF type JSON object">
-		<cfargument name="libraryId" type="numeric" required="true">
-		<cfargument name="server" type="string" required="true" >
-		<cfargument name="environment" type="string" required="true" >
-		<cfargument name="filename" type="string" required="true">
+	<cffunction name="setORFTypeObject" access="private" returntype="void" hint="
+				Generate detail ORF level metadata for give library. All data is saved/appened to overall JSON object
+				A helper function for:
+					getStatistics()
+			
+				Return: NA (write data to JSON object realted to the library)
+				">
+				
+		<cfargument name="libraryId" type="numeric" required="true" hint="Library ID">
+		<cfargument name="server" type="string" required="true" hint="Server name (database name)">
+		<cfargument name="environment" type="string" required="true" hint="Environment name">
+		<cfargument name="filename" type="string" required="true" hint="Filename where JSON information is stored">
 		
 		<cftry>
 			<cfquery name="qry" datasource="#arguments.server#">
@@ -313,18 +392,36 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
-								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="setVIROMECatObject" access="private" returntype="void" hint="create ORF type JSON object">
-		<cfargument name="libraryId" type="numeric" required="true">
-		<cfargument name="server" type="string" required="true" >
-		<cfargument name="environment" type="string" required="true" >
-		<cfargument name="filename" type="string" required="true">
-		
+	<cffunction name="setVIROMECatObject" access="private" returntype="void" hint="
+				Generate detail VIROME category information such as 
+					no. of tRNA
+					no. of rRNA
+					no. of ORFans
+					no. of functional orfs
+					no. of viral orfs etc...
+				
+				for give library. All data is saved/appened to overall JSON object
+				A helper function for:
+					getStatistics()
+			
+				Return: NA (write data to JSON object realted to the library)
+				">
+
+		<cfargument name="libraryId" type="numeric" required="true" hint="Library Id">
+		<cfargument name="server" type="string" required="true" hint="Server name (database name)">
+		<cfargument name="environment" type="string" required="true" hint="Environment name">
+		<cfargument name="filename" type="string" required="true" hint="Filename where JSON information is stored">
+
 		<cftry>
 			<cfquery name="qry" datasource="#arguments.server#">
 				SELECT	tRNA_cnt, tRNA_id, 
@@ -339,7 +436,7 @@
 						libraryId
 				FROM	statistics
 				WHERE	deleted = 0 
-					and	libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>		
+					and	libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
 			</cfquery>
 			
 			<cfscript>
@@ -423,16 +520,32 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SETREADOBJECT", 
-								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 
-	<cffunction name="getStatistics" access="private" returntype="struct">
-		<cfargument name="id" type="Numeric" required="true" />
-		<cfargument name="server" type="String" required="true" />
-		<cfargument name="environment" type="String" default=""/>
+	<cffunction name="getStatistics" access="private" returntype="struct" hint="
+				Generate detail statistics information such as  
+					read details
+					ORF details
+					virome category details and
+					domain level taxonomy information 
+				for give library.
+				A helper function for:
+					getLibraryInfo()
+			
+				Return: A hash of library details
+				">
+				
+		<cfargument name="id" type="Numeric" required="true" hint="Library ID"/>
+		<cfargument name="server" type="String" required="true" hint="Server (database) name"/>
+		<cfargument name="environment" type="String" default="" hint="Environment name"/>
 		
 		<cfset stat_struct = StructNew()>
 		<cfset local.filename = "LIBRARY_STAT_" & arguments.id & ".json"/>
@@ -464,8 +577,12 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSTATISTICS", 
-								cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -474,9 +591,21 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="serverOverviewHelper" access="private" returntype="Struct">
-		<cfargument name="environment" type="string" required="true">
-		<cfargument name="libraryId" type="string" required="true">
+	<cffunction name="serverOverviewHelper" access="private" returntype="Struct" hint="
+				Generate detail overview of environmental information such as
+					read count
+					ORF count
+					total number of read megabases
+					total number of ORF megabases
+				
+				A helper function for
+					getServerOverview()
+				
+				Return: hash of environmental details
+				">
+				
+		<cfargument name="environment" type="string" required="true" hint="Environment name">
+		<cfargument name="libraryId" type="string" required="true" hint="Library ID">
 		
 		<cftry>
 			<cfset serverObj = CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
@@ -495,8 +624,12 @@
 			</cfquery>
 					
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / SERVEROVERVIEWHELPER", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>				
@@ -505,32 +638,18 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getMeanSTD" access="private" returntype="Struct" 
-		hint="Get mean and std for a given library">
-		<cfargument name="libraryId" type="numeric" required="true"/>
-		<cfargument name="server" type="string" required="true"/>
-		<cfargument name="typeId" type="numeric" required="true"/>
+	<cffunction name="getMeanSTD" access="private" returntype="Struct" hint="
+				Get mean sequence length and standard deviation  
+				
+				Return: A hash of mean sequence length and standard deviation
+				">
+				
+		<cfargument name="libraryId" type="numeric" required="true" hint="Library ID"/>
+		<cfargument name="server" type="string" required="true" hint="Server (database) name"/>
+		<cfargument name="typeId" type="numeric" required="true" hint="Flag indicating read or ORF"/>
 	
 		<cfset lstr = structnew()/>
 		<cftry>
-			<!---<cfquery name="q" datasource="#arguments.server#">
-				SELECT	avg(s.size) as mean,
-						stddev(s.size) as sdev
-				FROM	sequence s
-					inner join 
-						sequence_relationship sr on s.id = sr.objectId
-				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
-					and sr.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
-			</cfquery>--->
-			
-			<!---<cfquery name="q" datasource="#arguments.server#">
-				SELECT	avg(s.size) as mean,
-						stddev(s.size) as sdev
-				FROM	sequence s
-				WHERE	s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
-					and s.typeId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.typeId#"/>
-			</cfquery>--->
-			
 			<cfset count = 0/>
 			<cfset xBar = 0/>
 			<cfset std_dev = 0/>
@@ -562,8 +681,12 @@
 			<cfset StructInsert(lstr,"STDEV", std_dev) />
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETMEANSTD", 
-									cfcatch.Message & "<br/>\n recordcount: #q.RecordCount# lib: #arguments.libraryId# typeId: #arguments.typeId#", cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -572,10 +695,15 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getLibraryInfo" access="remote" returntype="Struct">
-		<cfargument name="environment" type="string" required="true"/>
-		<cfargument name="libraryIdList" type="string" required="true"/>
-		<cfargument name="publish" type="numeric" required="true" default="1"/>
+	<cffunction name="getLibraryInfo" access="remote" returntype="Struct" hint="
+				Gather detail library information and metadata for library
+				
+				Return: hash of library information 
+				">
+				
+		<cfargument name="environment" type="string" required="true" hint="Environment name"/>
+		<cfargument name="libraryIdList" type="string" required="true" hint="Comma separated library ID list"/>
+		<cfargument name="publish" type="numeric" required="true" default="1" hint="Flag to retrieve public or private library"/>
 		
 		<cfset struct = StructNew()>
 		<cftry>
@@ -611,8 +739,12 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETLIBRARYINFO", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -621,8 +753,14 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="getEnvironmentObject" access="remote" returntype="Array">
-		<cfargument name="libraryIdList" type="string" default="" />
+	<cffunction name="getEnvironmentObject" access="remote" returntype="Array" hint="
+				Get environment information of give list of libraries
+				This function is directly called from Flex search, statistics and browse view
+				
+				Return: An array of hash of environment name
+				">
+				
+		<cfargument name="libraryIdList" type="string" default="" hint="Comma separated list of library ID"/>
 
 		<cfset e = getEnvironment(libraryIdList = arguments.libraryIdList) />
 		<cfset struct = StructNew()>
@@ -651,7 +789,12 @@
 		<cfreturn array />
 	</cffunction>
 
-	<cffunction name="getLibraryObject" access="remote" returntype="Array">
+	<cffunction name="getLibraryObject" access="remote" returntype="Array" hint="
+				Get library ID and name.
+				This Function is called directly by flex views such as search, statistics and browse view
+				
+				Return: An array of strucutre of library name and id
+				">
 		<cfargument name="environment" type="string" required="true">
 		<cfargument name="libraryIdList" type="string" required="true"/>
 		
@@ -663,7 +806,7 @@
 		<cfset StructInsert(struct, "data", "-1")>
 		<cfset ArrayAppend(array, struct)>
 		
-		<cfset pub_lib = getLibrary(environment=arguments.environment,publish=1)>
+		<cfset pub_lib = getLibrary(environment=arguments.environment, publish=1)>
 		<cfloop query="pub_lib">
 			<cfscript>
 				struct = StructNew();
@@ -674,7 +817,7 @@
 		</cfloop>
 		
 		<cfif len(libraryIdList) gt 0>
-			<cfset pri_lib = getLibrary(environment=arguments.environment,libraryIdList=arguments.libraryIdList,publish=0)>
+			<cfset pri_lib = getLibrary(environment=arguments.environment, libraryIdList=arguments.libraryIdList, publish=0)>
 			<cfloop query="pri_lib">
 				<cfscript>
 					struct = StructNew();
@@ -688,8 +831,13 @@
 		<cfreturn array />
 	</cffunction>
 	
-	<cffunction name="getAllLibrary" access="remote" returntype="Array">
-		<cfargument name="libraryIdList" type="string" default=""/>
+	<cffunction name="getAllLibrary" access="remote" returntype="Array" hint="
+				Gather all library and environment information
+				
+				Return: An array of hash of library name, environment and library ID
+				">
+				
+		<cfargument name="libraryIdList" type="string" default="" hint="Comma seperated list of library ID"/>
 		
 		<cftry>
 			<cfset arr = ArrayNew(1)/>
@@ -723,8 +871,12 @@
 			<cfset arr = CreateObject("component", request.cfc & ".Utility").SortArrayOfStrut(arr, "env")/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -733,29 +885,69 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getBLASTDBObject" access="remote" returntype="Array">
+	<cffunction name="getBLASTDBObject" access="remote" returntype="Array" hint="
+				Gather all BLASTable libraries and their respective metadata
+				This function is used 
+				
+				Return: An array of hash of BLASTable database 
+				">
+		<cfargument name="libraryIdList" type="string" default=""/>
+		
 		<cfset struct = StructNew()/>
 		<cfset arr = ArrayNew(1)/>
 		
 		<cftry>
 			<cfset lib = getLibrary(publish=1)/>
 			
-			<cfoutput query="lib" group="environment">
+			<cfif listLen(arguments.libraryIdList)>
+				<cfset priv_lib = getLibrary(libraryIdList=arguments.libraryIdList)>
+				
+				<cfloop query="priv_lib" >
+					<cfset priv_lib.name = "Private: " & priv_lib.name/> 
+				</cfloop>
+				
+				<cfquery name="all" dbtype="query" >
+					SELECT * FROM lib
+					UNION
+					SELECT * FROM priv_lib
+					ORDER BY environment, description asc, publish desc
+				</cfquery>
+			<cfelse>
+				<cfset all = lib/>
+			</cfif>
+			
+			<cfset evn_idx = 0/>
+			
+			<cfoutput query="all" group="environment">
 				<cfset struct = StructNew()/>
-				<cfset struct['label'] = UCase(lib.environment) & " ENVIRONMENT"/>
-				<cfset struct['data'] = UCase(REReplace(lib.environment,"_| ","-","ALL"))/>
-				<cfset ArrayAppend(arr,struct)/>
+				<cfset env_libs = ""/>
+				
+				<cfset struct['label'] = UCase(all.environment) & " ENVIRONMENT" />
+				<cfset struct['data'] = UCase(REReplace(all.environment, "_| ", "-", "ALL")) />
+				<cfset ArrayAppend(arr, struct) />
+				
+				<cfset env_idx = arraylen(arr)/>
+				
 				<cfoutput group="description">
 					<cfset struct = StructNew()/>
-					<cfset struct['label'] = "     "&UCase(lib.name)/>
-					<cfset struct['data'] = UCase(lib.name)/>
-					<cfset ArrayAppend(arr,struct)/>
+					<cfset struct['label'] = "     "&UCase(all.name)/>
+					<cfset struct['data'] = lcase(listFirst(all.environment, " ")) & "/" & UCase(all.prefix)/>
+					
+					<cfset env_libs &= lcase(listFirst(all.environment, " ")) & "/" & UCase(all.prefix) & ","/>
+					<cfset ArrayAppend(arr, struct)/>
 				</cfoutput>
+				
+				<cfset env_libs = ReReplace(env_libs, ",$", "", "one")/>
+				<cfset arr[env_idx]['data'] = env_libs/>
 			</cfoutput>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETBLASTOBJECT", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component", request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -764,12 +956,24 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getGeneralObject" access="remote" returntype="Struct" >
+	<cffunction name="getGeneralObject" access="remote" returntype="Struct" hint="
+				Collect overall detail information for a library such as
+					name,
+					description,
+					geographical location,
+					citation,
+					statistics,
+					mean library size,
+					etc... 
+				
+				Function called directly from Flex applicaiton by statistics view and browse view
+				
+				Return: A hash of library details 
+				">
 		<cfargument name="obj" type="Struct" required="true" />
 		
 		<cfset summary=StructNew()>
 		<cftry>
-			<cflog text="start: #arguments.obj.LIBRARY#" type="information" file="Virome.Library">
 			<cfset lib=getLibrary(id=arguments.obj.LIBRARY)/>
 			
 			<cfloop query="lib">
@@ -809,21 +1013,33 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGENERALOBJECT", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
-				<cflog text="returning: #arguments.obj.LIBRARY#" type="information" file="Virome.Library">
 				<cfreturn summary/>
 			</cffinally>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getHistogram" access="remote" returntype="xml">
-		<cfargument name="libraryId" type="numeric" required="true" />
-		<cfargument name="server" type="string" required="true"/>
-		<cfargument name="type" type="numeric" required="true"/>
+	<cffunction name="getHistogram" access="remote" returntype="xml" hint="
+				Generate xml document of GC and sequence length histogram data
+				Since GC content of a library and sequence length wont change, these xml files are
+				created once and save to be recalled at later time
+				
+				This function is called directly from Flex statistcs view.
+				
+				Return: Well formatted xml document 
+				">
+		
+		<cfargument name="libraryId" type="numeric" required="true" hint="Library ID"/>
+		<cfargument name="server" type="string" required="true" hint="Server (database) name"/>
+		<cfargument name="type" type="numeric" required="true" hint="Flag indicating read/contig or ORF data"/>
 
 		<cftry>
 			<cfscript>
@@ -902,8 +1118,12 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETHISTOGRAM", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -912,10 +1132,21 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getServerOverview" access="remote" returntype="Array">
-		<cfargument name="userId" type="numeric" required="true" hint="set to view private libraries for give user"/>
-		<cfargument name="libraryIdList" type="string" required="true" hint="set to view private libraries"/>
-		<cfargument name="privateOnly" type="boolean" required="true" default="false"/>
+	<cffunction name="getServerOverview" access="remote" returntype="Array" hint="
+				Generate a VIROME level data statistics per environment
+					no of read/contig 
+					no of ORFs
+					megabases of read/contig
+					megabases of ORFs
+					
+				Called directly from Flex by home view
+				
+				Return: An array of hash per environment.
+				">
+				
+		<cfargument name="userId" type="numeric" required="true" hint="Set to view private libraries for give user"/>
+		<cfargument name="libraryIdList" type="string" required="true" hint="Comma separated list of library ID"/>
+		<cfargument name="privateOnly" type="boolean" required="true" default="false" hint="Flag to get stats for private libraries only"/>
 			
 		<cfset local.arr = ArrayNew(1)/>
 		
@@ -1000,8 +1231,12 @@
 			</cfif>
 						
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETSERVEROVERVIEW", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -1012,15 +1247,26 @@
 	
 	<!--- functions for virome submission ---->
 		
-	<cffunction name="edit_library" access="remote" returntype="Struct" >
-		<cfargument name="obj" type="struct" required="true" >
+	<cffunction name="edit_library" access="remote" returntype="Struct" hint="
+				Allow ability to edit library metadata such as
+					description
+					environment
+					project
+					sequencing method
+				
+				Used by VIROME library submission applicaiton
+				
+				Return: A hash of update library info
+				">
+				
+		<cfargument name="obj" type="struct" required="true" hint="A hash library info to modify">
 		
 		<cftry>
 			<cfset struct= StructNew()>
 			<cfset struct['MSG'] = "failed"/>
 			<cfset struct['ERROR'] = ""/>
 			
-			<cfset srv = getServerName(arguments.obj.environment)/>
+			<cfset srv = serverName(arguments.obj.environment)/>
 			
 			<cfquery name="q" datasource="#request.mainDSN#" >
 				UPDATE library
@@ -1038,24 +1284,30 @@
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> modified successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / EDIT_LIBRARY", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.message/>
 			</cfcatch>
 			
 			<cffinally>
-				
-				<cfif struct["MSG"] neq "failed">
-					<!---<cfset CreateObject("component", request.cfc & ".Utility").reportLibrarySubmission(obj, "edit")/>--->
-				</cfif>
-				
 				<cfreturn struct/>		
 			</cffinally>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="add_library" access="remote" returntype="struct" >
-		<cfargument name="obj" type="struct" required="true" >
+	<cffunction name="add_library" access="remote" returntype="struct" hint="
+				Add new library information to be processed
+				
+				Used by VIROME library submission pipeline
+				
+				Return: A hash of library info added.
+				">
+				
+		<cfargument name="obj" type="struct" required="true" hint="A hash of library info to add">
 		
 		<cftry>
 			<cfset struct= StructNew()>
@@ -1067,65 +1319,158 @@
 				<cfset prefix = getPrefix()/>
 			</cfif>
 				
-			<cfset struct['PREFIX'] = prefix/>	
-			<cfset srv = getServerName(arguments.obj.environment)/>
+			<cfset struct['PREFIX'] = prefix/>
+			<cfset srv = serverName(arguments.obj.environment)/>
 			<cfset groupId = getGroupId(arguments.obj.user)/>
 			
-			<cfquery name="q" datasource="#request.mainDSN#">
-				INSERT INTO library(name, prefix, description, environment, project, publish, user, seqMethod, progress, groupId, server, deleted)
-				VALUES	(<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#prefix#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.description#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.environment#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.project#">,
-						<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.publish#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.user#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.seqMethod#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="standby">,
-						<cfqueryparam cfsqltype="cf_sql_integer" value="#groupId#">,
-						<cfqueryparam cfsqltype="cf_sql_varchar" value="#srv#">,
-						<cfqueryparam cfsqltype="cf_sql_tinyint" value="#arguments.obj.deleted#">
-						)
+			<!--- check if library name already exists --->
+			<cfquery name="x" datasource="#request.mainDSN#" result="rs">
+				SELECT	l.`name`
+				FROM	library l
+				WHERE	l.`name` = '#arguments.obj.name#'
 			</cfquery>
+			
+			<cfif x.RecordCount>
+				<cfset struct['ERROR'] = "Library by the name #arguments.obj.name# already exists. Submission terminated."/>
+				<cfreturn struct/>
+			</cfif>
+			
+			<cftransaction>
+				<cfquery name="a" datasource="#request.mainDSN#">
+					INSERT INTO library(name, prefix, description, environment, project, publish, user, seqMethod, progress, groupId, server, deleted, lib_new)
+					VALUES	(<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#prefix#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.description#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.environment#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.project#">,
+							<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.publish#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.user#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.sequence_method#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="standby">,
+							<cfqueryparam cfsqltype="cf_sql_integer" value="#groupId#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#srv#">,
+							<cfqueryparam cfsqltype="cf_sql_tinyint" value="#arguments.obj.deleted#">,
+							<cfqueryparam cfsqltype="cf_sql_tinyint" value="#arguments.obj.lib_new#">
+							)
+				</cfquery>
+				
+				<cfquery name="g" datasource="#request.mainDSN#">
+					SELECT MAX(id) as lastInsert FROM library
+				</cfquery>
+				
+				<cfset libId = g.lastInsert/>
+				
+				<cfquery name="s" datasource="#request.mainDSN#" >
+					INSERT INTO lib_summary(libraryId, lib_name, lib_prefix, lib_shortname, citation, seq_type, 
+											amplification, seq_center, lib_type, na_type, project, num_sites, 
+											region, geog_place_name, country, lat_deg, lat_hem, lon_deg, lon_hem,
+											sample_date, file_type, file_name, assembled, pooled, identifiers,
+											ncbi_submission, temp_c, pH, filter_lower_um, filter_upper_um,
+											genesis, sphere, ecosystem, extreme, physio_chem_mods, phys_subst, 
+											deleted)
+					VALUES (<cfqueryparam cfsqltype="cf_sql_integer" value="#libId#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#prefix#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.name#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.citation#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.sequence_method#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.amplification#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.sequence_center#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.metagenome_type#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.acid_type#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.project#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.sites#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.region#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.place#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.country#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_float" value="#arguments.obj.lat_degree#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.lat_hem#">,
+							<cfqueryparam cfsqltype="cf_sql_float" value="#arguments.obj.long_degree#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.long_hem#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.sample_date#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.file_type#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.file#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.assembled#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.pooling#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.identifier#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.ncbi#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.temperature#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.ph#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.lb_microbes#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.ub_microbes#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.genesis#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.sphere#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.ecosystem#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.extreme#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.physio_chem_mods#">,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.phys_subst#">,
+							
+							<cfqueryparam cfsqltype="cf_sql_tinyint" value="#arguments.obj.deleted#">
+							)
+				</cfquery>
+			</cftransaction>
 			
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> added successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / ADD_LIBRARY", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.message/>
 			</cfcatch>
 			
 			<cffinally>
-				<cfif struct["MSG"] neq "failed">
-					<!---<cfset CreateObject("component", request.cfc & ".Utility").reportLibrarySubmission(obj, "add")/>--->
-				</cfif>
-				
 				<cfreturn struct/>
 			</cffinally>
 		</cftry>
 	</cffunction>
 		
-	<cffunction name="delete_library" access="remote" returntype="Struct" >
-		<cfargument name="obj" type="struct" required="true" >
+	<cffunction name="delete_library" access="remote" returntype="Struct" hint="
+				Logically delete library that hasn't been processed  yet
+				
+				Used by VIROME library submission pipeline
+				
+				Return: A hash of library set to logically delete
+				">
+				
+		<cfargument name="obj" type="struct" required="true" hint="A hash of library information">
 		
 		<cftry>
 			<cfset struct= StructNew()>
 			<cfset struct['MSG'] = "failed"/>
 			<cfset struct['ERROR'] = ""/>
 		
-			<cfquery name="q" datasource="#request.mainDSN#" >
-				UPDATE 	library
-				SET		deleted = <cfqueryparam cfsqltype="cf_sql_tinyint" value="1">
-				WHERE	prefix = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.prefix#">
-					and	name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.old_name#">
-			</cfquery>
+			<cftransaction>
+				<cfquery name="a" datasource="#request.mainDSN#" >
+					DELETE FROM library WHERE id = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.libraryId#"/>
+				</cfquery>
+				
+				<cfquery name="b" datasource="#request.mainDSN#">
+					DELETE FROM lib_summary where libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.libraryId#">
+				</cfquery>
+			</cftransaction>
 			
 			<cfset struct['MSG'] = "Library <b>#arguments.obj.name#</b> deleted successfully."/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / DELETE_LIBRARY", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.Message/>
 			</cfcatch>
 			
@@ -1138,7 +1483,15 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getServerName" access="private" returntype="string">
+	<cffunction name="serverName" access="private" returntype="string" hint="
+				Get a server/dataase name based on environment
+				A helper function for:
+					edit_library()
+					add_library()
+					
+				Return: A string
+				">
+				
 		<cfargument name="environment" type="string" required="true" >
 		
 		<cfswitch expression="#lcase(arguments.environment)#">
@@ -1152,7 +1505,14 @@
 		</cfswitch>
 	</cffunction>
 	 
-	<cffunction name="getGroupId" access="private" returntype="Numeric">
+	<cffunction name="getGroupId" access="private" returntype="Numeric" hint="
+				Get group id user belongs to
+				
+				A helper function for:
+					add_library()
+					
+				Return: A group number
+				">
 		<cfargument name="username" type="string" required="true">
 		<cfset groupId = -1>
 		
@@ -1168,8 +1528,12 @@
 			</cfloop>
 				
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETGROUPID", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 				<cfset struct['ERROR'] = cfcatch.Message/>
 			</cfcatch>
 			
@@ -1179,7 +1543,14 @@
 		</cftry>
 	</cffunction> 
 	
-	<cffunction name="getPrefix" access="private" returntype="String">
+	<cffunction name="getPrefix" access="private" returntype="String" hint="
+				Assign a unique 3 letter alpha/numeric string for each new library
+				
+				A helper function for:
+					add_library()
+					
+				Return: A string 
+				">
 		<cfset prefix = ""/>
 		<cfset stop = false/>
 		
@@ -1199,8 +1570,12 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component", request.cfc & ".Utility").ReportError("LIBRARY.CFC / GETPREFIX",
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -1209,7 +1584,14 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="createPrefix" access="private" returntype="String">
+	<cffunction name="createPrefix" access="private" returntype="String" hint="
+				Generate a 3 letter alpha/numeric string
+				
+				A helper function for:
+					getPrefix()
+					
+				Return: A string
+				">
 		<cfset str = ""/>
 		<cfloop index="i" from="1" to="3" step="1">
 			<cfset a = randrange(48,122)/>

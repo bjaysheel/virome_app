@@ -23,8 +23,8 @@
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
 			
-			import mx.controls.Menu;
 			import mx.collections.ArrayCollection;
+			import mx.controls.Menu;
 			import mx.events.ItemClickEvent;
 			import mx.events.MenuEvent;
 			import mx.rpc.events.ResultEvent;
@@ -111,6 +111,10 @@
 				libraryId = obj['LIBRARY'];
 				environment = obj['ENVIRONMENT'];
 				
+				if ((environment == null) && (libraryId > -1)){
+					getEnvFromLibrary(libraryId);
+				} else {
+				
 				resetFlags();
 				
 				if (readyNessBit){
@@ -129,6 +133,14 @@
 					pendingEvent.duplicate(event);
 					pendingEvent.pending = true;
 				}
+				}
+			}
+			
+			private function getEnvFromLibrary(libId:Number):void {
+				var libStr:String = "";
+				libStr += libId;
+				
+				libToEnvRequest.token = Library.getEnvironmentObject(libStr);	
 			}
 			
 			private function changeViewHandler(event:StatsChangeViewEvent):void{				
@@ -233,6 +245,16 @@
 				}
 			}
 			
+			private function libToEnvResponse(event:ResultEvent):void{
+				var env:ArrayCollection = event.result as ArrayCollection;
+				
+				var ls:LibraryStatEvent = new LibraryStatEvent();
+				ls.library = libraryId;
+				ls.environment = env.getItemAt(1).data;
+				
+				this.dispatchEvent(ls);
+			}
+			
 			private function generalResponse(event:ResultEvent):void{
 				libraryInfoObject = event.result as Object;
 				gen.libraryInfoObject = libraryInfoObject;
@@ -265,6 +287,7 @@
 		<s:CallResponder id="environmentRequest" result="environmentResponse(event)" />
 		<s:CallResponder id="libraryRequest" result="libraryResponse(event)" />
 		<s:CallResponder id="generalRequest" result="generalResponse(event)"/>
+		<s:CallResponder id="libToEnvRequest" result="libToEnvResponse(event)"/>
 		<library:Library id="Library" showBusyCursor="true" fault="_util.faultHandler(event)"
 			destination="ColdFusion" endpoint="{_util.endpoint}" source="{_util.cfcPath}.Library" />
 		
@@ -276,6 +299,7 @@
 			<fx:Object label="ACLAME" name="_aclame"/>
 			<fx:Object label="GO" name="_go"/>
 			<fx:Object label="SEED" name="_seed"/>
+			<fx:Object label="PHGSEED" name="_phgseed"/>
 			<fx:Object label="KEGG" name="_kegg"/>
 			<fx:Object label="COG" name="_cog"/>
 			<fx:Object label="Taxonomy" name="_tax"/>
@@ -342,6 +366,7 @@
 				<mx:Button label="GO" id="_go" name="_go" width="150" click="showInformation(event)"/>
 				<mx:Button label="KEGG" id="_kegg" name="_kegg" width="150" click="showInformation(event)"/>
 				<mx:Button label="SEED" id="_seed" name="_seed" width="150" click="showInformation(event)"/>
+				<mx:Button label="PHGSEED" id="_phgseed" name="_phgseed" width="150" click="showInformation(event)"/>
 				<mx:Button label="Taxonomy" id="_tax" name="_tax" width="150" click="showInformation(event)"/>
 				
 				<mx:HBox>
@@ -393,6 +418,11 @@
 						  libraryInfoObject="{libraryInfoObject}"/>
 			
 			<stats:Seed id="seed" name="_seed" creationPolicy="auto"  label="SEED"
+						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
+						libraryId="{libraryId}" environment="{environment}" 
+						libraryInfoObject="{libraryInfoObject}"/>
+			
+			<stats:PhgSeed id="phgseed" name="_phgseed" creationPolicy="auto"  label="PHGSEED"
 						width="100%" height="100%" showEffect="WipeLeft" hideEffect="WipeRight"
 						libraryId="{libraryId}" environment="{environment}" 
 						libraryInfoObject="{libraryInfoObject}"/>

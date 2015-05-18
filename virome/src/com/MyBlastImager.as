@@ -26,7 +26,7 @@ package com
 		
 		private static var KB:Number = 2000;
 		private static var DEFAULT_WIDTH:Number = 700;
-		private static var DEFAULT_HEIGHT:Number = 410; //320
+		private static var DEFAULT_HEIGHT:Number = 480; //320
 		private static var TRIG_SIZE:Number = 10;
 		private static var FEATURE_X:Number = 18.75;
 		private static var FEATURE_GAP:Number = 50; //37.5
@@ -68,6 +68,7 @@ package com
 			db_names.push("UNIREF");
 			db_names.push("ACLAME");
 			db_names.push("SEED");
+			db_names.push("PHGSEED");
 			db_names.push("KEGG");
 			db_names.push("COG");
 			db_names.push("METAGENOMES");
@@ -193,7 +194,7 @@ package com
 			var c:UIComponent = new UIComponent();
 			var lb:TextField = new TextField();
 			
-			for (var i:int=0; i<6; i++) {
+			for (var i:int=0; i<7; i++) {
 				s = new Sprite();
 				c = new UIComponent();
 				
@@ -208,7 +209,11 @@ package com
 				lb.selectable = false;
 				lb.y = FEATURE_GAP*(i+2);
 				lb.height = FEATURE_HEIGHT*2;
-				lb.text = db_names[i];
+				
+				if (db_names[i] == "METAGENOMES")
+					lb.text = "MgOl";
+				else 
+					lb.text = db_names[i];
 				
 				c.addChild(s);
 				c.addChild(lb);
@@ -312,12 +317,14 @@ package com
 					frame = 3;
 				} else if (arr[i]['hsp']['DATABASE_NAME'] == "SEED") {
 					frame = 4;
-				} else if (arr[i]['hsp']['DATABASE_NAME'] == "KEGG") {
+				} else if (arr[i]['hsp']['DATABASE_NAME'] == "PHGSEED") {
 					frame = 5;
-				} else if (arr[i]['hsp']['DATABASE_NAME'] == "COG") {
+				} else if (arr[i]['hsp']['DATABASE_NAME'] == "KEGG") {
 					frame = 6;
-				} else if (arr[i]['hsp']['DATABASE_NAME'] == "METAGENOMES") {
+				} else if (arr[i]['hsp']['DATABASE_NAME'] == "COG") {
 					frame = 7;
+				} else if (arr[i]['hsp']['DATABASE_NAME'] == "METAGENOMES") {
+					frame = 8;
 				}
 				
 				var y:Number = FEATURE_X + (FEATURE_GAP * frame);

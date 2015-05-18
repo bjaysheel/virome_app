@@ -1,6 +1,13 @@
-<cfcomponent output="false">
+<cfcomponent displayname="Utility" output="false" hint="
+			A utility/helper component used by all Coldfusion functions.
+			">
 
-	<cffunction name="getMGOLDescription" access="remote" returntype="String">
+	<cffunction name="getMGOLDescription" access="remote" returntype="String" hint="
+				Create a detailed description of a Metagenome library information.
+				
+				DEPRICATED.  VIROME pipeline creates this information at analysis time 
+				">
+				
 		<cfargument name="hitName" type="String" required="true" />
 		
 		<cfset str="" />
@@ -42,7 +49,12 @@
 		<cfreturn str>
 	</cffunction>
 	
-	<cffunction name="getServerName" access="public" returntype="Struct">
+	<cffunction name="getServerName" access="public" returntype="Struct" hint="
+				Get name of server/database from either environment, sequence_name
+				mgol_hit or libraryId
+				
+				Return: A hash
+				">
 
 		<cfargument name="environment" type="string" default="-1" required="false">
 		<cfargument name="sequence_name" type="string" default="" required="false">
@@ -82,14 +94,23 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset reporterror("UTILITY.CFC - GETSERVERNAME",cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Utility", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
 		<cfreturn obj>
 	</cffunction>
 	
-	<cffunction name="getLibraryList" access="public" returntype="String">
+	<cffunction name="getLibraryList" access="public" returntype="String" hint="
+				Return list of all libraries that belong to a given environment
+				
+				Return: A comma separated list of library IDs
+				">
 
 		<cfargument name="environment" type="string" default="" required="true">
 
@@ -118,19 +139,27 @@
 		
 		<cfreturn libList>
 	</cffunction>
-
-	<cffunction name="reporterror" access="public" returntype="Any">
-
-		<cfargument name="funcName" default="" type="String" required="true">
+	
+	<cffunction name="reporterror" access="public" returntype="Any" hint="
+				Generate a detailed error report with
+					error type
+					error message
+					location of error
+					name of component
+					name of function
+				
+				and send an email to administrator email as listed in Application.cfc
+					
+				Return: NA
+				">
+				
+		<cfargument name="method_name" default="" type="string" required="true">
+		<cfargument name="function_name" default="" type="string" required="true" >
+		<cfargument name="args" default="" type="any" required="false" >
 		<cfargument name="msg" default="" type="String" required="true">
 		<cfargument name="detail" default="" type="String" required="true">
-		<cfargument name="tagcontent" type="Array" required="true">
-
+		<cfargument name="tagcontent" default="" type="Array" required="true">
 		
-		<cfloop array="#tagcontent#" index="idx">
-			<cflog type="error" file="virome" text="#idx.TEMPLATE#: #idx.RAW_TRACE#"/>
-		</cfloop>
-
 		<cfmail to="#request.reportErrorTo#" type="html"
 				from="#request.reportFrom#"
 				subject="ERROR IN VIROME APPLICATION">
@@ -140,8 +169,19 @@
 
 			There has been an error in VIROME (#CGI.HTTP_HOST#) application in <br/>
 
-			#funcName#<br/><br/>
+			Method: #arguments.method#<br/>
+			Function: #arguments.function#<br/><br/>
 
+			<cfif (isDefined("arguments.args") and isStruct(arguments.args))>
+				Arguments passed:<br/>
+				<cfdump var="#arguments.args#">
+				<!---<cfloop collection="#arguments.args#" item="key" >
+					#key#:     #arguments.args[key]#<br/>
+				</cfloop>--->
+				<br/><br/>
+			</cfif>
+			
+			
 			ERROR MESSAGE:<br/>
 			#msg#<br/><br/>
 
@@ -151,19 +191,25 @@
 			TAGCONTENT:<br/>
 			<cfloop array="#tagcontent#" index="idx">
 			#idx.TEMPLATE#: #idx.RAW_TRACE#<br/>
-			</cfloop>
+			</cfloop><br/><br/>
 			
-			<br/><br/>
+			
 			<cfif isDefined('cookie.VIROMEDEBUGCOOKIE')>
 				USER LOGGED IN: #cookie.VIROMEDEBUGCOOKIE#<br/>
 				CURRENT TIME: #now()#
 			</cfif>
 			<br/><br/><br/>VIROME APP
 		</cfmail>
-		
 	</cffunction>
 	
-	<cffunction name="reportFlexError" access="remote" returntype="void">
+	<cffunction name="reportFlexError" access="remote" returntype="void" hint="
+				Flex does not have a way to catch an error and report/log the message.
+				This untility give an ability for end user to email a Flex run time 
+				error messsage to the administrator.
+				
+				Return: NA				
+				">
+				
 		<cfargument name="msg" default="" type="String" required="true">
 		
 		<cfmail to="#request.reportErrorTo#" type="html"
@@ -187,7 +233,11 @@
 		</cfmail>		
 	</cffunction>
 	
-	<cffunction name="reportServerError" access="public" returntype="void">
+	<cffunction name="reportServerError" access="public" returntype="void" hint="
+				Report a very specific error when given environment or sequence information
+				VIROME database can not identify a server/database
+				">
+				
 		<cfargument name="envname" type="String">
 		<cfargument name="seqname" type="String">
 
@@ -210,7 +260,14 @@
 		</cfmail>
 	</cffunction>
 	
-	<cffunction name="reportLibrarySubmission" access="public" returntype="void" >
+	<cffunction name="reportLibrarySubmission" access="public" returntype="void" hint="
+				When a new library is added to the database, send an email to VIROME admin
+				notifying addition of new library.
+				
+				DEPRICATED
+				
+				Return: NA
+				">
 		<cfargument name="obj" type="struct" required="true" >
 		<cfargument name="action" type="string" required="true" >
 		
@@ -239,7 +296,9 @@
 		</cfmail>
 	</cffunction>
 
-	<cffunction name="PrintLog" access="public" returntype="void">
+	<cffunction name="PrintLog" access="public" returntype="void" hint="
+				Print log to virome.log file stored in ColdFusion logs/ directory
+				">
 
 		<cfargument name="str" type="string" default="">
 
@@ -247,7 +306,12 @@
 
 	</cffunction>
 
-	<cffunction name="QueryToStructure" access="public" returntype="Struct">
+	<cffunction name="QueryToStructure" access="public" returntype="Struct" hint="
+				Convert a give Query (SQL result set) into a hash of hashes using
+				a query column as unique identifier for hash key (usually a primary key of table/query)
+				
+				Return: A hash of hashes
+				">
 
 		<cfargument name="theQuery" type="Query" required="true" default="">
 		<cfargument name="primaryKey" type="String" required="true" default="">
@@ -294,8 +358,12 @@
 
 	</cffunction>
 
-     <cffunction name="QueryToStruct" access="public" returntype="any" output="false"
-	     hint="Converts an entire query or the given record to a struct. This might return a structure (single record) or an array of structures.">
+     <cffunction name="QueryToStruct" access="public" returntype="any" output="false" hint="
+				 Converts an entire query or the given record to a struct. 
+				 This might return a structure (single record) or an array of structures.
+				 
+				 Return: A hash or array of hashes
+				 ">
 
 	     <!--- Define arguments. --->
 	     <cfargument name="Query" type="query" required="true" />
@@ -371,7 +439,11 @@
 		</cfscript>
      </cffunction>
 
-	<cffunction name="SortArrayOfStrut" access="public" returntype="array">
+	<cffunction name="SortArrayOfStrut" access="public" returntype="array" hint="
+				Given an array of hashes deep sort hashes based on key and sort order defined.
+				
+				Return: A array of hashes
+				">
 		<cfargument name="aOfS" type="array" required="true">
 		<cfargument name="key" type="string" required="true">
 		<cfargument name="sOrder" type="string" default="asc">
@@ -431,7 +503,11 @@
 	</cffunction>
 
 
-	<cffunction name="getMedianEvalue" access="public" returntype="Numeric">
+	<cffunction name="getMedianEvalue" access="public" returntype="Numeric" hint="
+				Get media (not mean) of a given array
+				
+				Return: Median value.
+				">
 		<cfargument name="arr" type="array" required="true">
 
 		<cfset mid = 0>
@@ -448,7 +524,11 @@
 		</cfscript>
 	</cffunction>
 
-	<cffunction name="ECToHexColor" access="public" returntype="String">
+	<cffunction name="ECToHexColor" access="public" returntype="String" hint="
+				Given a E-value convert it into RGB Hex value for heat map display
+				
+				Return: A string in RGB Hex Color
+				">
 		<cfargument name="evalue" type="Numeric" required="true" />
 		<cfargument name="coverage" type="Numeric" required="true" />
 		<cfargument name="emin" type="Numeric" required="true" />
@@ -517,7 +597,11 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="sortArrayOfStruct" access="private" returntype="array">
+	<cffunction name="sortArrayOfStruct" access="private" returntype="array" hint="
+				Given an array of hashes deep sort hashes based on key and sort order defined.
+				
+				Return: A array of hashes
+				">
 
 		<cfargument name="aOfS" type="array" required="true">
 		<cfargument name="key" type="string" required="true">
@@ -557,7 +641,9 @@
 		</cfscript>
 	</cffunction>
 
-	<cffunction name="DecimalToScientific" access="public" returntype="String">
+	<cffunction name="DecimalToScientific" access="public" returntype="String" hint="
+				Convert a decimal number into scientific notation
+				">
 		<cfargument name="num" type="numeric" required="true">
 
 		<cfscript>
@@ -568,7 +654,9 @@
 		</cfscript>
 	</cffunction>
 
-	<cffunction name="ScientificToDecimal" access="public" returntype="numeric">
+	<cffunction name="ScientificToDecimal" access="public" returntype="numeric" hint="
+				Convert a number in scientific notation to decimal point
+				">
 		<cfargument name="num" type="string" required="true">
 
 		<cfscript>
@@ -586,7 +674,10 @@
 		</cfscript>
 	</cffunction>
 
-	<cffunction name="perRound" access="private" returnType="String">
+	<cffunction name="perRound" access="private" returnType="String" hint="
+				Convert a number to give precision value.  Pad a number if zeros if neccessary
+				">
+				
 		<cfargument name="num" type="string" required="true">
 		<cfargument name="precision" type="numeric" default="3">
 
@@ -597,7 +688,9 @@
 		<cfreturn zerosPad(result3, precision)>
 	</cffunction>
 
-	<cffunction name="zerosPad" access="private" returntype="String">
+	<cffunction name="zerosPad" access="private" returntype="String" hint="
+				Pad give decimal number with zero
+				">
 		<cfargument name="rndVal" type="numeric" required="true">
 		<cfargument name="decPlaces" type="numeric" required="true">
 
@@ -630,7 +723,11 @@
 		</cfscript>
 	</cffunction>
 
-	<cffunction name="MergeStructure" access="public" returntype="struct">
+	<cffunction name="MergeStructure" access="public" returntype="struct" hint="
+				Merge 2 or more hashes into one
+				
+				Return: A hash
+				">
 		<cfscript>
 			var base = {};
 			var i = 1;
@@ -644,7 +741,11 @@
 		</cfscript>>
 	</cffunction>
 
-	<cffunction name="generateFilename" access="public" returntype="String">
+	<cffunction name="generateFilename" access="public" returntype="String" hint="
+				Generate a random string based on date and time
+				
+				Return: String
+				">
 	
 		<cfset d = #DateFormat(now(),"mmddyy")# />
 		<cfset t = #TimeFormat(now(),"hhmmss")# />
@@ -653,7 +754,11 @@
 		<cfreturn filename />
 	</cffunction>
 
-	<cffunction name="properCase" access="public" returntype="String">
+	<cffunction name="properCase" access="public" returntype="String" hint="
+				Convert a string into proper case.
+				
+				Return: String
+				">
 		<cfargument name="str" type="String" required="true"/>
 		
 		<cfset t = "">
@@ -674,7 +779,11 @@
 		<cfreturn t>
 	</cffunction>
 	
-	<cffunction name="reverseComplement" access="public" returntype="string">
+	<cffunction name="reverseComplement" access="public" returntype="string" hint="
+				Reverse compliment a DNA string
+				
+				Return: String
+				">
 		<cfargument name="dna" type="string" required="true">
 		
 		<cfset arguments.dna = Reverse(arguments.dna)/>
@@ -692,7 +801,24 @@
 		<cfreturn revcom/> 
 	</cffunction>
 	
-	<cffunction name="SeqHeaderToStruct" access="public" returntype="Struct">
+	<cffunction name="SeqHeaderToStruct" access="public" returntype="Struct" hint="
+				Give a sequence header convert it into a hash 
+				
+				e.g header:
+					size=240 start=511 stop=750 strand=- frame=0 gc=0.477333 score=10.4697 model=bacteria type=lack_start caller=MetaGENE
+					
+				convert into a hash of
+					{
+						size => 240,
+						start => 511,
+						stop => 750,
+						strand => -,
+						...
+						...
+					}
+				
+				Return: A hash
+				">
 		<cfargument name="header" required="true" type="string" />
 		
 		<cfscript>
@@ -709,7 +835,11 @@
 		</cfscript>
 	</cffunction>
 	
-	<cffunction name="dereplicateList" access="public" returntype="String">
+	<cffunction name="dereplicateList" access="public" returntype="String" hint="
+				Give a comma separated list, ensure that there aren't any duplicate entries
+				
+				Return: A comma separated list of unique values
+				">
 		<cfargument name="lst" required="true" type="String" />
 		
 		<cfscript>

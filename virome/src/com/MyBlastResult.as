@@ -1,12 +1,15 @@
 package com
 {
 	import flash.events.MouseEvent;
+	import detail.MySequenceDetail;
 	
 	import mx.containers.*;
 	import mx.controls.Alert;
 	import mx.controls.LinkButton;
 	import mx.controls.Text;
-	import com.events.SearchDBEvent;
+	import mx.managers.PopUpManager;
+	import mx.core.FlexGlobals;
+	import flash.display.DisplayObject;
 	
 	public class MyBlastResult extends VBox
 	{
@@ -79,16 +82,15 @@ package com
 	    	}
 		}
 		
-		public function detailHandler(event:MouseEvent):void{
-			var sf:SearchDBEvent = new SearchDBEvent();
-			var _util:MyUtility = new MyUtility();
+		public function detailHandler(event:MouseEvent):void {
 			var vals:Array = (event.currentTarget.id as String).split("|");
 			
-			sf.evalue = 0.1;
-			sf.sequenceId=vals[0];
-			sf.sequence=((event.currentTarget.label as String).substr(0,1) == ">") ? (event.currentTarget.label as String).substr(1,(event.currentTarget.label as String).length) : (event.currentTarget.label as String);
+			var sequence_detail:MySequenceDetail = MySequenceDetail(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), MySequenceDetail, true));
+			sequence_detail.orfId = vals[0];
+			sequence_detail.environment = vals[1];
+			sequence_detail.seqname = ((event.currentTarget.label as String).substr(0,1) == ">") ? (event.currentTarget.label as String).substr(1,(event.currentTarget.label as String).length) : (event.currentTarget.label as String);
 			
-			//_util.simulateSearchClick(sf);
+			PopUpManager.bringToFront(sequence_detail);
 		}
 	}
 }

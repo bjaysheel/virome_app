@@ -1,7 +1,17 @@
-<cfcomponent output="false">
+<cfcomponent displayname="Statistics" output="false" hint="
+			This componented is used to get all Statistics related information.  
+			All statitics charts displayed by Flex call this component to get
+			relative data that can be used directly to render Flex charts.
+			">
 	
-	<cffunction name="getLibrary" access="private" returntype="Query" 
-		hint="Get all libraries">
+	<cffunction name="getLibrary" access="private" returntype="Query" hint="
+				Get all library related information
+				
+				A helper function for:
+					ORFOverview()
+					
+				Return: A hash of hashes
+				">
 		
 		<cfargument name="libraryIdList" type="string" required="false" default=""/>
 		
@@ -15,7 +25,7 @@
 						l.publish,
 						l.groupId
 				FROM	library l
-				WHERE	l.deleted = 0
+				WHERE	l.deleted = 0  and l.progress="complete"
 					<cfif len(arguments.libraryIdList) gt 0>
 						and l.id in (#arguments.libraryIdList#)
 						and l.publish = 0
@@ -25,22 +35,37 @@
 				ORDER BY l.environment, l.id, l.server 
 			</cfquery>
 			
-			<cfreturn q>
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETLIBRARY", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q>
+			</cffinally>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getAccList" access="private" returntype="Query" 
-		hint="Get all accession numbers (hit_name) for given library and database.">
+	<cffunction name="getAccList" access="private" returntype="Query" hint="
+				Get all accession numbers (hit_name) for given library and database.
+				
+				A helper function for: 
+					getFxnalDbBreakdown()
+					
+				Return: A hash of hashes
+				">
+			
 		<cfargument name="libraryId" type="numeric" required="true"/>
 		<cfargument name="server" type="string" required="true"/>
 		<cfargument name="database" type="string" required="true"/>
 		
-		<cfset q="">
 		<cftry>
+			<cfset q="">
+	
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	distinct (b.sequenceId), b.hit_name
 				FROM	blastp b
@@ -51,26 +76,39 @@
 					and b.database_name = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.database#"/>
 					and s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#"/>
 				ORDER BY b.sequenceId, b.hit_name
-			</cfquery>		
-			<cfreturn q/>
+			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETACCLIST", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
 		</cftry>
-		<cfreturn q/> 
 	</cffunction>
 	
-	<cffunction name="getFxnalDbQuery" access="private" returntype="Query"
-		hint="Get ACLAME functional information for a given ACLAME accession">
+	<cffunction name="getFxnalDbQuery" access="private" returntype="Query" hint="
+				Get functional information from SEED, KEGG, COG, ACLAME and GO database
+				given an accession number
+				
+				A helper function for: 
+					getFxnalDbBreakdown()
+				
+				Return: A hash of hashes
+				">
+				
 		<cfargument name="acc" type="string" required="true">
 		<cfargument name="database" type="string" required="true">
 		
-		<cfset q="">
-		
-		<cfset createobject("component", request.cfc & ".Utility").PrintLog(acc)/>
 		<cftry>
+			<cfset q="">
+			
 			<cfquery name="q" datasource="#request.lookupDSN#">
 				SELECT 	distinct db.realacc,
 						if(length(db.fxn1),db.fxn1,'UNKNOWN') as fxn1,
@@ -98,26 +136,40 @@
 						 ,fxn4 ,fxn5 ,fxn6 ,fxn7 ,fxn8 ,fxn9 ,fxn10 ,fxn11 ,fxn12
 					</cfif>
 			</cfquery>
-			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETFXNALDBQUERY", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
 		</cftry>
-		<cfreturn q/>
 	</cffunction>
 	
-	<cffunction name="getBlastHits" access="private" returntype="Query"
-		hint="Get id's of sequences who has blast records">
+	<cffunction name="getBlastHits" access="private" returntype="Query" hint="
+				Get sequence ID of all BLAST hits
+				
+				A helper function for:
+					getFxnalDbBreakdown()
+				
+				Return: A hash of hashes
+				">
+			
 		<cfargument name="server" type="String" required="true"/>
 		<cfargument name="library" type="numeric" required="true"/>
 		<cfargument name="database" type="string" default=""/>
 		<cfargument name="topHit" type="numeric" default="-1"/>
 		<cfargument name="fxnHit" type="numeric" default="-1"/>
 		
-		<cfset q="">
 		<cftry>
+			<cfset q="">
+			
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT 	DISTINCT(b.sequenceId)
 				FROM 	blastp b 
@@ -135,27 +187,42 @@
 					<cfif fxnHit gt -1>
 						and b.fxn_topHit = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.fxnHit#"/>
 					</cfif>
-					and s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.library#"/>
+					and s.libraryId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.library#"/>
 				ORDER BY b.sequenceId
 			</cfquery>
-			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETBLASTHITS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn q>
 	</cffunction>
 	
-	<cffunction name="gettRNAHelper" access="private" returntype="query">
+	<cffunction name="gettRNAHelper" access="private" returntype="query" hint="
+				Collect all tRNA related data for a library.
+				
+				A helper function for: 
+					gettRNASeq()
+					gettRNAStats()
+				
+				Return: A hash of hashes
+				">
+				
 		<cfargument name="libraryId" type="numeric" required="true"/>
 		<cfargument name="server" type="String" required="true"/>
 		<cfargument name="sortby" type="string" default="anti"/>
 		
-		<cfset q=""/>
 		<cftry>
+			<cfset q=""/>
+		
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	t.num,
 						t.tRNA_start,
@@ -179,21 +246,34 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTRNAHELPER", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
-		</cftry>
-		
-		<cfreturn q/>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
+		</cftry>		
 	</cffunction>
 	
-	<cffunction name="getTaxonomyHelper" access="private" returntype="Query"
-		hint="get all taxonomic information for all top blast hits for a given library">
+	<cffunction name="getTaxonomyHelper" access="private" returntype="Query" hint="
+				Collect all taxonomic information for all top blast hits for a given library
+				
+				A helper function for:
+					getTaxonomyBreakDown()
+					
+				Return: A hash of hashes
+				">
 		<cfargument name="libraryId" type="numeric" required="true"/>
 		<cfargument name="server" type="string" required="true"/>
 		
-		<cfset q=""/>
 		<cftry>
+			<cfset q=""/>
+			
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	b.domain,
 						b.kingdom,
@@ -216,24 +296,37 @@
 					and s.libraryId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.libraryId#" />
 				ORDER BY b.domain,b.kingdom,b.phylum,b.class,b.order,b.family,b.genus,b.species
 			</cfquery>
-			<cfreturn q/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTAXONOMYHELPER", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn q/>
 	</cffunction>
 	
-	<cffunction name="getStatistics" access="private" returntype="Query"
-		hint="Get Statistics for given library">		
+	<cffunction name="getStatistics" access="private" returntype="Query" hint="
+				Collect all pre calculated statistics from Statistics table
+				
+				A helper function for: 
+					ORFOverview()
+					getVIROMEClass()
+									
+				Return: A hash of hashes
+				">		
 		<cfargument name="server" type="String" requried="true"/>
 		<cfargument name="library" type="Numeric" required="true"/>
 
-		<cfset q="">
 		<cftry>
+			<cfset q="">
+			
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	s.read_cnt,
 						s.read_mb,
@@ -283,26 +376,45 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETSTATISTICS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
 		</cftry>
-		<cfreturn q/>
 	</cffunction>
 	
-	<cffunction name="ORFOverview" access="private" returntype="xml" 
-		hint="get overview of all orf per env, and virome cat" >
+	<cffunction name="ORFOverview" access="private" returntype="xml" hint="
+				Get overview of all ORFs and bin them into categories such as 
+					no. of ORFAN
+					no. of VIRAL ONLY ORFs
+					no. of MICOBIAL ONLY ORFs
+					no. of FUNCTIONAL ORFs
+					no. of tRNA
+					no. of rRNA
+					
+				A helper function for:
+					getXMLDocs()
+				
+				Return: Well formated XML object
+				">
 	
 		<cfargument name="userId" type="Numeric" required="false" default="-1"/>
 		<cfargument name="libraryIdList" type="string" required="false" default=""/>
-		
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		<cfset root.XmlAttributes.CHILDREN = "ENVIRONMENT"/>
-		<cfset root.XmlAttributes.DIRECT = "Browse"/>
-		
+				
 		<cftry>
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+			<cfset root.XmlAttributes.CHILDREN = "ENVIRONMENT"/>
+			<cfset root.XmlAttributes.DIRECT = "Browse"/>
+
 			<!--- get all librarires --->
 			<cfset libs = getLibrary(libraryIdList=arguments.libraryIdList)>
 			
@@ -412,17 +524,29 @@
 			</cfoutput> <!--- end environment --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - ORFOVERVIEW", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn xroot/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn xroot/>
 	</cffunction>
 	
-	<cffunction name="properMySQLList" access="private" returntype="string"
-		hint="Create a proper list where each element is surrounded by single quote, and delimted by comma 
-			  for MySQL where statement">
+	<cffunction name="properMySQLList" access="private" returntype="string" hint="
+				Create a proper list where each element is surrounded by single quote, 
+				and delimted by comma for MySQL where statement
+				
+				A helper function for:
+					getFxnalDbBreakdown()
+				
+				Return: A String
+				">
 			  
 		<cfargument name="aList" type="string" required="true" hint="original list of items"/>
 		<cfargument name="cList" type="string" required="true" hint="update list to return"/>
@@ -444,16 +568,28 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETACLAMEBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn cList/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn cList/>
 	</cffunction>
 		
-	<cffunction name="CreateFXNStruct" access="private" returntype="struct"
-		hint="Create complex array of struct for deep fxnl tree">
+	<cffunction name="CreateFXNStruct" access="private" returntype="struct" hint="
+				Create an full tree of array of hashes of functional information
+				
+				A helper function for:
+					getFxnalDbBreakdown()
+				
+				Return: A hash
+				">
 		
 		<cfargument name="arr" type="array" required="true" hint="array object in which to add/update struct"/>
 		<cfargument name="fxn" type="string" required="true" hint="fxnl string to add/update"/>
@@ -495,14 +631,24 @@
 			</cfscript>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETACLAMEBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-			</cfcatch>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
+			</cfcatch>			
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="RecursiveXMLDoc" access="private" returntype="Any" 
-		hint="recursively create entire xml document from complex array of struct passed">
+	<cffunction name="RecursiveXMLDoc" access="private" returntype="Any" hint="
+				Recursively create entire xml document from complex array of struct passed
+				
+				A helper function for:
+					getFxnalDbBreakdown
+				
+				Return: A well formated XML
+				">
 		
 		<cfargument name="xroot" type="xml" required="true" hint="xml document object">
 		<cfargument name="xnode" type="any" required="true" hint="xml node to add">
@@ -556,14 +702,24 @@
 			</cfif>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - RECURSIVEXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="RecursiveIDXMLDoc" access="private" returntype="Any" 
-		hint="recursively create entire xml document from complex array of struct passed">
+	<cffunction name="RecursiveIDXMLDoc" access="private" returntype="Any" hint="
+				Recursively create XML document from array of hashes tree data structure
+				
+				A helper functio for:
+					getFxnalDbBreakdown()
+					
+				Return: A well formatted XML document
+				">
 		
 		<cfargument name="xroot" type="xml" required="true" hint="xml document object">
 		<cfargument name="xnode" type="any" required="true" hint="xml node to add">
@@ -605,22 +761,41 @@
 			</cfif>
 		
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - RECURSIVEIDXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getAllFxnalDbBreakdown" access="private" returntype="xml"
-		hint="Get functional breakdown for a given library">
+	<cffunction name="getAllFxnalDbBreakdown" access="private" returntype="xml" hint="				
+				Get complete functional composition such as
+					no. of significant ORFs with ACLAME annotation
+					no. of significant ORFs with SEED annotation
+					no. of significant ORFs with phageSEED annotation...
+					
+				Generate a master XML file with hierarchical functional categories as
+				described by respective databases.
+				
+				DEPRICATED: VIROME pipeline generates these XML at analysis time
+				
+				A helper fuction for:
+					
+				
+				Return: A well formated XML object
+				">
+			
 		<cfargument name="library" type="numeric" required="true"/>
 		<cfargument name="environment" type="string" required="true"/>
 		
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		
 		<cftry>
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+			
 			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			
 			<!--- get seed counts --->
@@ -673,36 +848,54 @@
 				sed.XmlAttributes.value = seed_cnt;
 				sed.XmlAttributes.idList = #iif(len(seed_id), "seed_id", """NULL""")#;
 			</cfscript>
+		
+			<cfcatch type="any">
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
+			</cfcatch>
 			
-			<cfreturn xroot/>
-		
-		 	<cfcatch type="any">
-		 		<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETALLFXNALDBBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-		 	</cfcatch>			
-		</cftry>
-		
-		<cfreturn xroot/>
+			<cffinally>
+				<cfreturn xroot/>
+			</cffinally>
+		</cftry>		
 	</cffunction>
 	
-	<cffunction name="getFxnalDbBreakdown" access="private" returntype="struct"
-		hint="Get ACLAME/GO functional summary for a give database.">
+	<cffunction name="getFxnalDbBreakdown" access="private" returntype="struct" hint="
+				Get complete functional composition such as
+					no. of significant ORFs with ACLAME annotation
+					no. of significant ORFs with SEED annotation
+					no. of significant ORFs with phageSEED annotation...
+					
+				Generate a master XML file with hierarchical functional categories as
+				described by respective databases.
+				
+				DEPRICATED: VIROME pipeline generates these XML at analysis time
+				
+				A helper fuction for:
+					
+				
+				Return: A hash with pointer to well formated xml document.
+				">
+			
 		<cfargument name="libraryId" type="numeric" required="true"/>
 		<cfargument name="environment" type="string" required="true"/>
 		<cfargument name="database" type="string" required="true"/>
 		<cfargument name="idFName" type="String" required="true" />
 		
-		<!--- create new xml object --->
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		
-		
-		<cfset idXRoot = XMLNew()>
-		<cfset idXRoot.xmlRoot = XMLElemNew(idXRoot,"root")>
-		<cfset idRoot = idXRoot.xmlRoot>
-		
 		<cftry>
+			<!--- create new xml object --->
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+						
+			<cfset idXRoot = XMLNew()>
+			<cfset idXRoot.xmlRoot = XMLElemNew(idXRoot,"root")>
+			<cfset idRoot = idXRoot.xmlRoot>
+		
 			<!--- get server name --->
 			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			
@@ -852,29 +1045,44 @@
 			</cfif> <!--- end check if library have db hits --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETFXNALDBBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
-		</cftry>
-		
-		<cfreturn xStruct/>
+			
+			<cffinally>
+				<cfreturn xStruct/>
+			</cffinally>
+		</cftry>		
 	</cffunction>
 	
-	<cffunction name="getTaxonomyBreakDown" access="private" returntype="struct"
-		hint="get taxonomy break down for a given library">
+	<cffunction name="getTaxonomyBreakDown" access="private" returntype="struct" hint="
+				Get hierarchical taxonomy information from Domain->Species level of all ORFs in a give
+				library.
+				
+				DEPRICATED: VIROME pipeline generates these XML at analysis time
+				
+				A helper function for:
+					
+				
+				Return: A hash with pointer to well formated XML document
+				">
 		<cfargument name="libraryId" type="numeric" required="true" />
 		<cfargument name="environment" type="string" required="true" />
 		<cfargument name="idFName" type="string" required="true"/>
 		
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		
-		<cfset idXRoot = XMLNew()>
-		<cfset idXRoot.xmlRoot = XMLElemNew(idXRoot,"root")>
-		<cfset idRoot = idXRoot.xmlRoot>
-		
 		<cftry>
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+			
+			<cfset idXRoot = XMLNew()>
+			<cfset idXRoot.xmlRoot = XMLElemNew(idXRoot,"root")>
+			<cfset idRoot = idXRoot.xmlRoot>
+		
 			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
 			<cfset tq = getTaxonomyHelper(libraryId=arguments.libraryId,server=serverObj.server)/>
 			
@@ -1250,52 +1458,80 @@
 			</cfoutput><!--- end output loop for domain --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTAXONOMYBREAKDOWN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfset xStruct = StructNew()/>
+				<cfset xStruct['xroot'] = xroot/>
+				<cfset xStruct['idRoot'] = idXRoot/>
+				
+				<cfreturn xStruct/>
+			</cffinally>
 		</cftry>
-		
-		<cfset xStruct = StructNew()/>
-		<cfset xStruct['xroot'] = xroot/>
-		<cfset xStruct['idRoot'] = idXRoot/>
-		
-		<cfreturn xStruct/>
 	</cffunction>
 
-	<cffunction name="getEnvironment" access="private" returntype="xml">
+	<cffunction name="getEnvironment" access="private" returntype="xml" hint="
+				DEPRICATED
+				
+				">
 		<cfargument name="libraryId" type="numeric" required="true"/>
 		<cfargument name="type" type="string" required="true"/>
 		
-		<cfset xdoc = ""/>
-		
 		<cftry>
+			<cfset xdoc = ""/>
+
 			<cfset filename = UCASE(type) & "_XMLDOC_" & arguments.libraryId & ".xml"/>
 			<cffile action="read" file="#request.xDocsFilePath#/#filename#" variable="stats"/>
 			
 			<cfset xdoc = XMLPARSE(stats)/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETENVIRONMENT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn xdoc/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn xdoc/>
 	</cffunction>
 
-	<cffunction name="getVIROMEClass" access="remote" returntype="Struct"
-		hint="Get VIROME classification summary for a given library">
+	<cffunction name="getVIROMEClass" access="remote" returntype="Struct" hint="
+				Get VIROME classification summary for a given library. 
+				Read in XML documents generated by VIROME pipeline such as:
+					list of ORFANs
+					list of functional ORFs
+					list of unassigend ORFs
+					
+				and convert XML data into a hash that Flex charts can understand.
+				
+				Data retunred here is used to create bar chart in VIROME Classification tab under Statistics view
+				
+				This function is called directly from Flex Statistics view.
+				
+				Return: A hash
+				">
 		<cfargument name="libId" type="numeric" required="true"/>
 		<cfargument name="environment" type="string" required="true"/>
 				
-		<cfset globalStruct = StructNew()/>
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		<cfset vfilename = "VIRClass_XMLDOC_"&arguments.libId&".xml"/>
-		<cfset dbfilename = "DBBreakdown_XMLDOC_"&arguments.libId&".xml"/>
-
 		 <cftry>
+			<cfset globalStruct = StructNew()/>
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+			<cfset vfilename = "VIRClass_XMLDOC_"&arguments.libId&".xml"/>
+			<cfset dbfilename = "DBBreakdown_XMLDOC_"&arguments.libId&".xml"/>
+
 			 <cfdirectory action="list" name="fList" directory="#request.xDocsFilePath#" filter="#vfilename#"/>
 	
 			<cfif fList.recordcount eq 0>
@@ -1455,48 +1691,71 @@
 				<cfset StructInsert(globalStruct,"ACLASS",xmldoc)/>
 			</cfif>
 			
-		 	<cfcatch type="any">
-		 		<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETVIROMECLASS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
-		 	</cfcatch>
-		 </cftry>
-		 
-		 <cfreturn globalStruct/>
+			<cfcatch type="any">
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
+			</cfcatch>
+			
+			<cffinally>
+				 <cfreturn globalStruct/>
+			</cffinally>
+		</cftry>
 	</cffunction>
 	
-	<cffunction name="gettRNASeq" access="remote" returntype="array"
-		hint="get tRNA information for a given library">
+	<cffunction name="gettRNASeq" access="remote" returntype="array" hint="
+				Gather all tRNA data of all ORFs for a given library.
+				
+				Data returned here is used to create a table in tRNA tab under Statitics view 
+				
+				Return: An array of hashes
+				">
 		<cfargument name="libId" type="numeric" required="true"/>
 		<cfargument name="environment" type="String" required="true"/>
 				
-		<cfset local.arr = ArrayNew(1)/>
-
 		<cftry>
-				<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
-				<cfset qry=gettRNAHelper(libraryId=arguments.libId,server=serverObj.server,sortby="id")/>
+			<cfset local.arr = ArrayNew(1)/>
+
+			<cfset serverObj=CreateObject("component", request.cfc & ".Utility").getServerName(environment=arguments.environment)/>
+			<cfset qry=gettRNAHelper(libraryId=arguments.libId,server=serverObj.server,sortby="id")/>
 				
-				<cfset local.arr = CreateObject("component", request.cfc & ".Utility").QueryToStruct(qry)/>
+			<cfset local.arr = CreateObject("component", request.cfc & ".Utility").QueryToStruct(qry)/>
 						
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTRNASEQ", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn local.arr/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn local.arr/>
 	</cffunction>
 	
-	<cffunction name="gettRNAStats" access="remote" returntype="xml"
-		hint="get tRNA stats for a given library">
+	<cffunction name="gettRNAStats" access="remote" returntype="xml" hint="
+				Gather all tRNA data of all ORFs for a given library, and convert it
+				into a data strucutre that can be used by Flex charts.
+				
+				Data returned here is used to create chart in tRNA tab under Statitics view 
+				
+				Return: A well formated XML object
+				">
 		<cfargument name="libId" type="numeric" required="true"/>
 		<cfargument name="environment" type="String" required="true"/>
 		
-		<cfset xroot = XMLNew()>
-		<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
-		<cfset root = xroot.xmlRoot>
-		<cfset filename = "TRNA_FREQ_"&#libId#&".xml"/>
-
 		<cftry>
+			<cfset xroot = XMLNew()>
+			<cfset xroot.xmlRoot = XMLElemNew(xroot,"root")>
+			<cfset root = xroot.xmlRoot>
+			<cfset filename = "TRNA_FREQ_"&#libId#&".xml"/>
+
 			<cfdirectory name="xmlFileList" action="list" directory="#request.xDocsFilePath#" filter="#filename#"/>
 	
 			<cfif xmlFileList.recordcount eq 0>
@@ -1527,15 +1786,36 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETTRNASTATS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn xroot/>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn xroot/>
 	</cffunction>
 	
-	<cffunction name="getXMLDoc" access="remote" returntype="struct">
+	<cffunction name="getXMLDoc" access="remote" returntype="struct" hint="
+				Retrieve XML document already created by VIROME pipeline.  
+				
+				This function is called by various statistics TAB from Flex, reads in
+				XML documents for related data type
+					e.g: SEED,
+						 KEGG,
+						 COG,
+						 ACLAME,
+						 TAXONOMY
+						 
+				Format the XML data such that Flex charts can use it to render a chart. If 
+				the XML data is in tree form, then a drill down chart will be generated.
+				
+				Return: A hash
+				">
 		<cfargument name="obj" type="struct" required="true"/>
 		
 		<cftry>
@@ -1588,8 +1868,12 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("STATISTICS.CFC - GETXMLDOC", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Statistics", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>

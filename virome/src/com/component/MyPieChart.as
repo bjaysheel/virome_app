@@ -122,7 +122,7 @@ package com.component
 					} else if (event.hitData.chartItem.item.type == "ORFans") {
 						setSearchEvent.vircat = "orfan";
 						setSearchEvent.evalue = 0.1;
-						setSearchEvent.blastDB = "";
+						setSearchEvent.blastDB = "NOHIT";
 					} else if (event.hitData.chartItem.item.type == "Top viral hit"){
 						setSearchEvent.vircat = "topviral";
 						setSearchEvent.blastDB = "METAGENOMES";

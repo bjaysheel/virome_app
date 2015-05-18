@@ -155,13 +155,17 @@
 					var _sf:SetSearchDBFormEvent = new SetSearchDBFormEvent();
 					doubleClickFlag=true;
 					
-					var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
-					downloadPanel._content = "";
-					
-					var tObject:SearchDBEvent = new SearchDBEvent();
-					var fObject:FileSelectorEvent = new FileSelectorEvent();
+					var downloadPanel:DownloadFile;
+					var tObject:SearchDBEvent;
+					var fObject:FileSelectorEvent;
 					
 					if ((event.hitData.chartItem.item as XML).@CAT == 'tRNA'){
+						downloadPanel = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+						downloadPanel._content = "";
+						
+						tObject = new SearchDBEvent();
+						fObject = new FileSelectorEvent();
+						
 						tObject = new SearchDBEvent();
 						tObject.environment = environment;
 						tObject.library = libraryId;
@@ -175,6 +179,12 @@
 						PopUpManager.bringToFront(downloadPanel);
 						PopUpManager.centerPopUp(downloadPanel);
 					} else if ((event.hitData.chartItem.item as XML).@CAT == 'rRNA'){
+						downloadPanel = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
+						downloadPanel._content = "";
+						
+						tObject = new SearchDBEvent();
+						fObject = new FileSelectorEvent();
+						
 						tObject = new SearchDBEvent();
 						tObject.environment = environment;
 						tObject.library = libraryId;

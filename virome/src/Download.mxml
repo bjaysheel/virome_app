@@ -193,7 +193,7 @@
 
 		<mx:GridRow>
 			<mx:GridItem>
-				<mx:Button id="submit" label="Downlaod" name="Download" mouseDownEffect="{shrink}" 
+				<mx:Button id="submit" label="Download" name="Download" mouseDownEffect="{shrink}" 
 						   mouseUpEffect="{revert}" 
 						   click="submitForm(event);"/>
 			</mx:GridItem>
@@ -204,6 +204,6 @@
 						   click="removeMe();"/>
 			</mx:GridItem>
 		</mx:GridRow>
-	</mx:Grid>	
+	</mx:Grid>
 
 </mx:TitleWindow>

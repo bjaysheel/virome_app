@@ -306,7 +306,13 @@ package detail
 			
 			headerbox.percentWidth = 100;
 			headerbox.styleName = "subheading";
-			header.text = str + " BLAST Hits";
+			
+			// rename METAGENOMES label to Metagenomes Online
+			if (str == "METAGENOMES")
+				header.text = "Metagenomes Online BLAST Hits";
+			else 
+				header.text = str + " BLAST Hits";
+			
 			headerbox.addChild(header);
 			
 			//_spacer.height = 25;

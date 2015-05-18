@@ -46,8 +46,13 @@
 			private function submitAlias():void{
 				// set alias for search job
 				_searchDB.alias = alias.text;
-				_searchDB.userId = (_util.app.cookie.hasOwnProperty("USERID")) ? _util.app.cookie.USERID : 0;
-				_searchDB.username = (_util.app.cookie.hasOwnProperty("USERNAME")) ? _util.app.cookie.USERNAME : "";
+				_searchDB.userId = 0;
+				_searchDB.username = "";
+				
+				if ((_util.app.cookie != null) && (this.hasOwnProperty(_util.app.cookie.USERID)) && (_util.app.cookie.USERID > 0)){
+					_searchDB.userId = _util.app.cookie.USERID;
+					_searchDB.username = _util.app.cookie.USERNAME;
+				}
 				
 				// dispatch search event.
 				_util.app.dispatchEvent(searchDB);

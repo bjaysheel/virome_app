@@ -80,7 +80,7 @@
 					libraryIdList = _util.app.cookie.LIBRARYID;
 				
 				if (env_item.selectedIndex != 0)	
-					libraryRequest.token=Library.getLibraryObject(env_item.selectedItem.data,libraryIdList);
+					libraryRequest.token=Library.getLibraryObject(env_item.selectedItem.data, libraryIdList);
 			}
 			
 			private function libraryResponse(event:ResultEvent):void {
@@ -247,7 +247,7 @@
 					term_item.text = event.term;
 					term_list.selectedIndex=0;
 					for (i=0;i<dbList.length; i++)
-						if (dbList.getItemAt(i).data == event.inTax)
+						if (dbList.getItemAt(i).data == event.inTerm)
 							term_list.selectedIndex=i;
 					
 					//populate accession
@@ -288,6 +288,7 @@
 			<fx:Object label="COG" data="COG"/>
 			<fx:Object label="KEGG" data="KEGG"/>
 			<fx:Object label="SEED" data="SEED"/>
+			<fx:Object label="PHGSEED" data="PHGSEED"/>
 			<fx:Object label="UNIREF100 PLUS" data="UNIREF100P"/>
 		</mx:ArrayCollection>
 		
@@ -343,12 +344,11 @@
 	    <mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
 	</fx:Declarations>
 	
-	<!--<mx:Label text="Text Search"/>-->
-	<!--<mx:HBox width="100%" paddingBottom="15">
+	<mx:HBox width="100%" paddingBottom="15">
 		<mx:Spacer width="100%"/>
 		<mx:LinkButton label="BLAST Search" icon="@Embed(source='/assets/icons/Forward.png')" labelPlacement="left"
 					   textAlign="left" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>	
-	</mx:HBox>-->
+	</mx:HBox>
 
 	<mx:Grid width="100%" height="100%" borderStyle="none" id="searchDBForm">
 		<mx:GridRow>

@@ -194,7 +194,7 @@
 		<mx:VBox width="100%" horizontalGap="0" verticalGap="0" paddingRight="20" paddingBottom="15">
 			<stats:LibraryDemograph id="demo" libraryInfoObject="{libraryInfoObject}" width="100%"/>
 			
-			<mx:Text text="No tRNA found for the give library" width="100%" textAlign="center" styleName="strong" visible="false" id="msg"/>
+			<mx:Text text="No tRNA found for the given library" width="100%" textAlign="center" styleName="strong" visible="false" id="msg"/>
 
 			<mx:VBox id="graph" width="100%" visible="false">				
 				<mx:Text width="100%" textAlign="center" styleName="strong" paddingTop="15" condenseWhite="true">

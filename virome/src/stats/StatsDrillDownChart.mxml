@@ -367,7 +367,7 @@
 					_sf.evalue = evalue;
 					
 					_util.simulateSearchClick(_sf);
-				}	
+				}
 			}
 			
 			protected function timer_complete(evt:TimerEvent, item:ChartItemEvent):void{

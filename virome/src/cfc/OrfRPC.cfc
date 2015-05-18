@@ -1,14 +1,29 @@
-<cfcomponent output="false">
+<cfcomponent displayname="OrfRPC" output="false" hint="
+			This componented is used to get everything ORF related information.  
+			It is used to gather, format and return all ORF related information 
+			for Sequence Detail View and Detail BLAST view
+			">
 	
-	<cffunction name="getBlastHit" access="remote" returntype="Query">
-		<cfargument name="id" type="Numeric" required="true"/>
-		<cfargument name="server" type="String" required="true"/>
-		<cfargument name="database" type="String" required="false" default=""/>
-		<cfargument name="topHit" type="Numeric" required="false" default="-1"/>
-		<cfargument name="fxnHit" type="numeric" required="false" default="-1"/>
+	<cffunction name="getBlastHit" access="private" returntype="Query" Hint="
+				Retrieve all BLAST hits of e_value <= 0.001 from database.  
+				A helper function for:
+					getSequenceInfo()
+					orfBlastHit() and
+					orfBlastDetails()
+				
+				Note: E-Value filter is a hard filter.
+				
+				Return: Query
+					">
+		<cfargument name="id" type="Numeric" required="true" hint="Sequence ID for which BLAST results are requested"/>
+		<cfargument name="server" type="String" required="true" hint="Server name (i.e database name)"/>
+		<cfargument name="database" type="String" required="false" default="" hint="BLAST database name (e.g: SEED, KEGG, COG...). If empty get BLAST results for given Sequence ID"/>
+		<cfargument name="topHit" type="Numeric" required="false" default="-1" hint="Flag indicating if only top BLAST hit should be retrieved"/>
+		<cfargument name="fxnHit" type="numeric" required="false" default="-1" hint="Flag indicating if only top Functional BLAST hit should be retrieved"/>
 		
-		<cfset q="">
 		<cftry>
+			<cfset q="">
+		
 			<cfquery name="q" datasource="#arguments.server#">
 				SELECT	b.sequenceId,
 						b.query_name,
@@ -57,7 +72,7 @@
 						INNER JOIN
 						mgol_library m on m.lib_prefix = substring(b.hit_name,1,3)
 					</cfif>
-				WHERE	b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
+				WHERE	b.sequenceId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.id#"/>
 					and b.e_value <= 0.001
 					<cfif arguments.topHit gt -1>
 						and	b.sys_topHit = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.topHit#"/>
@@ -75,17 +90,30 @@
 			</cfquery>
 						
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETBLASTHIT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q>		
+			</cffinally>
 		</cftry>
-		
-		<cfreturn q>
 	</cffunction>
 
-	<cffunction name="getBlastImage" access="private" returntype="string">
-		<cfargument name="qry" required="true" type="query" />
-		<cfargument name="sname" required="true" type="string">
+	<cffunction name="getBlastImage" access="private" returntype="string" hint="DEPRICATED.
+				Create a tab delimited file with information need to create a ORF blast imager.
+				A helper function for:
+					orfBlastHit()
+				
+				Return: Tab delimited text file and BLAST Imager gif file.
+				">
+				
+		<cfargument name="qry" required="true" type="query" hint="A hash of BLAST results for a given Sequence."/>
+		<cfargument name="sname" required="true" type="string" hint="Sequence name to used as prefix for output file">
 		
 		<cfset img = "">
 		<cfset count = 0>
@@ -146,8 +174,12 @@
 			<cfset img="#request.rootHostPath#/blastImager/img/#imgFileName#">
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("SEQUENCE.CFC - GETBLASTIMAGE", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -156,12 +188,21 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="splitBlastResult" access="private" returntype="any" 
-		hint="Split blast query result into hsp and tax ">
-		<cfargument name="qry" type="Query" required="true" />
-		<cfargument name="idx" type="Numeric" required="false" default="0"/>
-		<cfargument name="server" type="String" required="true" />
-		<cfargument name="environment" type="String" required="true"/>
+	<cffunction name="splitBlastResult" access="private" returntype="any" hint="
+				Organize BLAST results in HSP and taxonomy infomration. 
+				A helper function for:
+					orfBlastHit()
+				
+				Return:  If idx value is 0.
+							An Array of Struct of BLAST hits organized by HSP and Taxonomy.
+						If idx value is greater than 0.
+							A Struct of BLAST hit organized by HSP and Taxonomy.
+				">
+				
+		<cfargument name="qry" type="Query" required="true" hint="hash of BLAST results for a given Sequence ID"/>
+		<cfargument name="idx" type="Numeric" required="false" default="0" hint="Number of BLAST records to return"/>
+		<cfargument name="server" type="String" required="true" hint="Server name (i.e: database name)"/>
+		<cfargument name="environment" type="String" required="true" hint="Environment with respect to give Sequence ID (water, soil etc...)"/>
 		
 		<cfset array=ArrayNew(1)/>
 
@@ -243,13 +284,19 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - SPLITBLASTRESULT", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 	</cffunction>
 
-	<cffunction name="blastStructHelper" access="private" returntype="Struct">
+	<!---<cffunction name="blastStructHelper" access="private" returntype="Struct" hint="
+				Convert BLAST query in to sturcture of select values.
+				A helper function for ">
 		<cfargument name="qry" type="query" required="true">
 		
 		<cfset bstr = StructNew()/>
@@ -276,7 +323,7 @@
 		<cfreturn bstr/>
 	</cffunction>
 	
-	<!---<cffunction name="getSEEDFxn" access="private" returntype="Struct">
+	<cffunction name="getSEEDFxn" access="private" returntype="Struct">
 		<cfargument name="id" type="numeric" required="true"/>
 		<cfargument name="server" type="string" required="true"/>
 		
@@ -504,8 +551,15 @@
 		<cfreturn fxn_struct/>
 	</cffunction> --->
 	
-	<cffunction name="getSEEDFxn" access="private" returntype="Array">
-		<cfargument name="acc" type="String" required="true"/>
+	<cffunction name="getSEEDFxn" access="private" returntype="Array" hint="
+				Get SEED functional information for a give accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of SEED fxn1, fxn2 and sub-system
+				">
+				
+		<cfargument name="acc" type="String" required="true" hint="SEED accession number"/>
 		
 		<cftry>
 			<cfset farray = ArrayNew(1)/>
@@ -528,12 +582,64 @@
 				<cfset StructInsert(fxnstr,"SUBSYSTEM",fx.subsystem)/>
 				<cfset StructInsert(fxnstr,"DESC",fx.desc)/>
 				<cfset StructInsert(fxnstr,"ORGANISM",fx.organism)/>
-				<cfset ArrayAppend(farray,fxnstr)/>					
+				<cfset ArrayAppend(farray,fxnstr)/>
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETSEEDFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn farray/>
+			</cffinally>
+		</cftry>
+	</cffunction>
+	
+	<cffunction name="getPHGSEEDFxn" access="private" returntype="Array" hint="
+				Get phageSEED functional information for a given accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of phageSEED fxn1, fxn2 and sub-system
+				">
+		<cfargument name="acc" type="String" required="true" hint="phageSEED accession number"/>
+		
+		<cftry>
+			<cfset farray = ArrayNew(1)/>
+				
+			<cfquery name="fx" datasource="#request.lookupDSN#">
+				SELECT 	s.fxn1,
+						s.fxn2,
+						s.subsystem,
+						s.organism,
+						s.desc
+				FROM	phgseed s
+				WHERE	s.realacc = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.acc#"/>
+			</cfquery>
+			
+			<cfloop query="fx">
+				<cfset fxnstr = StructNew()/>
+									
+				<cfset StructInsert(fxnstr,"FXN1",fx.fxn1)/>
+				<cfset StructInsert(fxnstr,"FXN2",fx.fxn2)/>
+				<cfset StructInsert(fxnstr,"SUBSYSTEM",fx.subsystem)/>
+				<cfset StructInsert(fxnstr,"DESC",fx.desc)/>
+				<cfset StructInsert(fxnstr,"ORGANISM",fx.organism)/>
+				<cfset ArrayAppend(farray,fxnstr)/>
+			</cfloop>
+			
+			<cfcatch type="any">
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -542,8 +648,14 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="getKEGGFxn" access="private" returntype="Array">
-		<cfargument name="acc" type="String" required="true"/>
+	<cffunction name="getKEGGFxn" access="private" returntype="Array" hint="
+				Get KEGG functional information for a given accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of KEGG fxn1, fxn2 and sub-system.
+				">
+		<cfargument name="acc" type="String" required="true" hint="KEGG accession number"/>
 		
 		<cftry>
 			<cfset farray = ArrayNew(1)/>
@@ -566,8 +678,12 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETKEGGFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -576,8 +692,14 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="getCOGFxn" access="private" returntype="Array">
-		<cfargument name="acc" type="String" required="true"/>
+	<cffunction name="getCOGFxn" access="private" returntype="Array" hint="
+				Get COG functional information for a given accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of COG fxn1, fxn2 and sub-system.
+				">
+		<cfargument name="acc" type="String" required="true" hint="COG accession number"/>
 		
 		<cftry>
 			<cfset farray = ArrayNew(1)/>
@@ -598,8 +720,12 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETCOGFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -608,13 +734,23 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="getACLAMEFxn" access="private" returntype="Array">
-		<cfargument name="acc" type="string" required="true"/>
+	<cffunction name="getACLAMEFxn" access="private" returntype="Array" hint="
+				Get ACLAME functional information for a given accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of ACLAME
+				">
+		<cfargument name="acc" type="string" required="true" hint="ACLAME accession number"/>
 		
 		<cftry>
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETACLAMEFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -623,8 +759,14 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="getUNIREF100PFxn" access="private" returntype="Array">
-		<cfargument name="acc" type="string" required="true"/>
+	<cffunction name="getUNIREF100PFxn" access="private" returntype="Array" hint="
+				Get GO functional information for a given accession number.
+				A helper function for: 
+					splitBlastResult()
+				
+				Return:  An array of hash of GO.
+				">
+		<cfargument name="acc" type="string" required="true" hint="UNIREF100 accession number"/>
 		
 		<cfset fxn_struct = StructNew()>
 		<cfset farray = ArrayNew(1)/>
@@ -660,8 +802,12 @@
 		
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETGOFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -670,8 +816,15 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="topFxnSysHits" access="private" returnType="Array" description="Split blast results">
-		<cfargument name="qry" type="query" required="true" />
+	<cffunction name="topFxnSysHits" access="private" returnType="Array" hint="
+				Extract only the top Functional and BLAST hit from give BLAST query.
+				A helper function for:
+					getSequenceInfo()
+				
+				Return:  An array of hash with just top Functional and BLAST hit
+				">
+				
+		<cfargument name="qry" type="query" required="true" hint="hash of all BLAST results"/>
 		
 		<cftry>
 			<cfset array = ArrayNew(1) />
@@ -680,7 +833,7 @@
 				<cfoutput group="database_name" >
 					<cfscript>
 						struct = structNew();
-						if (qry.sys_topHit eq 1) {							
+						if (qry.sys_topHit eq 1) {
 							structInsert(struct, "hsp", CreateObject("component", request.cfc & ".Utility").QueryToStruct(qry, qry.currentRow));
 						}
 						
@@ -705,8 +858,12 @@
 			</cfoutput>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - TOPFXNSYSHITS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -716,9 +873,19 @@
 		
 	</cffunction>
 	
-	<cffunction name="getSequenceInfo" access="remote" returntype="Array">
-		<cfargument name="orfId" type="Numeric" required="true" />
-		<cfargument name="environment" type="String" required="true"/>
+	<cffunction name="getSequenceInfo" access="remote" returntype="Array" hint="
+				Retrieve detail sequence information for a give ORF Id.
+				This function gather all relavent information such as
+					(ORF name, sequence, size and metadata (ORF type, model, start and stop coordinate)
+					ORF BLAST records for each database
+					ORF heat map information)
+				to be displayed on Sequence Detail view.
+				
+				Return:  An Array of strucutre with detail ORF information.
+				">
+				
+		<cfargument name="orfId" type="Numeric" required="true" hint="Sequence ID of ORF"/>
+		<cfargument name="environment" type="String" required="true" hint="Environment of ORF ID"/>
 		
 		<cftry>
 			<cfset local.array = ArrayNew(1) />
@@ -734,7 +901,7 @@
 								s.size,
 								s.header
 				FROM	sequence s
-				WHERE	s.id = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.orfId#">
+				WHERE	s.id = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.orfId#">
 					and s.deleted = 0
 				ORDER BY s.id
 			</cfquery>
@@ -750,10 +917,6 @@
 					orf['HEADER'] = qry.header;
 				
 					blast = getBlastHit(id=arguments.orfId, topHit=-1, server=_server);
-				
-					//img = getBlastImage(qry=blast, sname=blast.query_name);
-					//if (NOT StructKeyExists(orf, "IMAGE"))
-					//	StructInsert(orf, "IMAGE", img);
 						
 					//get top sys and fxn hits
 					orf['TOPHITS'] = topFxnSysHits(blast);
@@ -767,8 +930,12 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETGOFXN", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -779,12 +946,17 @@
 	</cffunction>
 	
 
-	<cffunction name="orfBlastHit" access="remote" returntype="Struct">
-		<cfargument name="id" type="Numeric" required="true" />
-		<cfargument name="environment" type="String" required="true" />
-		<cfargument name="tabindex" type="Numeric" requried="true" />
-		<cfargument name="database" type="String" required="false" default=""/>
-		<cfargument name="topHit" type="Numeric" required="false" default="1"/>
+	<cffunction name="orfBlastHit" access="remote" returntype="Struct" hint="DEPRICATED.
+				Get BLAST hit details for a give ORF.  
+				
+				Return:  A hash of BLAST hit
+				">
+				
+		<cfargument name="id" type="Numeric" required="true" hint="Sequence ID of an ORF"/>
+		<cfargument name="environment" type="String" required="true" hint="Environment name"/>
+		<cfargument name="tabindex" type="Numeric" requried="true" hint="Flex display reference index"/>
+		<cfargument name="database" type="String" required="false" default="" hint="Database type to query BLAST records"/>
+		<cfargument name="topHit" type="Numeric" required="false" default="1" hint="Flag to indicate if only top BLAST hit should be retunred"/>
 				
 		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.environment) />
 		<cfset _server = _serverObject['server']/>
@@ -813,8 +985,12 @@
 			</cfscript>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - GETORFINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -823,10 +999,16 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="orfBlastDetails" access="remote" returntype="Array">
-		<cfargument name="id" type="Numeric" required="true" />
-		<cfargument name="environment" type="String" required="true" />
-		<cfargument name="database" type="String" required="false" default=""/>
+	<cffunction name="orfBlastDetails" access="remote" returntype="Array" hint="
+				Get BLAST hit details for a give ORF.  This function is by secondary display of Sequence Detail view
+				show all BLAST hits of a give orf, highlighting top functional and BLAST hits along with a mini
+				BLAST imager showing hit coverage.
+				
+				Return:  An array of all blast hits.
+				">
+		<cfargument name="id" type="Numeric" required="true" hint="Sequence ID of ORF"/>
+		<cfargument name="environment" type="String" required="true" hint="Environment name"/>
+		<cfargument name="database" type="String" required="false" default="" hint="Database name if any to filter BLAST hits"/>
 		
 		<cfset _serverObject = CreateObject("component",  request.cfc & ".Utility").getServerName(arguments.environment) />
 		<cfset _server = _serverObject['server']/>
@@ -870,8 +1052,12 @@
 			</cfloop> --->
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - ORFBLASTDETAILS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -880,7 +1066,13 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="heatMap" access="private" returntype="Struct">
+	<cffunction name="heatMap" access="private" returntype="Struct" hint="
+				Convert BLAST hits E-value into a color code depicting heat map for each database type.
+				A helper function for: 
+					getSequenceInfo()
+				
+				Return:  An struct per database of each evalue converted to red blue color code.
+				">
 		<!---<cfargument name="id" type="Numeric" required="true" />
 		
 		<cfargument name="tabindex" type="Numeric" requried="true" />
@@ -889,8 +1081,8 @@
 		<cfset _server = _serverObject['server']/>
 		<cfset _environment = _serverObject['environment']/>--->
 		
-		<cfargument name="blast" type="Query" required="true"/>
-		<cfargument name="environment" type="String" required="true" />
+		<cfargument name="blast" type="Query" required="true" hint="A hash of all blast results"/>
+		<cfargument name="environment" type="String" required="true" hint="Environment name"/>
 		
 		<cftry>
 			
@@ -975,8 +1167,12 @@
 			</cfif>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("ORFRPC.CFC - HEATMAP", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="OrfRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>

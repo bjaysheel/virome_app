@@ -1,7 +1,15 @@
-<cfcomponent displayname="Bookmark" output="false">
+<cfcomponent displayname="Bookmark" output="false" hint="
+			This componented is used to get everything Bookmark related information.  
+			It is used to gather, format and return all information for Bookmarks
+			">
 	
-	<cffunction name="get" access="remote" returntype="Array">
-		<cfargument name="userId" type="numeric" required="true" >
+	<cffunction name="get" access="remote" returntype="Array" hint="
+				Get all Bookmarks that are available for a give user.
+				
+				Return: An array of all bookmarks for a give user. Empty array if non exists.
+				">
+				
+		<cfargument name="userId" type="numeric" required="true" hint="User ID">
 		
 		<cfset arr = ArrayNew(1)>
 		<cftry>
@@ -28,8 +36,12 @@
 			</cfloop>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("BOOKMARK.CFC - GET", 
-						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Bookmark", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -40,10 +52,16 @@
 		
 	</cffunction>
 	
-	<cffunction name="add" access="remote" returntype="void">
-		<cfargument name="obj" type="struct" required="true" />
-		<cfargument name="jname" type="string" required="true"  />
-		<cfargument name="count" type="numeric" required="true" />
+	<cffunction name="add" access="remote" returntype="void" hint="
+				Add all Bookmarks to the database.  
+				A crude way of keeping history of all searches performed against VIROME database.
+				
+				Return: NA
+				">
+				
+		<cfargument name="obj" type="struct" required="true" hint="A hash with user ID and bookmark alias name"/>
+		<cfargument name="jname" type="string" required="true"  hint="Bookmark name"/>
+		<cfargument name="count" type="numeric" required="true" hint="Number of rows/search results" />
 		
 		<cftry>
 			<cfquery name="q" datasource="#request.mainDSN#">
@@ -57,8 +75,12 @@
 			</cfquery>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("BOOKMARK.CFC - ADD", 
-						cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Bookmark", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>			
 		</cftry>
 		

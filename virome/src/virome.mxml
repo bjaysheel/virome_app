@@ -23,11 +23,12 @@
 			import com.IModuleInterface.IBookmarkInterface;
 			import com.IModuleInterface.IUserInterface;
 			import com.MyUtility;
+			import com.events.LibraryStatEvent;
 			import com.events.SearchDBEvent;
 			import com.events.SetSearchDBFormEvent;
 			import com.google.analytics.AnalyticsTracker;
 			import com.google.analytics.GATracker;
-	
+			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.LinkButton;
@@ -39,9 +40,8 @@
 			import mx.managers.BrowserManager;
 			import mx.managers.IBrowserManager;
 			import mx.managers.PopUpManager;
-			import mx.events.ModuleEvent;
-			import mx.modules.ModuleManager;
 			import mx.modules.IModuleInfo;
+			import mx.modules.ModuleManager;
 			import mx.rpc.AbstractInvoker;
 			import mx.utils.ObjectUtil;
 			import mx.utils.URLUtil;
@@ -186,7 +186,9 @@
 				parsing = true;
 		
 		        var o:Object = URLUtil.stringToObject(browserManager.fragment);
-		        
+				var _ls:LibraryStatEvent = new LibraryStatEvent();
+				var _sf:SearchDBEvent = new SearchDBEvent();
+				
 				if (o.view == undefined)
 		            o.view = 'home';
 		        if (o.state == undefined)
@@ -194,9 +196,8 @@
 		        
 				urlParam = '';
 				
-				if ((o.srch != undefined) && (o.srch == true)){					
+				if ((o.srch != undefined) && (o.srch == true)){
 					urlParam="srch=true;";
-					var _sf:SearchDBEvent = new SearchDBEvent();
 					if (o.env != undefined){
 						_sf.environment = o.env;
 						urlParam += "env=" + o.env +";";
@@ -255,6 +256,9 @@
 					}
 					
 					//goToSleep(_sf);
+				} else if ((o.stats != undefined) && (o.stats == true)) {
+					_ls.library = o.id;
+					_ls.environment = o.env;
 				}
 				
 				//simulate link to take me to a given link
@@ -267,7 +271,9 @@
 		        parsing = false;
 				
 				if ((o.srch != undefined) && (o.srch == true)){	
-					//_util.app.dispatchEvent(_sf);
+					_util.app.dispatchEvent(_sf);
+				} else if ((o.stats != undefined) && (o.stats == true)) {
+					_util.app.dispatchEvent(_ls);
 				}
 		    }
 			

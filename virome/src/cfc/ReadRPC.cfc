@@ -1,11 +1,24 @@
-<cfcomponent output="false">
+<cfcomponent displayname="ReadRPC" output="false" hint="
+			This componented is used to get everything Read related information.  
+			It is used to gather, format and return all Read related information 
+			for Sequence Detail View and Detail BLAST view
+			">
 
-	<cffunction name="getORFs" access="private" returntype="query">
-		<cfargument name="readId" type="Numeric" required="true"/>
-		<cfargument name="server" type="String" required="true"/>
-		<cfset q = "">
+	<cffunction name="getORFs" access="private" returntype="query" hint="
+				Gather all ORF metadata for give read/contig.
+				
+				A helper function for:
+					getSequenceInfo()
+					
+				Return: A hash of all ORF names, ids, size and metadata
+				">
+				
+		<cfargument name="readId" type="Numeric" required="true" hint="Read/contig ID"/>
+		<cfargument name="server" type="String" required="true" hint="Server (database) name"/>
 
 		<cftry>
+			<cfset q = "">
+	
 			<!--- get orf for a given read --->
 			<cfquery name="q" datasource="#server#">
 				SELECT distinct s.id,
@@ -15,27 +28,42 @@
 				FROM	sequence s
 					INNER JOIN
 						sequence_relationship sr on sr.objectId = s.id
-				WHERE	sr.subjectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+				WHERE	sr.subjectId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.readId#">
 					and sr.typeId = 3
 					and s.deleted = 0
 				ORDER BY s.id
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("SEQUENCE.CFC - GETORFS", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q/>
+			</cffinally>
 		</cftry>
-
-		<cfreturn q>
 	</cffunction>
 
-	<cffunction name="gettRNA" access="private" returntype="query" hint="get tRNAs for a given read">
-		<cfargument name="readId" type="Numeric" required="true"/>
-		<cfargument name="server" type="String" required="true"/>
-		<cfset q = "">
+	<cffunction name="gettRNA" access="private" returntype="query" hint="
+				Gather all tRNAs metadata for given read/contig
+				
+				A helper function for:
+					getSequenceInfo()
+					
+				Return: A hash of tRNA name, location and type
+				">
+				
+		<cfargument name="readId" type="Numeric" required="true" hint="Read/contig ID"/>
+		<cfargument name="server" type="String" required="true" hint="Server (database) name"/>
 
 		<cftry>
+			<cfset q = "">
+	
 			<!--- get orf for a given read --->
 			<cfquery name="q" datasource="#server#">
 				SELECT distinct t.num,
@@ -45,25 +73,39 @@
 								t.intron
 				FROM	tRNA t
 				WHERE	t.deleted = 0
-					and t.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+					and t.sequenceId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.readId#">
 				ORDER BY t.num
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("SEQUENCE.CFC - GETTRNA", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn q>
+			</cffinally>
 		</cftry>
-
-		<cfreturn q>
 	</cffunction>
 
-	<cffunction name="getBlastHit" access="private" returntype="query">
-		<cfargument name="orfId" type="Numeric" required="false" default="-1" />
-		<cfargument name="readId" type="numeric" required="false" default="-1"> 
-		<cfargument name="topHit" type="Numeric" required="true" />
-		<cfargument name="server" type="String" required="true" />
-		<cfargument name="database" type="String" required="true"/>
+	<cffunction name="getBlastHit" access="private" returntype="query" hint="
+					Gather BLAST details of all ORFs for give read/contig
+					
+					A helper function for:
+						getSequenceInfo
+						
+					Return: A hash of BLAST details
+				">
+				
+		<cfargument name="orfId" type="Numeric" required="false" default="-1" hint="ORF ID"/>
+		<cfargument name="readId" type="numeric" required="false" default="-1" hint="Read/contig ID"> 
+		<cfargument name="topHit" type="Numeric" required="true" hint="Flag indication whether to retrieve all or only the top BLAST"/>
+		<cfargument name="server" type="String" required="true" hint="Server (database) name"/>
+		<cfargument name="database" type="String" required="true" hint="BLAST database type (SEED, KEGG, COG, ACLAME etc...)"/>
 		
 		<cftry>
 			<cfset q=""/>
@@ -106,10 +148,10 @@
 							sequence_relationship sr on b.sequenceId = sr.objectId
 					</cfif>
 				WHERE	<cfif arguments.readId gt -1>
-							sr.subjectId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.readId#">
+							sr.subjectId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.readId#">
 							and sr.typeId=3 
 						<cfelse>
-					 		b.sequenceId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#"/>
+					 		b.sequenceId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#arguments.id#"/>
 						 </cfif>
 					<cfif arguments.topHit>
 						and	b.sys_topHit = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.topHit#"/>
@@ -123,8 +165,12 @@
 			</cfquery>
 
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("SEQUENCE.CFC - GETDBDETAIL", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -134,8 +180,16 @@
 		
 	</cffunction>
 	
-	<cffunction name="getEnvironmentDetail" access="private" returntype="Struct">
-		<cfargument name="prefix" type="string" required="true" >
+	<cffunction name="getEnvironmentDetail" access="private" returntype="Struct" hint="
+				Gather environmental metadata related to give prefix (a unique library identifier, which is the same for ORF and read/contigs)
+				
+				A helper function for:
+					getSequenceInfo()
+					
+				Return: A hash of environmental metadata
+				">
+				
+		<cfargument name="prefix" type="string" required="true" hint="A unique library identifier, which is the same for ORF and read/contigs">
 		
 		<cftry>
 			<cfset struct = structNew()/>
@@ -159,8 +213,12 @@
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("SEQUENCE.CFC - GETDBDETAIL", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
@@ -169,7 +227,7 @@
 		</cftry>
 	</cffunction> 
 
-	<cffunction name="getBlastImage" access="private" returntype="String">
+	<!---<cffunction name="getBlastImage" access="private" returntype="String">
 		<cfargument name="qry" required="true" type="Query" />
 		<cfargument name="tqry" required="true" type="any" />
 		<cfargument name="sname" required="true" type="String" />
@@ -291,18 +349,27 @@
 			<cfset img= "#request.rootHostPath#/blastImager/img/#imgFileName#">
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETBLASTIMAGE", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>
 				<cfreturn img>
 			</cffinally>
 		</cftry>
-	</cffunction>
+	</cffunction>--->
 
-	<cffunction name="getACLAMEInfo" access="private" returntype="struct">
-		<cfargument name="acc" type="string" required="true"/>
+	<cffunction name="getACLAMEInfo" access="private" returntype="struct" hint="
+				Get ACLAME functional information for a given accession number.
+				
+				Return:  An array of hash of ACLAME
+				">
+				
+		<cfargument name="acc" type="string" required="true" hint="Accession number"/>
 		
 		<cfset st= StructNew()/>
 		
@@ -328,18 +395,30 @@
 			<cfset st = CreateObject("component", request.cfc & ".Utility").QueryToStruct(query=aq,row=1)/>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETACLAMEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 		</cftry>
 		
 		<cfreturn st/>
 	</cffunction>
 
-	<cffunction name="getSequenceInfo" access="remote" returntype="Struct">
-		<cfargument name="orfId" type="numeric" required="true" />
-		<cfargument name="readId" type="numeric" required="true" />
-		<cfargument name="environment" type="string" required="true" />
+	<cffunction name="getSequenceInfo" access="remote" returntype="Struct" hint="
+				Get detail seqeunce information of a given read/contig.
+				This function will gather all ORFs, tRNA and ORF BLAST details related to a read/contig 
+				
+				Called directly from Flex sequence detail view
+				
+				Return: A hash of all ORF, tRNA and ORF BLAST details.
+				">
+				
+		<cfargument name="orfId" type="numeric" required="true" hint="ORF ID"/>
+		<cfargument name="readId" type="numeric" required="true" hint="Read ID"/>
+		<cfargument name="environment" type="string" required="true" hint="Environment name"/>
 		
 		<!--- 	get details about a read and return a detail struct
 				struct includes following fields
@@ -375,7 +454,7 @@
 				FROM	sequence s
 					INNER JOIN
 						sequence_relationship sr on sr.subjectId = s.id
-				WHERE	sr.objectId = <cfqueryparam cfsqltype="CF_SQL_NUMERIC" value="#local.id#" null="false">
+				WHERE	sr.objectId = <cfqueryparam cfsqltype="cf_sql_bigint" value="#local.id#" null="false">
 					<cfif arguments.orfId gt 0>
 						and sr.typeId = 3
 					<cfelse>
@@ -467,8 +546,12 @@
 			</cfscript>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").
-					reporterror("READRPC.CFC - GETSEQUENCEINFO", cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="ReadRPC", 
+																		function_name=getFunctionCalledName(), 
+																		args=arguments, 
+																		msg=cfcatch.Message, 
+																		detail=cfcatch.Detail,
+																		tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
 			<cffinally>

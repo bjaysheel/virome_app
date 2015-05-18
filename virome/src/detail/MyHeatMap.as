@@ -62,6 +62,14 @@ package detail
 			gi = new MyGridItem();
 			gi.addChild(head);
 			gr.addChild(gi);
+			
+			head = new Label();
+			head.text = "PhgSEED";
+			head.styleName = "header";
+			head.width = 50;
+			gi = new MyGridItem();
+			gi.addChild(head);
+			gr.addChild(gi);
 
 			head = new Label();
 			head.text = "KEGG";
@@ -88,7 +96,7 @@ package detail
 			gr.addChild(gi);
 
 			head = new Label();
-			head.text = "META";
+			head.text = "MgOl";
 			head.styleName = "header";
 			head.width = 50;
 			gi = new MyGridItem();
@@ -199,6 +207,32 @@ package detail
 
 					gi.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{
 						blastDetailFunc(e,id,"SEED",env);
+					});
+				} else gi.setStyle("backgroundColor","#FFFFFF");
+				gr.addChild(gi);
+				
+				////////////////////////////////////
+				// PhgSEED MAP
+				////////////////////////////////////
+				gi = new GridItem();
+				gi.width=50;
+				gi.height=50;
+				if ((obj.PHGSEED != undefined) && (obj.PHGSEED.length > i)){
+					flag = true;
+					gi.setStyle("backgroundColor",obj.PHGSEED[i].COLOR);
+					gi.toolTip = "Description: " + obj.PHGSEED[i].HITDESCRIPTION + 
+						"<br/>Evalue: " + obj.PHGSEED[i].EVALUE + 
+						"<br/>Qry Coverage: " + 
+						new MyNumberFormatter().format(obj.PHGSEED[i].QCOVER).toString() +
+						"%";
+					
+					// since seq and env are the same for a heat map
+					// overriding is not an issue.
+					id = obj.PHGSEED[i].SEQUENCEID;
+					env = obj.PHGSEED[i].ENVIRONMENT;
+					
+					gi.addEventListener(MouseEvent.CLICK,function(e:MouseEvent):void{
+						blastDetailFunc(e,id,"PHGSEED",env);
 					});
 				} else gi.setStyle("backgroundColor","#FFFFFF");
 				gr.addChild(gi);

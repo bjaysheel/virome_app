@@ -75,7 +75,7 @@
 				
 				var txt:Text = new Text();
 				txt.text = "BLAST Sequence Detail";
-				txt.setStyle("color","0xFFFFFF");
+				//txt.setStyle("color","0xFFFFFF");
 				
 				var sp:Spacer = new Spacer();
 				sp.percentWidth=100;
@@ -87,6 +87,7 @@
 				tbox.width = this.parent.width * 0.99;
 				tbox.height = this.titleBar.height;
 				tbox.addChild(txt);
+				tbox.addChild(sp);
 				
 				if (database != "METAGENOMES"){
 					//top fxnal hit.
@@ -97,7 +98,7 @@
 					
 					txt = new Text();
 					txt.text = "= TOP Fxnal Hit";
-					txt.setStyle("color","0xFFFFFF");
+					//txt.setStyle("color","0xFFFFFF");
 					tbox.addChild(txt);
 					
 					//top fxnal and blast hit being the same
@@ -107,10 +108,10 @@
 					
 					txt = new Text();
 					txt.text = "= Top Fxnal & BLAST Hit";
-					txt.setStyle("color","0xFFFFFF");
+					//txt.setStyle("color","0xFFFFFF");
 					tbox.addChild(txt);
 					
-					tbox.addChild(sp);					
+					//tbox.addChild(sp);					
 				}
 				
 				//top system hit or blast hit icon
@@ -120,7 +121,7 @@
 				
 				txt = new Text();
 				txt.text = "= Top BLAST Hit";
-				txt.setStyle("color","0xFFFFFF");
+				//txt.setStyle("color","0xFFFFFF");
 				tbox.addChild(txt);
 				
 				//close image icon

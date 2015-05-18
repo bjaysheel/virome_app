@@ -204,9 +204,9 @@ package com.events
 			term = o.TERM;
 			inTerm = o.INTERM;
 			taxonomy = o.TAXONOMY;
-			inTax = o.INTAX;
+			inTax = o.INTAXONOMY;
 			accession = o.ACCESSION;
-			inAcc = o.INACC;
+			inAcc = o.INACCESSION;
 			pending = o.PENDING;
 			readId = o.READID;
 			recall = o.RECALL;

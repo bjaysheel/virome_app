@@ -198,7 +198,7 @@
 					evt.detail = Alert.YES;
 					getRS(evt,event.recall);
 				} else {
-					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);	
+					prepareRSRequest.token = PrepSearch.prepareRS(searchDBRequestObject);
 				}
 			}
 						
@@ -231,13 +231,16 @@
 				Alert.yesLabel = "View now";
 				Alert.buttonWidth = 90;
 				
-				if (event.result.MSG == "Success"){
+				if (event.result.MSG == "EMPTY") {
+					Alert.show("No records matching search parameters found.",
+						"Search empty", Alert.OK);
+				}else if(event.result.MSG == "Success"){
 					//add new search to bookmark object
 					_util.app.addBookmarkHandler(event.result as Object); 
 
 					Alert.show("Your search results of " + event.result.RCD_COUNT + " for " + event.result.JOBALIAS + " are ready, would you like to view them?", 
 						  "Results ready", Alert.YES|Alert.NO, this,
-						  function (e:CloseEvent):void{getRS(e,event.result);}, null, Alert.YES);
+						  function (e:CloseEvent):void{getRS(e, event.result);}, null, Alert.YES);
 				} else {
 					Alert.show("There has been a problem while gathering data. Please try again or contact the administrator",
 								"Search error", Alert.OK);
@@ -299,6 +302,11 @@
 		    	
 		    	// add header space
 		    	searchBlastResult.addChild(spacer);
+				
+				//var t:Text = new Text;
+				//t.htmlText = event.getBlastResult();
+				
+				//searchBlastResult.addChild(t);
 
 				// get the blast report
 		    	searchBlastResult.formatResult(event.getBlastResult());

@@ -166,6 +166,13 @@ package com
 			navigateToURL(url,"_blank");
 		}
 		
+		public function followPHGSEED(event:MouseEvent):void{
+			var accession:String = event.currentTarget.label;
+			accession.substr(4,accession.length);
+			var url:URLRequest = new URLRequest(" http://www.phantome.org/PhageSeed/seedviewer.cgi?page=Organism&organism="+accession);
+			navigateToURL(url,"_blank");
+		}
+		
 		public function followSEED(event:MouseEvent):void{
 			var url:URLRequest = new URLRequest("http://seed-viewer.theseed.org/seedviewer.cgi?page=Annotation&feature="+event.currentTarget.label);
 			navigateToURL(url,"_blank");
@@ -198,6 +205,7 @@ package com
 		
 		public function submissionLink(event:MouseEvent=null):void{
 			var url:URLRequest = new URLRequest("http://virome.dbi.udel.edu/submission/index.php");
+			//var url:URLRequest = new URLRequest("http://virome.diagcomputing.org/maintenance.html");
 			navigateToURL(url,"_blank");
 		}
 		
