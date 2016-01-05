@@ -90,6 +90,14 @@
 				}
 			}
 			
+			protected function check_library_selection():void{
+				if (lib_item.selectedIndex > 0) {
+					submit.enabled = true;
+				} else {
+					submit.enabled = false;
+				}
+			}
+			
 			protected function submitForm(event:Event):void{
 				var downloadPanel:DownloadFile = DownloadFile(PopUpManager.createPopUp(DisplayObject(FlexGlobals.topLevelApplication), DownloadFile, true));
 				
@@ -142,7 +150,7 @@
 				<mx:Label text="Query Library" />
 			</mx:GridItem>
 			<mx:GridItem>
-				<mx:ComboBox id="lib_item" dataProvider="{_libs}" width="100%" top="10"/> 
+				<mx:ComboBox id="lib_item" change="check_library_selection()" dataProvider="{_libs}" width="100%" top="10"/> 
 			</mx:GridItem>
 		</mx:GridRow>
 		
@@ -195,7 +203,7 @@
 			<mx:GridItem>
 				<mx:Button id="submit" label="Download" name="Download" mouseDownEffect="{shrink}" 
 						   mouseUpEffect="{revert}" 
-						   click="submitForm(event);"/>
+						   click="submitForm(event);" enabled="false"/>
 			</mx:GridItem>
 			
 			<mx:GridItem>

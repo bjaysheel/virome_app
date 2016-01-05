@@ -68,6 +68,9 @@
 				if (not StructIsEmpty(arguments.biom)){
 					uniqueId = "VIROME_BIOM_" & dateformat(now(), "mmddyy") & "" & timeformat(now(), "hhmmssL");
 				}
+				
+				uniqueId = REReplaceNoCase(uniqueId, " ", "_", "all");
+				fname = REReplaceNoCase(fname, " ", "_", "all");
 
 				// set dir name where files are stored
 				dir = lcase(request.tmpFilePath & "/" & uniqueId);
@@ -79,8 +82,8 @@
 					dir = lcase(request.tmpFilePath & "/" & arguments.genInfoObject.ENVIRONMENT);
 				}
 
-				if (not directoryExists(#dir#)) {
-					DirectoryCreate(#dir#);
+				if (not directoryExists(dir)) {
+					DirectoryCreate(dir);
 				}
 
 				// download biom files
@@ -164,6 +167,7 @@
 			</cfscript>
 
 			<cfzip action="zip" source="#dir#" file="#localFilePath#" overwrite="yes" prefix="#uniqueId#"/>
+			<cfset DirectoryDelete(#dir#, "true") />
 
 			<cfcatch type="any">
 				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Exporter",
@@ -175,7 +179,7 @@
 			</cfcatch>
 
 			<cffinally>
-				<cfreturn "#webFilePath#"/>
+				<cfreturn webFilePath/>
 			</cffinally>
 		</cftry>
 	</cffunction>
@@ -315,7 +319,7 @@
 				  typeId=2 => get rRNA (nuc)
 				  typeId=3 => get orfs (peptide)
 				  typeId=4 => get orfs (nuc) --->
-			<cfquery name="qry" datasource="#_server#">
+			<cfquery name="exportSeqQRY" datasource="#_server#" result="qrslt">
 				SELECT	distinct
 							s.id as sequenceId,
 							s.libraryId,
@@ -333,12 +337,12 @@
 			</cfquery>
 
 			<!--- this function is called for one library only so just get description for library once. --->
-			<cfset seq_desc = CreateObject("component",  request.cfc & ".Utility").getMGOLDescription(qry.name[1])/>
-
+			<cfset seq_desc = CreateObject("component",  request.cfc & ".Utility").getMGOLDescription(exportSeqQRY.name[1])/>
+			
 			<cfscript>
-				if (qry.recordcount) {
+				if (exportSeqQRY.recordcount) {
 					if (isDefined("arguments.obj.ENVDIR")) {
-						arguments.filename &= "/" & left(qry["name"][1], 3);
+						arguments.filename &= "/" & left(exportSeqQRY["name"][1], 3);
 
 						if (arguments.typeId == 4) {
 							arguments.filename &= "_orf.fasta";
@@ -346,22 +350,20 @@
 							arguments.filename &= "_pep.fasta";
 						}
 					}
-
-					myfile = FileOpen("#arguments.filename#","write","UTF-8");
-				}
-
-				for (i=1; i lte qry.recordcount; i++) {
-					header = ">" & qry["name"][i] & " " & seq_desc;
-
-					if (len(qry["header"][i])){
-						header &= " [" & qry["header"][i] & "]";
+										
+					myfile = FileOpen("#arguments.filename#", "write", "UTF-8");					
+				
+					for (i=1; i lte exportSeqQRY.recordcount; i++) {
+						header = ">" & exportSeqQRY["name"][i] & " " & seq_desc;
+	
+						if (len(exportSeqQRY["header"][i])){
+							header &= " [" & exportSeqQRY["header"][i] & "]";
+						}
+	
+						FileWriteLine(myfile, header);
+						fileWriteLine(myfile, formatSequence(exportSeqQRY["basepair"][i]));
 					}
 
-					FileWriteLine(myfile, header);
-					fileWriteLine(myfile, formatSequence(qry["basepair"][i]));
-				}
-
-				if (qry.recordcount) {
 					FileClose(myfile);
 				}
 			</cfscript>
@@ -468,11 +470,13 @@
 				<cfset local_struct['counts'] = structNew()/>
 
 				<cfloop list="#arguments.object.libraryIdList#" index="id" >
-					<cfset xmlfile = request.xDocsFilePath & "/" & ucase(idx) & "_XMLDOC_" & id & ".xml" />
-					<cfset myDoc = xmlParse(xmlfile) />
-
-					<cfset theRootElement = myDoc.XmlRoot>
-					<cfset local_struct = flatternXML(theRootElement, "", local_struct, #id#)/>
+					<cfscript>
+						xmlfile = request.xDocsFilePath & "/" & ucase(idx) & "_XMLDOC_" & id & ".xml";
+						myDoc = xmlParse(xmlfile);
+						
+						theRootElement = myDoc.XmlRoot;
+						local_struct = flatternXML(theRootElement, "", local_struct, #id#);
+					</cfscript>
 				</cfloop>
 
 				<cfset local_dir = arguments.dir & "/" & lcase(idx) />
@@ -510,64 +514,78 @@
 		<cfargument name="libraryId" type="numeric" required="true" hint="Library ID of BIOM file requested">
 
 		<cfscript>
-			//set name and prefix, of the current node
-			var t_name = "NONE";
-			var t_value = 0;
-			var updateStr = arguments.str;
-
-			if (arguments.node.XmlName eq "root"){
-				t_name = """ROOT""";
-			} else {
-				if (structKeyExists(arguments.node.XmlAttributes, "NAME")) {
-					var prefix = arguments.node.XmlName;
-
-					// if parsing seed, keeg, cog or aclame the tag name is
-					// function_X and prefix will always be F, set it to F
-					// followed by function level no.
-					if (findnocase("function_", prefix)){
-						prefix = rereplacenocase(prefix, "function_", "", "one");
-						prefix = "F" & prefix;
-					} else {
-						prefix = left(arguments.node.XmlName, 1);
-					}
-
-					t_name = """" & prefix & "_" & arguments.node.XmlAttributes['NAME'] & """";
-				}
-
-
-				if (structKeyExists(arguments.node.XmlAttributes, "VALUE"))
-					t_value = arguments.node.XmlAttributes['VALUE'];
-			}
-
-
-			if (len(arguments.str))
-				updateStr &= ", " & t_name;
-			else
-				updateStr = t_name;
-
-
-			//recursion end condition
-			if (arraylen(arguments.node.XmlChildren) eq 0) {
-				var hash_key = hash(updateStr, "MD5");
-
-				if (not structKeyExists(arguments.object['lineage'], hash_key)) {
-					arguments.object['lineage'][hash_key] = updateStr;
-					arguments.object['counts'][hash_key][arguments.libraryId] = t_value;
+			try {
+				
+				//set name and prefix, of the current node
+				var t_name = "NONE";
+				var t_value = 0;
+				var updateStr = arguments.str;
+	
+				if (arguments.node.XmlName eq "root"){
+					t_name = """ROOT""";
 				} else {
-					if (structKeyExists(arguments.object['counts'], hash_key) and structKeyExists(arguments.object['counts'][hash_key], libraryId))
-						writeoutput("duplicate lineage: " & arguments.str & "<br/>");
-					else
-						arguments.object['counts'][hash_key][arguments.libraryId] = t_value;
+					if (structKeyExists(arguments.node.XmlAttributes, "NAME")) {
+						var prefix = arguments.node.XmlName;
+	
+						// if parsing seed, keeg, cog or aclame the tag name is
+						// function_X and prefix will always be F, set it to F
+						// followed by function level no.
+						if (findnocase("function_", prefix)){
+							prefix = rereplacenocase(prefix, "function_", "", "one");
+							prefix = "F" & prefix;
+						} else {
+							prefix = left(arguments.node.XmlName, 1);
+						}
+	
+						t_name = """" & prefix & "_" & arguments.node.XmlAttributes['NAME'] & """";
+					}
+	
+	
+					if (structKeyExists(arguments.node.XmlAttributes, "VALUE"))
+						t_value = arguments.node.XmlAttributes['VALUE'];
 				}
-
+	
+	
+				if (len(arguments.str))
+					updateStr &= ", " & t_name;
+				else
+					updateStr = t_name;
+	
+	
+				//recursion end condition
+				if (arraylen(arguments.node.XmlChildren) eq 0) {
+					var hash_key = hash(updateStr, "MD5");
+	
+					if (not structKeyExists(arguments.object['lineage'], hash_key)) {
+						arguments.object['lineage'][hash_key] = updateStr;
+						arguments.object['counts'][hash_key][arguments.libraryId] = t_value;
+					} else {
+						if (structKeyExists(arguments.object['counts'], hash_key) and structKeyExists(arguments.object['counts'][hash_key], libraryId))
+							writeoutput("duplicate lineage: " & arguments.str & "<br/>");
+						else
+							arguments.object['counts'][hash_key][arguments.libraryId] = t_value;
+					}
+	
+					return(arguments.object);
+				}
+	
+				for(var j=1; j lte arraylen(arguments.node.XmlChildren); j=j+1) {
+					arguments.lineage = flatternXML(arguments.node.XmlChildren[j], updateStr, arguments.object, arguments.libraryId);
+				}
+			}
+						
+			catch (any e) {
+				CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Exporter",
+																		function_name=getFunctionCalledName(),
+																		args=arguments,
+																		msg=e.Message,
+																		detail=e.Detail,
+																		tagcontent=e.tagcontext);
+			}
+			
+			finally {
 				return(arguments.object);
 			}
-
-			for(var j=1; j lte arraylen(arguments.node.XmlChildren); j=j+1) {
-				arguments.lineage = flatternXML(arguments.node.XmlChildren[j], updateStr, arguments.object, arguments.libraryId);
-			}
-
-			return(arguments.object);
 		</cfscript>
 
 	</cffunction>
@@ -588,19 +606,15 @@
 			<cfset var RNArray = ArrayNew(1)/>
 
 			<cfquery name="q" datasource="#request.mainDSN#" >
-				SELECT	l.libraryId, l.lib_name, l.orfs
-				FROM	lib_summary l
-				WHERE	l.libraryId in (#arguments.libIdList#)
-				ORDER BY l.libraryId
+				SELECT  l.libraryId, l.library_name, l.num_of_orfs
+				FROM    library_metadata l
+				WHERE   l.libraryId in (#arguments.libIdList#)
+				ORDER BY num_of_orfs desc, l.libraryId
 			</cfquery>
 
 			<cfset RNArray = CreateObject("component",  request.cfc & ".Utility").QueryToStruct(q)/>
 
-			<cfloop query="q">
-				<cfif max lt q.orfs>
-					<cfset max = q.orfs>
-				</cfif>
-			</cfloop>
+			<cfset max = q['num_of_orfs'][1]>			
 
 			<cfloop from="1" to="#arrayLen(RNArray)#" index="p" >
 				<cfset structInsert(RNArray[p], "normal", (max/RNArray[p]['orfs']))/>
@@ -650,7 +664,7 @@
 				if (outputFlag eq 8 or outputFlag eq 9 or outputFlag eq 10 or outputFlag eq 11 or outputFlag eq 12 or outputFlag eq 13 or outputFlag eq 14 or outputFlag eq 15) {
 				    rawFlag = 1;
 				}
-				if (outputFlag eq 4 or outputFlag eq 5 or outputFlag eq 6 or outputFlag eq 7 or outputFlag eq 12 or outputFlag eq 13 or outputFlag eq 14 or outputFlag == 15) {
+				if (outputFlag eq 4 or outputFlag eq 5 or outputFlag eq 6 or outputFlag eq 7 or outputFlag eq 12 or outputFlag eq 13 or outputFlag eq 14 or outputFlag eq 15) {
 				    norFLag = 1;
 				}
 
@@ -665,7 +679,7 @@
 				//create header for the file
 				var header = "##ID#chr(9)#";
 				for(var i=1; i lte arrayLen(RNcounts); i++){
-					header &= RNcounts[i]['lib_name'] & "#chr(9)#";
+					header &= RNcounts[i]['library_name'] & "#chr(9)#";
 				}
 				header &= "taxonomy#request.linefeed#";
 
@@ -824,7 +838,7 @@
 							nor_str &= "0,";
 						}
 
-						columns &= "#chr(9)#{""id"": ""#RNcounts[i]['lib_name']#"", ""metadata"": null}, #request.linefeed# ";
+						columns &= "#chr(9)#{""id"": ""#RNcounts[i]['library_name']#"", ""metadata"": null}, #request.linefeed# ";
 					}
 
 					// remove the last , from data, and add closing ],
@@ -916,10 +930,17 @@
 
 		<cftry>
 			<cfquery name="q" datasource="#request.mainDSN#" >
-				SELECT	libraryId, lib_name, lib_prefix, lib_type,
-						na_type, geog_place_name, country, region,
-						lat_deg, lon_deg, lat_hem, lon_hem
-				FROM	lib_summary
+				SELECT	libraryId, 
+						library_name, 
+						prefix, 
+						metatype,
+						acidtype, 
+						place, 
+						country, 
+						region,
+						latitude, 
+						longitude
+				FROM	library_metadata
 				WHERE	libraryId in (#arguments.libIdList#)
 				ORDER BY libraryId
 			</cfquery>
@@ -931,8 +952,8 @@
 				filewrite(map, "##SampleID#chr(9)#Description#request.linefeed#");
 
 				for(var i=1; i lte listlen(arguments.libIdList); i++){
-					var str = summary[listGetAt(arguments.libIdList, i)]['lib_name'] & "#chr(9)#" & summary[listGetAt(arguments.libIdList, i)]['lib_name'];
-					str &= " " & summary[listGetAt(arguments.libIdList, i)]['lib_prefix'] & " " & summary[listGetAt(arguments.libIdList, i)]['na_type'];
+					var str = summary[listGetAt(arguments.libIdList, i)]['library_name'] & "#chr(9)#" & summary[listGetAt(arguments.libIdList, i)]['library_name'];
+					str &= " " & summary[listGetAt(arguments.libIdList, i)]['prefix'] & " " & summary[listGetAt(arguments.libIdList, i)]['acidtype'];
 					str &= request.linefeed;
 
 					str = rereplace(str, "-", "_", "all");

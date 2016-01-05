@@ -10,43 +10,44 @@
 				
 		<cfargument name="hitName" type="String" required="true" />
 		
-		<cfset str="" />
-		
 		<cftry>
+			<cfset str="" />
+			
 			<!--- get metagenoems data --->
-			<cfquery name="mgoldesc" datasource="#request.mainDSN#">
-				SELECT	ls.seq_type,
-						ls.lib_type,
-						ls.na_type,
-						ls.phys_subst,
-						ls.org_substr,
-						ls.ecosystem,
-						ls.geog_place_name,
+			<cfquery name="mgoldesc" datasource="#request.mainDSN#" result="qrslt">
+				SELECT	ls.seqmethod,
+						ls.metatype,
+						ls.acidtype,
+						ls.place,
 						ls.country,
-						ls.lib_shortname
-				FROM	lib_summary ls
-				WHERE	ls.lib_prefix = <cfqueryparam cfsqltype="cf_sql_varchar" value="#left(arguments.hitName,3)#" />
+						ls.phys_subst,
+						ls.ecosystem,
+						ls.library_name
+				FROM	library_metadata ls
+				WHERE	ls.prefix = <cfqueryparam cfsqltype="cf_sql_varchar" value="#left(arguments.hitName,3)#" />
 			</cfquery>
 			
 			<cfset dwel = "N/A"/>
-			<cfif mgoldesc.recordcount>				
-				<cfif len(mgoldesc.org_substr)>
-					<cfset dwel = 'dwelling ' & mgoldesc.org_substr>
-				<cfelse>
-					<cfset dwel = mgoldesc.phys_subst>
-				</cfif>
+			<cfif mgoldesc.recordcount>
+				<cfset dwel = mgoldesc.phys_subst>
 				
-				<cfset str = "#mgoldesc.lib_type# metagenome from #mgoldesc.ecosystem# #dwel#"&
-						 " near #mgoldesc.geog_place_name#, #mgoldesc.country# [library: #mgoldesc.lib_shortname#]"/>	
+				<cfset str = "#mgoldesc.metatype# metagenome from #mgoldesc.ecosystem# #dwel#"&
+						 " near #mgoldesc.place#, #mgoldesc.country# [library: #mgoldesc.library_name#]"/>	
 			</cfif>
 			
 			<cfcatch type="any">
-				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror("UTILITY.CFC - GETMGOLDESCRIPTION #arguments.hitName#", 
-									cfcatch.Message, cfcatch.Detail, cfcatch.tagcontext)>
+				<cfset reporterror(method_name="Utility",
+									function_name=getFunctionCalledName(),
+									args=arguments,
+									msg=cfcatch.Message,
+									detail=cfcatch.Detail,
+									tagcontent=cfcatch.tagcontext)>																		
 			</cfcatch>
+			
+			<cffinally>
+				<cfreturn str>
+			</cffinally>
 		</cftry>
-		
-		<cfreturn str>
 	</cffunction>
 	
 	<cffunction name="getServerName" access="public" returntype="Struct" hint="
@@ -169,8 +170,8 @@
 
 			There has been an error in VIROME (#CGI.HTTP_HOST#) application in <br/>
 
-			Method: #arguments.method#<br/>
-			Function: #arguments.function#<br/><br/>
+			Method: #arguments.method_name#<br/>
+			Function: #arguments.function_name#<br/><br/>
 
 			<cfif (isDefined("arguments.args") and isStruct(arguments.args))>
 				Arguments passed:<br/>

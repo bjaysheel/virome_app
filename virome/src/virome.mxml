@@ -13,7 +13,7 @@
 				preloader="com.preloader.Preloader"
 				applicationComplete="onApplicationComplete()"
 				creationComplete="onCreationComplete()" 
-				historyManagementEnabled="false"
+				historyManagementEnabled="true"
 				preinitialize="onPreinitialize()" > 
 
 	<!--maxHeight="800" maxWidth="1280"-->
@@ -133,8 +133,8 @@
 			
 			protected function onApplicationComplete():void{
 				
-				tracker = new GATracker( this, trackerId, "AS3", false );
-				tracker.trackPageview( "/VIROME" ); 
+				//tracker = new GATracker( this, trackerId, "AS3", false );
+				//tracker.trackPageview( "/VIROME" ); 
 				
 				//init browser management
 				browserManager.init("", "VIROME | HOME");
@@ -143,6 +143,8 @@
 				//create home page.
 				//see if this eliminates race condition where http connection fails.
 				homePage.createComponentsFromDescriptors();
+				
+				//Security.loadPolicyFile("http://maps.googleapis.com/crossdomain.xml");
 			}
 			
 			protected function onCreationComplete():void{

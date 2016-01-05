@@ -20,9 +20,9 @@
 		
 		<!---<cfargument name="privateOnly" default="False" type="boolean">--->
 				
-		<cfset q="">
 		<cftry>
-			<cfquery name="q" datasource="#request.mainDSN#">
+			<cfset q="">
+			<!--- <cfquery name="q" datasource="#request.mainDSN#">
 				SELECT	l.id,
 						lower(l.name) as name,
 						l.description,
@@ -51,6 +51,51 @@
 				FROM	library l
 					INNER JOIN
 						lib_summary ls on l.id = ls.libraryId
+				WHERE	l.deleted = 0 and l.progress="complete"
+					<cfif arguments.id gt -1>
+						and l.id = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
+					</cfif>
+					<cfif arguments.publish gt -1>
+						and l.publish = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.publish#">
+					</cfif>
+					<cfif len(arguments.libraryIdList) gt 0>
+						and l.id in (#arguments.libraryIdList#)
+						and l.publish = 0
+					</cfif>
+					<cfif len(arguments.environment)>
+						and l.environment = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.environment#">
+					</cfif>
+				order by l.environment, l.prefix, l.name, l.description asc, l.publish desc
+			</cfquery> --->
+			
+			<cfquery name="q" datasource="#request.mainDSN#">
+				SELECT	l.id,
+						lower(l.name) as name,
+						l.description,
+						lower(l.environment) as environment,
+						l.prefix,
+						l.server,
+						l.publish,
+						l.groupId,
+						l.project,
+						ls.citation,
+						"" as citation_pdf,
+						ls.seqmethod as seq_type,
+						ls.metatype as lib_type,
+						ls.acidtype as na_type,
+						ls.place as geog_place_name,
+						ls.country,
+						ls.amplification,
+						ls.filter_lowerbound as filter_lower_um,
+						ls.filter_upperbound as filter_upper_um,
+						ls.sampdate as sample_date,
+						ls.latitude as lat_deg,
+						ls.longitude as lon_deg,
+						ls.latitude as lat_hem,
+						ls.latitude as lon_hem
+				FROM	library l
+					INNER JOIN
+						library_metadata ls on l.id = ls.libraryId
 				WHERE	l.deleted = 0 and l.progress="complete"
 					<cfif arguments.id gt -1>
 						and l.id = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.id#">
@@ -622,6 +667,8 @@
 				WHERE	libraryId in (#arguments.libraryId#)
 					and deleted = 0
 			</cfquery>
+			
+			<cflog type="information" text="environment: #arguments.environment# ... count: #qry.RecordCount#" file="virome.library" > 
 					
 			<cfcatch type="any">
 				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
@@ -632,7 +679,7 @@
 																						tagcontent=cfcatch.tagcontext)>
 			</cfcatch>
 			
-			<cffinally>				
+			<cffinally>		
 				<cfreturn CreateObject("component", request.cfc & ".Utility").QueryToStruct(Query=qry, Row=1)/>
 			</cffinally>
 		</cftry>
@@ -722,7 +769,10 @@
 					<cfset StructInsert(summary,"PUBLISH",lib.publish)>
 					<cfset StructInsert(summary,"PROJECT",lib.project)>
 					<cfset StructInsert(summary,"CITATION",lib.citation)>
-					<cfset StructInsert(summary,"LINK",lib.citation_pdf)>
+					<!---<cfset StructInsert(summary,"LINK",lib.citation_pdf)>--->
+					<!--- library_metatadata table does not consist of citation_pdf --->
+					<cfset StructInsert(summary, "LINK", "")>
+						
 					<cfset StructInsert(summary,"NA_TYPE",lib.na_type)>
 					<cfset StructInsert(summary,"ENVIRONMENT",arguments.environment)>
 					
@@ -762,31 +812,44 @@
 				
 		<cfargument name="libraryIdList" type="string" default="" hint="Comma separated list of library ID"/>
 
-		<cfset e = getEnvironment(libraryIdList = arguments.libraryIdList) />
-		<cfset struct = StructNew()>
-		<cfset array = ArrayNew(1)>
+		<cftry>
+			<cfset e = getEnvironment(libraryIdList = arguments.libraryIdList) />
+			<cfset struct = StructNew()>
+			<cfset array = ArrayNew(1)>
+	
+			<cfset type = "PUBLIC" />
+			<cfif len(libraryIdList) gt 0>
+				<cfset type = "PRIVATE" />
+			</cfif>
+	
+			<cfset StructInsert(struct,"label", "Select One")>
+			<cfset StructInsert(struct,"data", "-1")>
+			<cfset ArrayAppend(array, struct)>
+	
+			<cfloop query="e">
+				<cfscript>
+					struct = StructNew();
+					structInsert(struct, "label", "#UCase(q.environment)#");
+					structInsert(struct, "data", "#UCase(q.environment)#");
+					structInsert(struct, "type", "#type#");
+	
+					ArrayAppend(array, struct);
+				</cfscript>
+			</cfloop>
 
-		<cfset type = "PUBLIC" />
-		<cfif len(libraryIdList) gt 0>
-			<cfset type = "PRIVATE" />
-		</cfif>
-
-		<cfset StructInsert(struct,"label", "Select One")>
-		<cfset StructInsert(struct,"data", "-1")>
-		<cfset ArrayAppend(array, struct)>
-
-		<cfloop query="e">
-			<cfscript>
-				struct = StructNew();
-				structInsert(struct, "label", "#UCase(q.environment)#");
-				structInsert(struct, "data", "#UCase(q.environment)#");
-				structInsert(struct, "type", "#type#");
-
-				ArrayAppend(array, struct);
-			</cfscript>
-		</cfloop>
-
-		<cfreturn array />
+			<cfcatch type="any">
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn array />
+			</cffinally>
+		</cftry>			
 	</cffunction>
 
 	<cffunction name="getLibraryObject" access="remote" returntype="Array" hint="
@@ -798,37 +861,50 @@
 		<cfargument name="environment" type="string" required="true">
 		<cfargument name="libraryIdList" type="string" required="true"/>
 		
-		<cfset libList = "">
-		<cfset struct = StructNew()>
-		<cfset array = ArrayNew(1)>
-
-		<cfset StructInsert(struct, "label", "Select One")>
-		<cfset StructInsert(struct, "data", "-1")>
-		<cfset ArrayAppend(array, struct)>
-		
-		<cfset pub_lib = getLibrary(environment=arguments.environment, publish=1)>
-		<cfloop query="pub_lib">
-			<cfscript>
-				struct = StructNew();
-				structInsert(struct, "label", "Public: " & #UCase(pub_lib.name)#);
-				structInsert(struct, "data", "#pub_lib.id#");
-				ArrayAppend(array, struct);
-			</cfscript>
-		</cfloop>
-		
-		<cfif len(libraryIdList) gt 0>
-			<cfset pri_lib = getLibrary(environment=arguments.environment, libraryIdList=arguments.libraryIdList, publish=0)>
-			<cfloop query="pri_lib">
+		<cftry>
+			<cfset libList = "">
+			<cfset struct = StructNew()>
+			<cfset array = ArrayNew(1)>
+	
+			<cfset StructInsert(struct, "label", "Select One")>
+			<cfset StructInsert(struct, "data", "-1")>
+			<cfset ArrayAppend(array, struct)>
+			
+			<cfset pub_lib = getLibrary(environment=arguments.environment, publish=1)>
+			<cfloop query="pub_lib">
 				<cfscript>
 					struct = StructNew();
-					structInsert(struct, "label", "Private: " & #UCase(pri_lib.name)#);
-					structInsert(struct, "data", "#pri_lib.id#");
+					structInsert(struct, "label", "Public: " & #UCase(pub_lib.name)#);
+					structInsert(struct, "data", "#pub_lib.id#");
 					ArrayAppend(array, struct);
 				</cfscript>
 			</cfloop>
-		</cfif>
-		
-		<cfreturn array />
+			
+			<cfif len(libraryIdList) gt 0>
+				<cfset pri_lib = getLibrary(environment=arguments.environment, libraryIdList=arguments.libraryIdList, publish=0)>
+				<cfloop query="pri_lib">
+					<cfscript>
+						struct = StructNew();
+						structInsert(struct, "label", "Private: " & #UCase(pri_lib.name)#);
+						structInsert(struct, "data", "#pri_lib.id#");
+						ArrayAppend(array, struct);
+					</cfscript>
+				</cfloop>
+			</cfif>
+			
+			<cfcatch type="any">
+				<cfset CreateObject("component",  request.cfc & ".Utility").reporterror(method_name="Library", 
+																						function_name=getFunctionCalledName(), 
+																						args=arguments, 
+																						msg=cfcatch.Message, 
+																						detail=cfcatch.Detail,
+																						tagcontent=cfcatch.tagcontext)>
+			</cfcatch>
+			
+			<cffinally>
+				<cfreturn array />
+			</cffinally>
+		</cftry>			
 	</cffunction>
 	
 	<cffunction name="getAllLibrary" access="remote" returntype="Array" hint="
@@ -987,14 +1063,20 @@
 				<cfset StructInsert(summary,"PUBLISH",lib.publish)>
 				<cfset StructInsert(summary,"LIBTYPE",lib.lib_type)>
 				<cfset StructInsert(summary,"CITATION",lib.citation)>
-				<cfset StructInsert(summary,"LINK",lib.citation_pdf)>
+				
+				<!---<cfset StructInsert(summary,"LINK",lib.citation_pdf)>--->
+				<!--- library_metadata table does not have citation_pdf field --->
+				<cfset StructInsert(summary, "LINK", "")>
+				
 				<cfset StructInsert(summary,"SAMPLEDATE",lib.sample_date)>
 				<cfset StructInsert(summary,"LOCATION",lib.geog_place_name)>
 				<cfset StructInsert(summary,"COUNTRY",lib.country)>
+				
 				<cfset StructInsert(summary,"LAT",lib.lat_deg)>
 				<cfset StructInsert(summary,"LATHEM",lib.lat_hem)>
 				<cfset StructInsert(summary,"LON",lib.lon_deg)>
 				<cfset StructInsert(summary,"LONHEM",lib.lon_hem)>
+				
 				<cfset StructInsert(summary,"SEQTYPE",lib.seq_type)>
 				<cfset StructInsert(summary,"AMPLIFICATION", lib.amplification)>
 				<cfset StructInsert(summary,"FILTER_LOWER", lib.filter_lower_um)>
@@ -1166,6 +1248,8 @@
 					total_no_reads = 0; total_read_mb = 0; total_no_orfs = 0; total_orf_mb = 0; total_no_libs=0;
 				</cfscript>
 				
+				<cflog type="information" text="lib: #lib.RecordCount#" file="virome.library" >
+				
 				<!--- for each environment get simple library stats --->
 				<cfoutput query="lib" group="environment">
 					<cfset idList = ""/>
@@ -1173,6 +1257,7 @@
 					<cfoutput>
 						<cfset idList = listAppend(idList, lib.id) />
 					</cfoutput>
+					<cflog type="information" text="env: #lib.environment#" file="virome.library" >
 					
 					<cfscript>
 						tStruct = StructNew();
@@ -1299,7 +1384,7 @@
 		</cftry>
 	</cffunction>
 	
-	<cffunction name="add_library" access="remote" returntype="struct" hint="
+	<!--- <cffunction name="add_library" access="remote" returntype="struct" hint="
 				Add new library information to be processed
 				
 				Used by VIROME library submission pipeline
@@ -1435,9 +1520,9 @@
 				<cfreturn struct/>
 			</cffinally>
 		</cftry>
-	</cffunction>
+	</cffunction> --->
 		
-	<cffunction name="delete_library" access="remote" returntype="Struct" hint="
+	<!--- <cffunction name="delete_library" access="remote" returntype="Struct" hint="
 				Logically delete library that hasn't been processed  yet
 				
 				Used by VIROME library submission pipeline
@@ -1481,7 +1566,7 @@
 				<cfreturn struct/>		
 			</cffinally>
 		</cftry>
-	</cffunction>
+	</cffunction> --->
 	
 	<cffunction name="serverName" access="private" returntype="string" hint="
 				Get a server/dataase name based on environment

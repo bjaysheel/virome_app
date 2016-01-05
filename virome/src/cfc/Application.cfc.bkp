@@ -22,7 +22,7 @@
 	<cffunction name="onRequestStart" output="false" returntype="void" >
 		<cfscript>
 			//DSN variables.
-			request.mainDSN = "virome";
+			request.mainDSN = "app_info";
 			request.lookupDSN = "uniref_lookup";
 	
 			request.seed = "SEED";
@@ -73,6 +73,15 @@
 				request.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBQdVYN3EdDtLl4NNMD6gXWS-vWfShSIOaNRaBtOSCFyLDNZFjJvdmzQig";
 			}
 	
+			//env sipho
+			if (FindNoCase("sipho.dbi.udel.edu",CGI.HTTP_HOST)) {
+				request.rootHostPath = "http://#CGI.HTTP_HOST#/app";
+				request.cfc = "virome.app.cfc";
+				request.tracker_id = "UA-17366023-1";
+				request.map_key = "ABQIAAAAp0BksRjoymo94K_lfWHZDBQdVYN3EdDtLl4NNMD6gXWS-vWfShSIOaNRaBtOSCFyLDNZFjJvdmzQig";
+				rawPath = "/var/www/html/virome/app";
+			}
+			
 			request.hostEndPoint = "http://#CGI.HTTP_HOST#/flex2gateway/";
 			request.webCFCPath = "#request.rootHostPath#/#request.cfc#";
 		

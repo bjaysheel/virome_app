@@ -229,37 +229,37 @@
 			<cfquery name="u" datasource="#request.mainDSN#">
 				UPDATE user set
 						dateModified = #CreateODBCDateTime(now())#
-						<cfif len(arguments.obj.USERNAME)>
+						<cfif isDefined("arguments.obj.USERNAME") and len(arguments.obj.USERNAME)>
 							,username = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.USERNAME#" null="false">
 						</cfif>
-						<cfif len(arguments.obj.PASSWORD)>
+						<cfif isDefined("arguments.obj.PASSWORD") and len(arguments.obj.PASSWORD)>
 							,password = <cfqueryparam cfsqltype="cf_sql_varchar" value="#encrypt(arguments.obj.PASSWORD,local.key,"CFMX_COMPAT")#" null="false">
 						</cfif>
-						<cfif len(arguments.obj.INSTITUTE)>
+						<cfif isDefined("arguments.obj.INSTITUTE") and len(arguments.obj.INSTITUTE)>
 							,institute = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.INSTITUTE#" null="false">
 						</cfif>
-						<cfif len(arguments.obj.EMAIL)>
+						<cfif isDefined("arguments.obj.EMAIL") and len(arguments.obj.EMAIL)>
 							,email = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.EMAIL#" null="false">
 						</cfif>
-						<cfif len(arguments.obj.FIRSTNAME)>
+						<cfif isDefined("arguments.obj.FIRSTNAME") and len(arguments.obj.FIRSTNAME)>
 							,firstname = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.FIRSTNAME#" null="false">
 						</cfif>
-						<cfif len(arguments.obj.LASTNAME)>
+						<cfif isDefined("arguments.obj.LASTNAME") and len(arguments.obj.LASTNAME)>
 							,lastname = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.obj.LASTNAME#" null="false">
 						</cfif>
-						<cfif arguments.obj.ANNOTATION gt -1>
+						<cfif isDefined("arguments.obj.ANNOTATION") and arguments.obj.ANNOTATION gt -1>
 							,annotation = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.ANNOTATION#" null="false">
 						</cfif>
-						<cfif arguments.obj.VIEWDETAIL gt -1>
+						<cfif isDefined("arguments.obj.VIEWDETAIL") and arguments.obj.VIEWDETAIL gt -1>
 							,viewdetail = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.VIEWDETAIL#" null="false">
 						</cfif>
-						<cfif arguments.obj.DELETED gt -1>
+						<cfif isDefined("arguments.obj.DELETED") and arguments.obj.DELETED gt -1>
 							,deleted = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.DELETED#" null="false">
 						</cfif>
-						<cfif arguments.obj.DOWNLOAD gt -1>
+						<cfif isDefined("arguments.obj.DOWNLOAD") and arguments.obj.DOWNLOAD gt -1>
 							,download = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.DOWNLOAD#" null="false">
 						</cfif>
-						<cfif arguments.obj.NOOFLOGINS gt -1>
+						<cfif isDefined("arguments.obj.NOOFLOGINS") and arguments.obj.NOOFLOGINS gt -1>
 							,noOfLogins = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.NOOFLOGINS#" null="false">
 						</cfif>
 				WHERE	userId = <cfqueryparam cfsqltype="cf_sql_integer" value="#arguments.obj.USERID#" null="false">
@@ -376,28 +376,31 @@
 
 				Return: A hash
 				">
-		<cfargument name="obj" type="Struct" required="False" />
 
 		<cftry>
 			<cfset userStruct = structnew()>
 			<cfset local.key = "krypton"/>
 
-			<cfdump var="#request.mainDSN#"/>
-
-			<cfquery name="q" datasource="#request.mainDSN#">
-				SELECT 	userId, username, firstname, lastname, password, email
+			<cfquery name="getQ" datasource="#request.mainDSN#">
+				SELECT 	userID, username, firstname, lastname, password, email
 				FROM	user
-				WHERE	1
+				WHERE   1
+				order by userID
 			</cfquery>
 
-			<cfloop query="q">
-				<cfset pass = #decrypt(q.password,local.key,"CFMX_COMPAT")#/>
+			<cfloop query="getQ">
+				<cfif len(getQ.password)>
+					<cfoutput>#getQ.password#----</cfoutput>
+					<cfset pass = #decrypt(getQ.password,local.key,"CFMX_COMPAT")#/>
 
-				<cfquery name="a" datasource="#request.mainDSN#">
-					UPDATE user
-					SET		password=<cfqueryparam cfsqltype="cf_sql_varchar" value="#pass#" null="false">
-					WHERE	userId = q.userId
-				</cfquery>
+					<cfoutput>#pass#---->#getQ.userID#<br/></cfoutput>
+
+					<cfquery name="a" datasource="#request.mainDSN#">
+						UPDATE app_info.user
+						SET	npassword = <cfqueryparam cfsqltype="cf_sql_varchar" value="#pass#" null="false">
+						WHERE	userID = #getQ.userID#
+					</cfquery>
+				</cfif>
 			</cfloop>
 
 			<cfcatch type="any">

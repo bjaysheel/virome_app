@@ -41,9 +41,9 @@ mx|TitleWindow {
 	closeButtonSkin: Embed(source="/assets/icons/Stop.png");
 }
 
-mx|CursorManager {
+/*mx|CursorManager {
 	busyCursor: Embed(source="/assets/BusyCursor.swf");
-}
+}*/
 
 mx|Text.htmlText.a:link, mx|Text.htmlText.a:visited {text-decoration:none; color:#cc3300; font-weight:bold}
 mx|Text.a:hover {text-decoration:underline}

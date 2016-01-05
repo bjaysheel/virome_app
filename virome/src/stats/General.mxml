@@ -30,6 +30,7 @@
 			import mx.collections.ArrayCollection;
 			import mx.collections.XMLListCollection;
 			import mx.controls.Alert;
+			import mx.controls.Image;
 			import mx.events.ToolTipEvent;
 			import mx.formatters.NumberFormatter;
 			import mx.managers.ToolTipManager;
@@ -56,7 +57,7 @@
 			
 			protected function init():void{
 				//track
-				tracker = new GATracker( this, _util.trackerId, "AS3", false );
+				//tracker = new GATracker( this, _util.trackerId, "AS3", false );
 				
 				nf.precision = 0;
 				ToolTipManager.toolTipClass = MyToolTip;
@@ -67,14 +68,14 @@
 			}
 			
 			public function onHide():void{
-				dropMap();
+				//dropMap();
 			}
 			
 			public function onShow():void{
 				//set google tracker
-				tracker.trackPageview( "/STATISTICS/General" );
+				//tracker.trackPageview( "/STATISTICS/General" );
 				
-				addMap();
+				//addMap();
 			}
 		
 			public function clear():void{
@@ -118,12 +119,12 @@
 				_geo.text = (libraryInfoObject['LOCATION'].toString().length) ? libraryInfoObject['LOCATION'] : "N/A";
 				_geo.text += (libraryInfoObject['COUNTRY'].toString().length) ? ", "+ libraryInfoObject['COUNTRY'] : "";
 				_geo.text += ((libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length)) ? 
-							" (" + new MyNumberFormatter().format(libraryInfoObject['LAT'])+ "" + libraryInfoObject['LATHEM'] + 
-							"," + new MyNumberFormatter().format(libraryInfoObject['LON'])+ "" + libraryInfoObject['LONHEM'] + ")" : "";
+							" (" + new MyNumberFormatter().format(libraryInfoObject['LAT']) + "," + new MyNumberFormatter().format(libraryInfoObject['LON']) + ")" : "";
+				//_geo.text += "https://maps.googleapis.com/maps/api/staticmap?key=AIzaSyDGL4I5mj3jxKrleTnoYlBk_bkRsOCP-NA&center="+libraryInfoObject['LAT']+","+libraryInfoObject['LON']+"&zoom=10&size=400x400";
 				
 				
 				if (_geo.text.length > 50){
-					var t:String = _geo.text.substr(0,50) + "-\n" + _geo.text.substr(50,_geo.text.length);
+					var t:String = _geo.text.substr(0,50) + "\n" + _geo.text.substr(50,_geo.text.length);
 					_geo.text = t;
 				}
 				
@@ -157,32 +158,56 @@
 			
 			protected function addMap():void{
 				var lat:Number=0;
-				var lon:Number=0;
+				var lng:Number=0;
 				
 				_map.removeAllChildren();
 				
+				var imageURL:String = "http://sipho.dbi.udel.edu/virome_maps_new/map_"+libraryInfoObject['PREFIX']+".png";
+				//var imageURL:String = "https://maps.googleapis.com/maps/api/staticmap?key=AIzaSyDGL4I5mj3jxKrleTnoYlBk_bkRsOCP-NA&center=0,0&size=400x400&format=jpg";
+				
 				//set map
-				if ((libraryInfoObject['LAT'] != undefined) && (libraryInfoObject['LON'] != undefined) &&
-					(libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length)){
-					var gmap:MyGoogleMap = new MyGoogleMap();
+				//if ((libraryInfoObject['LAT'] != undefined) && (libraryInfoObject['LON'] != undefined) &&
+				//	(libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length)){
+				
+				//if ((libraryInfoObject['LAT'] != undefined) && (libraryInfoObject['LON'] != undefined) &&
+				//	(libraryInfoObject['LAT'].toString().length) && (libraryInfoObject['LON'].toString().length) &&
+				//	(parseFloat(libraryInfoObject['LAT'])) > 0 && (parseFloat(libraryInfoObject['LON']) > 0)) {
+					//var gmap:MyGoogleMap = new MyGoogleMap();
 					
-					if ((libraryInfoObject['LATHEM'] == "W") || (libraryInfoObject['LATHEM'] == "S"))
-						lat = parseFloat(libraryInfoObject['LAT']) * -1;
-					else lat = parseFloat(libraryInfoObject['LAT']);
+					//if ((libraryInfoObject['LATHEM'] == "W") || (libraryInfoObject['LATHEM'] == "S"))
+					//	lat = parseFloat(libraryInfoObject['LAT']) * -1;
+					//else lat = parseFloat(libraryInfoObject['LAT']);
 					
-					if ((libraryInfoObject['LONHEM'] == "W") || (libraryInfoObject['LONHEM'] == "S"))
-						lon = parseFloat(libraryInfoObject['LON']) * -1;
-					else lon = parseFloat(libraryInfoObject['LON']);
+					//if ((libraryInfoObject['LONHEM'] == "W") || (libraryInfoObject['LONHEM'] == "S"))
+					//	lng = parseFloat(libraryInfoObject['LON']) * -1;
+					//else lng = parseFloat(libraryInfoObject['LON']);
 					
-					var str:String = _library.text + ", part of\n" 
-						+ _project.text + " project, from\n" 
-						+ _environment.text + " environment.\n" 
-						+ _geo.text;
+					//var str:String = _library.text + ", part of\n" 
+					//	+ _project.text + " project, from\n" 
+					//	+ _environment.text + " environment.\n" 
+					//	+ _geo.text;
 					
-					gmap.init(lat,lon,str);
-					_map.addChild(gmap);
-					_map.validateNow();
-				}
+					//imageURL = "https://maps.googleapis.com/maps/api/staticmap?key=AIzaSyDGL4I5mj3jxKrleTnoYlBk_bkRsOCP-NA&center=";
+					//imageURL += libraryInfoObject['LAT']+","+libraryInfoObject['LON']+"&zoom=10&size=400x400&format=jpg";
+					//imageURL += "&markers="+libraryInfoObject['LAT']+","+libraryInfoObject['LON'];
+					
+					//gmap.init(lat,lon,str);
+					//_map.addChild(gmap);
+					//_map.validateNow();
+				//}
+				
+				var context:LoaderContext = new LoaderContext();
+				context.checkPolicyFile = true;
+				var imageURLReq:URLRequest = new URLRequest(imageURL);
+				var imageLoader:Loader = new Loader();
+				imageLoader.contentLoaderInfo.addEventListener(Event.COMPLETE,imageContentLoadComplete)
+				imageLoader.load(imageURLReq, context);
+			}
+			
+			protected function imageContentLoadComplete(event:Event):void{
+				var image:Image = new Image();
+				image.source = event.currentTarget.content
+				_map.addChild(image) 
 			}
 			
 			protected function nhistogramResponse(event:ResultEvent):void{

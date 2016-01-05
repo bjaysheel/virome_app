@@ -344,11 +344,11 @@
 	    <mx:Zoom id="revert" duration="50" zoomHeightTo="1" zoomWidthTo="1" />
 	</fx:Declarations>
 	
-	<mx:HBox width="100%" paddingBottom="15">
+	<!--<mx:HBox width="100%" paddingBottom="15">
 		<mx:Spacer width="100%"/>
 		<mx:LinkButton label="BLAST Search" icon="@Embed(source='/assets/icons/Forward.png')" labelPlacement="left"
 					   textAlign="left" click="_util.app.searchPage.currentState = 'showBlastPanel'"/>	
-	</mx:HBox>
+	</mx:HBox>-->
 
 	<mx:Grid width="100%" height="100%" borderStyle="none" id="searchDBForm">
 		<mx:GridRow>

@@ -2,6 +2,20 @@
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
    <site-control permitted-cross-domain-policies="all" />
-   <allow-access-from domain="*" />
-   <allow-http-request-headers-from domain="*" headers="*"/>
+   
+   	<allow-access-from domain="viromes.org" />
+	<allow-access-from domain="www.viromes.org" />
+	<allow-access-from domain="virome.dbi.udel.edu" />
+	<allow-access-from domain="wwww.virome.dbi.udel.edu" />
+	<allow-access-from domain="localhost" />
+	<allow-access-from domain="www.localhost" />
+	<allow-access-from domain="virome.diagcomputing.org" />
+	<allow-access-from domain="www.virome.diagcomputing.org" />
+   
+	<allow-access-from domain="maps.googleapis.com"/>
+  	<allow-access-from domain="maps-api-ssl.googleapis.com"/>
+	<allow-access-from domain="maps.gstatic.com"/>
+	<allow-access-from domain="maps.gstatic.cn"/>
+	<allow-access-from domain="*.corp.google.com"/>
+	<allow-access-from domain="*.borg.google.com"/>
 </cross-domain-policy>

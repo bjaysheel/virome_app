@@ -1,0 +1,76 @@
+<cfapplication name="VIROME" applicationtimeout="#createtimespan(0,2,0,0)#" 
+	sessiontimeout="#createtimespan(0,2,0,0)#" sessionmanagement="true" />
+
+	<cfscript>
+		//DSN variables.
+		request.mainDSN = "app_info";
+		request.lookupDSN = "uniref_lookup";
+		
+		request.seed = "SEED";
+		request.kegg = "KEGG";
+		request.cog = "COG";
+		request.aclame = "ACLAME";
+		request.uniref = "UNIREF100P";
+		request.metagenome = "METAGENOMES";
+		
+		//email to/from adr
+		request.reportFrom = "kingquattro@gmail.com";
+		request.reportErrorTo = "bjaysheel@gmail.com";
+		request.reportLibrarySubmissionTo = "virome@dbi.udel.edu";
+		
+		// get path of application root dir by finding the location
+		// of Application.cfc.  So long as Application.cfc is in the
+		// application root dir we will find it.
+		applicationRootDir = getApplicationRootPath();
+		applicationRootDir = REReplaceNoCase(applicationRootDir, "/$", "");
+		
+		rootFolder = listlast(applicationRootDir, "\/");
+		
+		// get the name of application dir.  CGI SCRIPT_NAME should
+		// always start with app dir name followed by any sub dir
+		// and then file name, so getting the first dir from SCRIPT_NAME
+		// should give us dynamic app dir name
+		applicationDirName = listToArray(CGI.SCRIPT_NAME, "/")[1];
+		
+		// google app keys for google analytics and google maps
+		request.tracker_id = "UA-17366023-3";
+		request.map_key = "AIzaSyDGL4I5mj3jxKrleTnoYlBk_bkRsOCP-NA";
+		
+		request.hostEndPoint = "http://#CGI.HTTP_HOST#/flex2gateway/";
+		request.rootHostPath = "http://#CGI.HTTP_HOST#/#rootFolder#";
+		request.cfc = "#rootFolder#.cfc";
+		
+		//if (FindNoCase("localhost", CGI.HTTP_HOST)) {
+		//	request.cfc = "virome.cfc";
+		//}
+		
+		request.webCFCPath = "#request.rootHostPath#/cfc";
+		
+		request.rootFilePath = "#applicationRootDir#";
+		request.chartFilePath = "#request.rootFilePath#/charts";
+		request.blastImgFilePath = "#request.rootFilePath#/blastImager";
+		request.idFilePath = "#request.rootFilePath#/idFiles";
+		request.xDocsFilePath = "#request.rootFilePath#/xDocs";
+		request.tmpFilePath = "#request.rootFilePath#/tmp";
+		request.searchFilePath = "#request.rootFilePath#/search";
+		
+		if (FindNoCase("Mac", CGI.HTTP_USER_AGENT) or FindNoCase("Linux", CGI.HTTP_USER_AGENT))
+			request.linefeed = #chr(10)#;
+		else
+			request.linefeed = #chr(13)#&#chr(10)#;
+
+	</cfscript>
+
+	<cffunction name="getApplicationRootPath" returntype="string" hint="Returns the root path of the acting Application.cfm file." output="false" access="public">
+		<cfargument name="base_path" default="./" hint="Normally you want to leave this as default" required="false">
+
+		<cfset actual_path = ExpandPath(arguments.base_path)>
+		<cfif FileExists(ExpandPath(arguments.base_path & "Application.cfc"))>
+			<cfreturn actual_path>
+		<cfelseif REFind(".*[/\\].*[/\\].*", actual_path)>
+			<cfreturn getApplicationRootPath("../#arguments.base_path#")>
+		<cfelse>
+			<!--- we have reached the root dir, so throw an error not found --->
+			<cfthrow message="Unable to determine Application Root Path" detail="#actual_path#">
+		</cfif>
+	</cffunction>

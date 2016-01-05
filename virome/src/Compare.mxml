@@ -32,7 +32,7 @@
 			[Bindable] private var _util:MyUtility = new MyUtility();
 			private var completeLibraryList:ArrayCollection;
 			private var listDataSort:Sort;
-			private var biomArray:Array = ["taxonomy", "kegg", "cog", "seed", "aclame", "go", "library", "libtype", "ecosystem", "envo"];
+			private var biomArray:Array = ["taxonomy", "kegg", "cog", "seed", "aclame", "go", "library", "libtype", "ecosystem", "envo", "physiochemmods", "genesis", "sphere"];
 			private var outputArray:Array = ["bit1", "bit2", "bit3", "bit4"];
 			public var tracker:AnalyticsTracker;
 			
@@ -368,7 +368,7 @@
 					<mx:Label text="GO"/>
 				</mx:GridItem>
 				<mx:GridItem>
-					<mx:CheckBox id="go" change="toggleSubmit()" enabled="false"/>
+					<mx:CheckBox id="go" change="toggleSubmit()"/>
 				</mx:GridItem>
 			</mx:GridRow>
 			<mx:GridRow>
@@ -403,7 +403,7 @@
 					<mx:Label text="LIBRARY"/>
 				</mx:GridItem>
 				<mx:GridItem>
-					<mx:CheckBox id="library" change="toggleSubmit()" enabled="false"/>
+					<mx:CheckBox id="library" change="toggleSubmit()"/>
 				</mx:GridItem>
 			</mx:GridRow>
 			<mx:GridRow>
@@ -412,7 +412,7 @@
 					<mx:Label text="LIBRARY TYPE"/>
 				</mx:GridItem>
 				<mx:GridItem>
-					<mx:CheckBox id="libtype" change="toggleSubmit()" enabled="false"/>
+					<mx:CheckBox id="libtype" change="toggleSubmit()"/>
 				</mx:GridItem>
 			</mx:GridRow>
 			<mx:GridRow>
@@ -421,18 +421,45 @@
 					<mx:Label text="ECOSYSTEM"/>
 				</mx:GridItem>
 				<mx:GridItem>
-					<mx:CheckBox id="ecosystem" change="toggleSubmit()" enabled="false"/>
+					<mx:CheckBox id="ecosystem" change="toggleSubmit()"/>
 				</mx:GridItem>
 			</mx:GridRow>
-			<mx:GridRow>
+			<!--<mx:GridRow>
 				<mx:GridItem />
 				<mx:GridItem>
 					<mx:Label text="EnVO TERMS"/>
 				</mx:GridItem>
 				<mx:GridItem>
-					<mx:CheckBox id="envo" change="toggleSubmit()" enabled="false"/>
+					<mx:CheckBox id="envo" change="toggleSubmit()"/>
 				</mx:GridItem>
-			</mx:GridRow>	
+			</mx:GridRow>-->
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="PHYSIOCHEMMODS"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="physiochemmods" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Genesis"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="genesis" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem />
+				<mx:GridItem>
+					<mx:Label text="Sphere"/>
+				</mx:GridItem>
+				<mx:GridItem>
+					<mx:CheckBox id="sphere" change="toggleSubmit()"/>
+				</mx:GridItem>
+			</mx:GridRow>
 		</mx:Grid>		
 	</mx:HBox>
 	

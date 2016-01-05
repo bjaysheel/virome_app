@@ -59,12 +59,12 @@
 			
 			protected function onAddtoStage():void{
 				//track
-				tracker = new GATracker( this, _util.trackerId, "AS3", false );				
+				//tracker = new GATracker( this, _util.trackerId, "AS3", false );				
 			}
 			
 			protected function onShow():void{
 				//set google tracker
-				tracker.trackPageview( "/STATISTICS/Physio-chem-mods" );
+				//tracker.trackPageview( "/STATISTICS/Physio-chem-mods" );
 				
 				var obj:GeneralObject = new GeneralObject();
 				obj.libraryId = libraryId;
